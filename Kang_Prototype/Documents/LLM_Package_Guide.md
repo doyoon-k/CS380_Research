@@ -150,3 +150,37 @@ public class QuestBriefingChain : MonoBehaviour
 - PromptTemplate를 대체/확장하여 조건부 블록, 반복 구문 등 더 풍부한 템플릿 기능을 구현할 수 있습니다.
 - OllamaSettings 에셋을 여러 개 만들어 모델별 또는 용도별(서사, 경제, 전투) 파라미터를 분리합니다.
 - 임베딩 API를 Vector DB(예: SQLite + cosine)와 결합하면 게임 내 지식 베이스 검색이나 NPC 기억 시스템을 구축할 수 있습니다.
+
+## 9. Prompt Pipeline 그래프 에디터 사용법
+새로운 그래프 에디터는 ScriptableObject 기반의 PromptPipelineAsset을 시각적으로 설계하고, 상태 키 흐름을 검증하며, 즉시 시뮬레이션할 수 있도록 돕는 도구입니다. 아래 순서를 참고해 활용하세요.
+
+### 9.1 에디터 열기와 자산 선택
+1. Unity 메뉴에서 Window > LLM > Prompt Pipeline Editor를 클릭해 창을 엽니다.
+2. 상단 툴바의 Pipeline Asset 필드에 기존 자산을 지정하거나, Project 창에서 Create > LLM > Prompt Pipeline을 통해 새 자산을 만든 뒤 드래그해 넣습니다.
+3. 툴바 버튼:
+   - Save: 현재 자산을 저장합니다.
+   - Validate: Analyzer 결과(단계 수, 상태 키 수)를 팝업으로 확인합니다.
+   - Run: 입력 패널 값으로 즉시 시뮬레이션을 수행합니다.
+   - Ping Asset: Project 창에서 해당 자산을 하이라이트합니다.
+
+### 9.2 그래프 구성 요소 이해
+- Step Node: 각 PromptPipelineStep을 나타내며, 타이틀에는 순번/이름/StepKind가 표시되고 색상으로 종류를 구분합니다. 상단 Exec 포트는 실행 순서를 나타내며 하나의 선형 체인만 허용됩니다. 하단 State 포트는 Analyzer가 자동으로 상태 키를 연결하는 시각화 전용 포트입니다.
+- Node 본문에서 OllamaSettings, User Prompt Template, JSON 재시도 옵션, Custom Link 타입명을 바로 편집할 수 있습니다. Insert State Key 버튼은 Analyzer가 찾아낸 키를 드롭다운으로 보여 주고 템플릿에 {{keyName}} 형식으로 삽입합니다.
+- State Blackboard Node: Analyzer가 감지한 모든 키를 표로 나열하며, 각 행에 읽기/쓰기 포트와 마지막 값 미리보기가 표시됩니다.
+- Pipeline Input/Output Node: 외부 입력이 필요한 키와 최종 출력 키를 목록화하고 Step Node와 자동 연결을 유지합니다.
+
+### 9.3 실행 순서 변경
+1. Step Node의 Exec In/Out 포트를 드래그해 새 연결을 만들면 그래프가 유효한 선형 체인인지 검사합니다.
+2. 체인이 올바르면 PromptPipelineAsset.steps 리스트가 해당 순서로 재정렬되고 Analyzer가 재실행됩니다.
+3. 분기나 루프가 생기면 콘솔에 경고가 찍히며 기존 순서가 유지되므로, 단일 체인이 되도록 다시 연결해야 합니다.
+
+### 9.4 시뮬레이션 패널
+1. Analyzer가 Input으로 분류한 키들이 우측 패널 텍스트 필드로 표시됩니다. 테스트 값, JSON 조각 등을 입력하세요.
+2. Run Pipeline 버튼을 누르면 EditorCoroutineRunner가 StateSequentialChainExecutor를 구성해 모든 Step을 순차 실행합니다.
+3. 완료되면 상태 라벨에 시간이 갱신되고, State Blackboard의 lastValuePreview에 각 키의 최신 값이 표시됩니다. 실패하면 라벨과 Console 모두에 오류 메시지가 출력됩니다.
+
+### 9.5 팁
+- 씬에 OllamaComponent 인스턴스가 없으면 시뮬레이션이 응답을 받지 못할 수 있으니 미리 배치해 두세요.
+- Custom Link 단계는 Analyzer가 읽기/쓰기 키를 추적하지 않으므로 필요한 키를 문서로 별도 기록하는 것이 좋습니다.
+- 그래프 창을 닫았다가 다시 열면 Analyzer가 재실행되어 상태가 최신으로 유지됩니다. Undo/Redo도 자동 기록되므로 자유롭게 편집해도 됩니다.
+

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03b52acd3da64abbb58ffeef4a98a876, type: 3}
+  m_Name: Sample
+  m_EditorClassIdentifier: Assembly-CSharp::PromptPipelineAsset
+  displayName: New Prompt Pipeline
+  description: 
+  steps:
+  - stepName: Greeting
+    stepKind: 1
+    ollamaSettings: {fileID: 0}
+    userPromptTemplate: 
+    jsonMaxRetries: 0
+    jsonRetryDelaySeconds: 0
+    customLinkTypeName: 
+    editorPosition: {x: 0, y: 0}

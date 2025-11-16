@@ -1,0 +1,211 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
+using UnityEngine;
+
+/// <summary>
+/// Editor-only helper that inspects a PromptPipelineAsset and infers which state keys each step uses or produces.
+/// </summary>
+public static class PipelineStateAnalyzer
+{
+    private static readonly Regex PromptKeyRegex = new Regex(
+        "{{([A-Za-z0-9_]+)}}",
+        RegexOptions.Compiled
+    );
+
+    public static AnalyzedStateModel Analyze(PromptPipelineAsset asset)
+    {
+        var model = new AnalyzedStateModel();
+        if (asset == null || asset.steps == null)
+        {
+            return model;
+        }
+
+        model.stepCount = asset.steps.Count;
+        var keyMap = new Dictionary<string, AnalyzedStateKey>();
+
+        for (int i = 0; i < asset.steps.Count; i++)
+        {
+            var step = asset.steps[i];
+            if (step == null)
+            {
+                continue;
+            }
+
+            switch (step.stepKind)
+            {
+                case PromptPipelineStepKind.JsonLlm:
+                case PromptPipelineStepKind.CompletionLlm:
+                    CollectPromptKeys(step, keyMap, i);
+                    break;
+                case PromptPipelineStepKind.CustomLink:
+                    // MVP ignores custom link read/write inference.
+                    break;
+            }
+
+            switch (step.stepKind)
+            {
+                case PromptPipelineStepKind.JsonLlm:
+                    CollectJsonProducedKeys(step, keyMap, i);
+                    break;
+                case PromptPipelineStepKind.CompletionLlm:
+                    model.hasCompletionStep = true;
+                    RegisterKey(keyMap, PromptPipelineConstants.AnswerKey)
+                        .producedByStepIndices
+                        .AddUnique(i);
+                    break;
+            }
+        }
+
+        foreach (AnalyzedStateKey key in keyMap.Values)
+        {
+            bool hasProducer = key.producedByStepIndices.Count > 0;
+            bool hasConsumer = key.consumedByStepIndices.Count > 0;
+
+            if (string.Equals(key.keyName, PromptPipelineConstants.AnswerKey, StringComparison.Ordinal) &&
+                model.hasCompletionStep)
+            {
+                key.kind = AnalyzedStateKeyKind.Output;
+            }
+            else if (!hasProducer && hasConsumer)
+            {
+                key.kind = AnalyzedStateKeyKind.Input;
+            }
+            else if (hasProducer && !hasConsumer)
+            {
+                key.kind = AnalyzedStateKeyKind.Output;
+            }
+            else if (hasProducer && hasConsumer)
+            {
+                key.kind = AnalyzedStateKeyKind.Intermediate;
+            }
+            else
+            {
+                key.kind = AnalyzedStateKeyKind.Input;
+            }
+        }
+
+        model.keys = keyMap.Values
+            .OrderBy(k => k.kind)
+            .ThenBy(k => k.keyName, StringComparer.Ordinal)
+            .ToList();
+
+        return model;
+    }
+
+    private static void CollectPromptKeys(
+        PromptPipelineStep step,
+        Dictionary<string, AnalyzedStateKey> keyMap,
+        int stepIndex
+    )
+    {
+        if (!string.IsNullOrEmpty(step.userPromptTemplate))
+        {
+            foreach (string key in ExtractPromptKeys(step.userPromptTemplate))
+            {
+                RegisterKey(keyMap, key).consumedByStepIndices.AddUnique(stepIndex);
+            }
+        }
+
+        var settings = step.ollamaSettings;
+        if (settings != null && !string.IsNullOrEmpty(settings.systemPromptTemplate))
+        {
+            foreach (string key in ExtractPromptKeys(settings.systemPromptTemplate))
+            {
+                RegisterKey(keyMap, key).consumedByStepIndices.AddUnique(stepIndex);
+            }
+        }
+    }
+
+    private static void CollectJsonProducedKeys(
+        PromptPipelineStep step,
+        Dictionary<string, AnalyzedStateKey> keyMap,
+        int stepIndex
+    )
+    {
+        var settings = step.ollamaSettings;
+        if (settings == null || string.IsNullOrWhiteSpace(settings.jsonOutputFormat))
+        {
+            return;
+        }
+
+        try
+        {
+            var token = JToken.Parse(settings.jsonOutputFormat);
+            if (token is JObject obj)
+            {
+                foreach (JProperty prop in obj.Properties())
+                {
+                    if (!string.IsNullOrWhiteSpace(prop.Name))
+                    {
+                        RegisterKey(keyMap, prop.Name).producedByStepIndices.AddUnique(stepIndex);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"PipelineStateAnalyzer: Failed to parse JSON output for step '{step.stepName}': {ex.Message}");
+        }
+    }
+
+    private static IEnumerable<string> ExtractPromptKeys(string template)
+    {
+        var matches = PromptKeyRegex.Matches(template);
+        foreach (Match match in matches)
+        {
+            if (match.Groups.Count > 1)
+            {
+                yield return match.Groups[1].Value;
+            }
+        }
+    }
+
+    private static AnalyzedStateKey RegisterKey(Dictionary<string, AnalyzedStateKey> keyMap, string keyName)
+    {
+        if (!keyMap.TryGetValue(keyName, out var key))
+        {
+            key = new AnalyzedStateKey { keyName = keyName };
+            keyMap.Add(keyName, key);
+        }
+        return key;
+    }
+}
+
+[Serializable]
+public class AnalyzedStateModel
+{
+    public List<AnalyzedStateKey> keys = new();
+    public int stepCount;
+    public bool hasCompletionStep;
+}
+
+[Serializable]
+public class AnalyzedStateKey
+{
+    public string keyName;
+    public List<int> producedByStepIndices = new();
+    public List<int> consumedByStepIndices = new();
+    public AnalyzedStateKeyKind kind;
+    public string lastValuePreview;
+}
+
+public enum AnalyzedStateKeyKind
+{
+    Input = 0,
+    Intermediate = 1,
+    Output = 2
+}
+
+internal static class ListExtensions
+{
+    public static void AddUnique(this List<int> source, int value)
+    {
+        if (!source.Contains(value))
+        {
+            source.Add(value);
+        }
+    }
+}
