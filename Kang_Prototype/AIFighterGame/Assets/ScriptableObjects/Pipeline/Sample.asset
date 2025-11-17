@@ -16,7 +16,7 @@ MonoBehaviour:
   description: 
   steps:
   - stepName: Greeting
-    stepKind: 1
+    stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 84801d43b9f1d3943ba362bcf9f3309e, type: 2}
     userPromptTemplate: Greet to Mr. {{Name}}
     jsonMaxRetries: 0
@@ -24,15 +24,15 @@ MonoBehaviour:
     customLinkTypeName: 
     editorPosition: {x: -1144, y: 77}
   - stepName: Step 2
-    stepKind: 1
-    ollamaSettings: {fileID: 11400000, guid: 84801d43b9f1d3943ba362bcf9f3309e, type: 2}
+    stepKind: 0
+    ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
     userPromptTemplate: Respond to {{response}}
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -596, y: 77}
+    editorPosition: {x: -720, y: 77}
   layoutSettings:
     inputNodePosition: {x: -1405, y: 97}
-    outputNodePosition: {x: -89, y: 121}
+    outputNodePosition: {x: -309, y: 97}
     inputPositionInitialized: 1
     outputPositionInitialized: 1

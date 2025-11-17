@@ -48,6 +48,13 @@ public class PromptPipelineGraphView : GraphView
             Vector2 graphPosition = contentViewContainer.WorldToLocal(ctx.screenMousePosition);
             CreateStepAt(graphPosition);
         };
+
+        OllamaSettingsChangeNotifier.SettingsChanged += OnOllamaSettingsChanged;
+    }
+
+    public void Dispose()
+    {
+        OllamaSettingsChangeNotifier.SettingsChanged -= OnOllamaSettingsChanged;
     }
 
     public void SetAsset(PromptPipelineAsset asset)
@@ -620,6 +627,23 @@ public class PromptPipelineGraphView : GraphView
 
         MarkAssetDirty();
         Reload();
+    }
+
+    private void OnOllamaSettingsChanged(OllamaSettings settings)
+    {
+        if (settings == null || _asset?.steps == null)
+        {
+            return;
+        }
+
+        foreach (var step in _asset.steps)
+        {
+            if (step?.ollamaSettings == settings)
+            {
+                RefreshStateAnalysis();
+                break;
+            }
+        }
     }
 
     private Vector2 GetInputNodePosition()

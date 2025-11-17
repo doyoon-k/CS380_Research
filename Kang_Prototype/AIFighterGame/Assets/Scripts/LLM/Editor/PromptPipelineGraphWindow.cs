@@ -39,6 +39,7 @@ public class PromptPipelineGraphWindow : EditorWindow
         if (_graphView != null)
         {
             _graphView.StateModelChanged -= OnStateModelChanged;
+            _graphView.Dispose();
         }
     }
 
@@ -47,6 +48,7 @@ public class PromptPipelineGraphWindow : EditorWindow
         if (_graphView != null)
         {
             _graphView.StateModelChanged -= OnStateModelChanged;
+            _graphView.Dispose();
         }
 
         rootVisualElement.Clear();

@@ -46,6 +46,7 @@ public class OllamaSettingsEditor : Editor
                 {
                     settings.RebuildFormatFromFields();
                     EditorUtility.SetDirty(settings);
+                    OllamaSettingsChangeNotifier.RaiseChanged(settings);
                 }
             }
 
