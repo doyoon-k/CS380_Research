@@ -42,6 +42,7 @@ public static class EditorCoroutineRunner
     {
         private readonly Stack<IEnumerator> _stack = new();
         private double? _waitUntil;
+        private AsyncOperation _pendingAsyncOperation;
 
         public EditorCoroutineInstance(IEnumerator root)
         {
@@ -58,6 +59,16 @@ public static class EditorCoroutineRunner
                 }
 
                 _waitUntil = null;
+            }
+
+            if (_pendingAsyncOperation != null)
+            {
+                if (!_pendingAsyncOperation.isDone)
+                {
+                    return true;
+                }
+
+                _pendingAsyncOperation = null;
             }
 
             while (_stack.Count > 0)
@@ -85,6 +96,12 @@ public static class EditorCoroutineRunner
                 if (current is WaitForSeconds wait)
                 {
                     _waitUntil = EditorApplication.timeSinceStartup + ResolveWaitTime(wait);
+                    return true;
+                }
+
+                if (current is AsyncOperation asyncOp)
+                {
+                    _pendingAsyncOperation = asyncOp;
                     return true;
                 }
 

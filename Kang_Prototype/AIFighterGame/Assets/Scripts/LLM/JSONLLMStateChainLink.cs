@@ -9,18 +9,35 @@ using UnityEngine;
 /// </summary>
 public class JSONLLMStateChainLink : IStateChainLink
 {
+    private readonly IOllamaService _ollamaService;
     private readonly OllamaSettings _settings;
     private readonly int _maxRetries;
     private readonly float _delayBetweenRetries;
     private readonly PromptTemplate _userPromptTemplate;
+    private readonly Action<string> _log;
 
     public JSONLLMStateChainLink(
         OllamaSettings settings,
         string userPromptTemplate,
         int maxRetries = 3,
-        float delayBetweenRetries = 0.1f
+        float delayBetweenRetries = 0.1f,
+        Action<string> log = null
+    )
+        : this(OllamaServiceLocator.Require(), settings, userPromptTemplate, maxRetries, delayBetweenRetries, log)
+    {
+    }
+
+    public JSONLLMStateChainLink(
+        IOllamaService service,
+        OllamaSettings settings,
+        string userPromptTemplate,
+        int maxRetries = 3,
+        float delayBetweenRetries = 0.1f,
+        Action<string> log = null
     )
     {
+        _ollamaService = service;
+        _log = log;
         _settings = settings;
         _userPromptTemplate = new PromptTemplate(userPromptTemplate ?? string.Empty);
         _maxRetries = Mathf.Max(1, maxRetries);
@@ -40,6 +57,13 @@ public class JSONLLMStateChainLink : IStateChainLink
             yield break;
         }
 
+        if (_ollamaService == null)
+        {
+            Debug.LogError("[JSONLLMStateChainLink] IOllamaService is missing.");
+            onDone?.Invoke(state);
+            yield break;
+        }
+
         int attempt = 0;
         bool parsedSuccessfully = false;
         JObject parsedObject = null;
@@ -49,22 +73,17 @@ public class JSONLLMStateChainLink : IStateChainLink
             attempt++;
 
             string userPrompt = RenderUserPrompt(state);
-            Debug.Log($"[JSONLLMStateChainLink] Attempt {attempt}/{_maxRetries} - User Prompt:\n{userPrompt}");
+            Log($"[JSONLLMStateChainLink] Attempt {attempt}/{_maxRetries} - User Prompt:\n{userPrompt}");
 
             string jsonResponse = null;
-            OllamaComponent.Instance.GenerateCompletionWithState(
+            yield return _ollamaService.GenerateCompletionWithState(
                 _settings,
                 userPrompt,
                 state,
                 resp => jsonResponse = resp
             );
 
-            while (jsonResponse == null)
-            {
-                yield return null;
-            }
-
-            Debug.Log($"[JSONLLMStateChainLink] Attempt {attempt}/{_maxRetries} - Raw Response:\n{jsonResponse}");
+            Log($"[JSONLLMStateChainLink] Attempt {attempt}/{_maxRetries} - Raw Response:\n{jsonResponse}");
 
             try
             {
@@ -73,7 +92,7 @@ public class JSONLLMStateChainLink : IStateChainLink
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[JSONLLMStateChainLink] JSON parse failed: {e.Message}");
+                Log($"[JSONLLMStateChainLink] JSON parse failed: {e.Message}");
                 parsedObject = null;
             }
 
@@ -102,5 +121,11 @@ public class JSONLLMStateChainLink : IStateChainLink
         }
 
         return _userPromptTemplate.Render(state);
+    }
+
+    private void Log(string message)
+    {
+        _log?.Invoke(message);
+        Debug.Log(message);
     }
 }

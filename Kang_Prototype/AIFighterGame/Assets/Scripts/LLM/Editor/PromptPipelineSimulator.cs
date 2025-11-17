@@ -12,7 +12,9 @@ public static class PromptPipelineSimulator
         PromptPipelineAsset asset,
         Dictionary<string, string> initialState,
         Action<Dictionary<string, string>> onSuccess,
-        Action<string> onError
+        Action<string> onError,
+        Action<string> onLog = null,
+        IOllamaService service = null
     )
     {
         if (asset == null)
@@ -21,9 +23,12 @@ public static class PromptPipelineSimulator
             return;
         }
 
+        service ??= new OllamaEditorService();
+        onLog?.Invoke($"Building pipeline '{asset.displayName}'...");
+
         try
         {
-            var executor = BuildExecutor(asset);
+            var executor = BuildExecutor(asset, service, onLog);
             var startingState = CloneOrCreate(initialState);
             EditorCoroutineRunner.Start(RunExecutor(executor, startingState, onSuccess));
         }
@@ -33,8 +38,16 @@ public static class PromptPipelineSimulator
         }
     }
 
-    private static StateSequentialChainExecutor BuildExecutor(PromptPipelineAsset asset)
+    private static StateSequentialChainExecutor BuildExecutor(
+        PromptPipelineAsset asset,
+        IOllamaService service,
+        Action<string> onLog)
     {
+        if (service == null)
+        {
+            throw new InvalidOperationException("IOllamaService is missing for PromptPipelineSimulator.");
+        }
+
         var executor = new StateSequentialChainExecutor();
         foreach (var step in asset.steps)
         {
@@ -43,7 +56,7 @@ public static class PromptPipelineSimulator
                 continue;
             }
 
-            var link = CreateLink(step);
+            var link = CreateLink(step, service, onLog);
             if (link == null)
             {
                 throw new InvalidOperationException($"Step '{step.stepName}' failed to create IStateChainLink.");
@@ -55,23 +68,30 @@ public static class PromptPipelineSimulator
         return executor;
     }
 
-    private static IStateChainLink CreateLink(PromptPipelineStep step)
+    private static IStateChainLink CreateLink(
+        PromptPipelineStep step,
+        IOllamaService service,
+        Action<string> onLog)
     {
         switch (step.stepKind)
         {
             case PromptPipelineStepKind.JsonLlm:
                 EnsureSettings(step);
                 return new JSONLLMStateChainLink(
+                    service,
                     step.ollamaSettings,
                     step.userPromptTemplate,
                     step.jsonMaxRetries,
-                    step.jsonRetryDelaySeconds
+                    step.jsonRetryDelaySeconds,
+                    onLog
                 );
             case PromptPipelineStepKind.CompletionLlm:
                 EnsureSettings(step);
                 return new CompletionChainLink(
+                    service,
                     step.ollamaSettings,
-                    step.userPromptTemplate
+                    step.userPromptTemplate,
+                    onLog
                 );
             case PromptPipelineStepKind.CustomLink:
                 return InstantiateCustomLink(step);

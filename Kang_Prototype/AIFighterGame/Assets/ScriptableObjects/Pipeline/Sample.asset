@@ -32,10 +32,10 @@ MonoBehaviour:
     customLinkTypeName: 
     editorPosition: {x: -1602, y: 67}
   layoutSettings:
-    inputNodePosition: {x: -2130, y: 87}
-    outputNodePosition: {x: -1253, y: 87}
+    inputNodePosition: {x: -2115, y: 91}
+    outputNodePosition: {x: -1263, y: 91}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 2036, y: 149, z: 0}
-    viewScale: {x: 0.7561437, y: 0.7561437, z: 1}
+    viewPosition: {x: 2387, y: -25.00001, z: 0}
+    viewScale: {x: 1.15, y: 1.15, z: 1}
     viewInitialized: 1

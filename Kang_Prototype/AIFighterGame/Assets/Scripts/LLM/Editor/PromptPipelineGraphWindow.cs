@@ -14,6 +14,8 @@ public class PromptPipelineGraphWindow : EditorWindow
     private ScrollView _simulationInputs;
     private Label _simulationStatus;
     private Button _runButton;
+    private ScrollView _simulationLogScroll;
+    private TextField _simulationLogField;
     private bool _isSimulating;
     private readonly Dictionary<string, string> _inputValues = new();
 
@@ -144,6 +146,27 @@ public class PromptPipelineGraphWindow : EditorWindow
         _simulationStatus = new Label("Idle");
         simulationContainer.Add(_simulationStatus);
 
+        _simulationLogScroll = new ScrollView(ScrollViewMode.Vertical)
+        {
+            style =
+            {
+                flexGrow = 1f,
+                minHeight = 160
+            }
+        };
+        _simulationLogScroll.AddToClassList("simulation-log-scroll");
+
+        _simulationLogField = new TextField("Step Log")
+        {
+            multiline = true,
+            isReadOnly = true
+        };
+        _simulationLogField.style.flexGrow = 1f;
+        _simulationLogField.style.whiteSpace = WhiteSpace.Normal;
+        _simulationLogScroll.Add(_simulationLogField);
+
+        simulationContainer.Add(_simulationLogScroll);
+
         split.Add(simulationContainer);
         rootVisualElement.Add(split);
     }
@@ -202,6 +225,29 @@ public class PromptPipelineGraphWindow : EditorWindow
         }
     }
 
+    private void ClearSimulationLog()
+    {
+        if (_simulationLogField != null)
+        {
+            _simulationLogField.value = string.Empty;
+        }
+    }
+
+    private void AppendSimulationLog(string message)
+    {
+        if (_simulationLogField == null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(_simulationLogField.value))
+        {
+            _simulationLogField.value += "\n";
+        }
+
+        _simulationLogField.value += $"[{DateTime.Now:HH:mm:ss}] {message}";
+    }
+
     private void RunSimulation()
     {
         if (_activeAsset == null)
@@ -218,12 +264,15 @@ public class PromptPipelineGraphWindow : EditorWindow
         _isSimulating = true;
         _runButton.SetEnabled(false);
         _simulationStatus.text = "Running...";
+        ClearSimulationLog();
+        AppendSimulationLog($"Started simulation for '{_activeAsset.displayName}'.");
 
         PromptPipelineSimulator.Run(
             _activeAsset,
             BuildSimulationState(),
             OnSimulationCompleted,
-            OnSimulationFailed
+            OnSimulationFailed,
+            AppendSimulationLog
         );
     }
 
@@ -242,6 +291,7 @@ public class PromptPipelineGraphWindow : EditorWindow
         _isSimulating = false;
         _runButton.SetEnabled(true);
         _simulationStatus.text = $"Completed at {DateTime.Now:T}";
+        AppendSimulationLog("Simulation completed successfully.");
 
         if (resultState != null)
         {
@@ -254,6 +304,7 @@ public class PromptPipelineGraphWindow : EditorWindow
         _isSimulating = false;
         _runButton.SetEnabled(true);
         _simulationStatus.text = $"Error: {error}";
+        AppendSimulationLog($"Simulation failed: {error}");
         Debug.LogError($"Prompt Pipeline Simulation failed: {error}");
     }
 

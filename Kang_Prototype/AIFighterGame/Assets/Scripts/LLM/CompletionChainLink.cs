@@ -10,9 +10,22 @@ public class CompletionChainLink : IStateChainLink
 {
     private readonly OllamaSettings _settings;
     private readonly PromptTemplate _userPromptTemplate;
+    private readonly IOllamaService _ollamaService;
+    private readonly Action<string> _log;
 
-    public CompletionChainLink(OllamaSettings settings, string userPromptTemplate)
+    public CompletionChainLink(OllamaSettings settings, string userPromptTemplate, Action<string> log = null)
+        : this(OllamaServiceLocator.Require(), settings, userPromptTemplate, log)
     {
+    }
+
+    public CompletionChainLink(
+        IOllamaService service,
+        OllamaSettings settings,
+        string userPromptTemplate,
+        Action<string> log = null)
+    {
+        _ollamaService = service;
+        _log = log;
         _settings = settings;
         _userPromptTemplate = new PromptTemplate(userPromptTemplate ?? string.Empty);
     }
@@ -30,22 +43,34 @@ public class CompletionChainLink : IStateChainLink
             yield break;
         }
 
+        if (_ollamaService == null)
+        {
+            Debug.LogError("[CompletionChainLink] IOllamaService is missing.");
+            onDone?.Invoke(state);
+            yield break;
+        }
+
         string userPrompt = _userPromptTemplate.Render(state);
         string response = null;
 
-        OllamaComponent.Instance.GenerateCompletionWithState(
+        Log($"[CompletionChainLink] User Prompt:\n{userPrompt}");
+
+        yield return _ollamaService.GenerateCompletionWithState(
             _settings,
             userPrompt,
             state,
             text => response = text
         );
 
-        while (response == null)
-        {
-            yield return null;
-        }
+        Log($"[CompletionChainLink] Raw Response:\n{response}");
 
         state[PromptPipelineConstants.AnswerKey] = response;
         onDone?.Invoke(state);
+    }
+
+    private void Log(string message)
+    {
+        _log?.Invoke(message);
+        Debug.Log(message);
     }
 }

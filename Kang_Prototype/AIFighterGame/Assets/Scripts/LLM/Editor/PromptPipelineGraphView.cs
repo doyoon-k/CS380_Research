@@ -951,6 +951,11 @@ internal class PromptPipelineStepNode : Node
     private readonly TextField _nameField;
     private readonly TextField _titleEditField;
     private readonly ObjectField _settingsField;
+    private readonly Foldout _settingsFoldout;
+    private readonly IMGUIContainer _settingsInspector;
+    private UnityEditor.Editor _settingsEditor;
+    private bool _lastExpandedState;
+    private IVisualElementScheduledItem _expandedMonitor;
     private readonly EnumField _kindField;
     private readonly TextField _userPromptField;
     private readonly IntegerField _maxRetriesField;
@@ -1070,8 +1075,32 @@ internal class PromptPipelineStepNode : Node
         _settingsField.RegisterValueChangedCallback(evt =>
         {
             ApplyChange("Assign Ollama Settings", () => step.ollamaSettings = evt.newValue as OllamaSettings);
+            UpdateSettingsInspector();
         });
         extensionContainer.Add(_settingsField);
+
+        _settingsFoldout = new Foldout
+        {
+            text = "Inline Ollama Settings",
+            value = false
+        };
+        _settingsFoldout.RegisterValueChangedCallback(evt =>
+        {
+            if (evt.newValue)
+            {
+                BringNodeToFront();
+            }
+        });
+        _settingsInspector = new IMGUIContainer(DrawSettingsInspector)
+        {
+            style =
+            {
+                marginLeft = 4,
+                marginBottom = 4
+            }
+        };
+        _settingsFoldout.Add(_settingsInspector);
+        extensionContainer.Add(_settingsFoldout);
 
         _userPromptField = new TextField("User Prompt Template")
         {
@@ -1124,7 +1153,25 @@ internal class PromptPipelineStepNode : Node
         extensionContainer.Add(_writesLabel);
 
         RefreshSections();
+        UpdateSettingsInspector();
         RefreshExpandedState();
+        if (expanded)
+        {
+            BringNodeToFront();
+        }
+        RegisterCallback<DetachFromPanelEvent>(_ =>
+        {
+            DisposeSettingsEditor();
+            _expandedMonitor?.Pause();
+        });
+        RegisterCallback<AttachToPanelEvent>(_ =>
+        {
+            _expandedMonitor?.Resume();
+            _lastExpandedState = expanded;
+        });
+        ApplyBackgroundStyles();
+        _lastExpandedState = expanded;
+        _expandedMonitor = schedule.Execute(MonitorExpandedState).Every(200);
     }
 
     public void UpdateStateSummary(IReadOnlyCollection<string> reads, IReadOnlyCollection<string> writes)
@@ -1199,6 +1246,90 @@ internal class PromptPipelineStepNode : Node
     {
         var color = GetColorForKind(Step.stepKind);
         titleContainer.style.backgroundColor = new StyleColor(color);
+    }
+
+    private void UpdateSettingsInspector()
+    {
+        if (_settingsFoldout == null || _settingsInspector == null)
+        {
+            return;
+        }
+
+        var target = Step.ollamaSettings;
+        if (target == null)
+        {
+            _settingsFoldout.style.display = DisplayStyle.None;
+            DisposeSettingsEditor();
+            return;
+        }
+
+        _settingsFoldout.style.display = DisplayStyle.Flex;
+        UnityEditor.Editor.CreateCachedEditor(target, null, ref _settingsEditor);
+        _settingsInspector.MarkDirtyRepaint();
+    }
+
+    private void DrawSettingsInspector()
+    {
+        if (_settingsEditor == null)
+        {
+            EditorGUILayout.HelpBox("Assign OllamaSettings to edit inline.", MessageType.Info);
+            return;
+        }
+
+        EditorGUI.BeginChangeCheck();
+        _settingsEditor.OnInspectorGUI();
+        if (EditorGUI.EndChangeCheck())
+        {
+            var settings = Step.ollamaSettings;
+            if (settings != null)
+            {
+                Undo.RecordObject(settings, "Edit Ollama Settings");
+                EditorUtility.SetDirty(settings);
+                OllamaSettingsChangeNotifier.RaiseChanged(settings);
+            }
+        }
+    }
+
+    private void DisposeSettingsEditor()
+    {
+        if (_settingsEditor != null)
+        {
+            UnityEngine.Object.DestroyImmediate(_settingsEditor);
+            _settingsEditor = null;
+        }
+    }
+
+    private void ApplyBackgroundStyles()
+    {
+        var panelColor = new Color(0.11f, 0.11f, 0.11f, 0.98f);
+        var bodyColor = new Color(0.16f, 0.16f, 0.16f, 0.98f);
+        style.backgroundColor = new StyleColor(panelColor);
+        style.opacity = 1f;
+        mainContainer.style.backgroundColor = new StyleColor(panelColor);
+        mainContainer.style.opacity = 1f;
+        extensionContainer.style.backgroundColor = new StyleColor(bodyColor);
+        extensionContainer.style.opacity = 1f;
+        extensionContainer.style.paddingLeft = 6;
+        extensionContainer.style.paddingRight = 6;
+        extensionContainer.style.paddingBottom = 6;
+    }
+
+    private void BringNodeToFront()
+    {
+        BringToFront();
+        parent?.BringToFront();
+    }
+
+    private void MonitorExpandedState()
+    {
+        if (expanded != _lastExpandedState)
+        {
+            if (expanded)
+            {
+                BringNodeToFront();
+            }
+            _lastExpandedState = expanded;
+        }
     }
 
     private static Color GetColorForKind(PromptPipelineStepKind kind)
