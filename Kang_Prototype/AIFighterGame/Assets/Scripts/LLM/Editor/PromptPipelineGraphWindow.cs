@@ -31,6 +31,11 @@ public class PromptPipelineGraphWindow : EditorWindow
         if (_activeAsset != null)
         {
             _graphView.SetAsset(_activeAsset);
+            RebuildSimulationInputs(_graphView.CurrentStateModel);
+        }
+        else
+        {
+            RebuildSimulationInputs(null);
         }
     }
 
@@ -150,7 +155,7 @@ public class PromptPipelineGraphWindow : EditorWindow
             : "Prompt Pipeline");
 
         _graphView.SetAsset(_activeAsset);
-        RebuildSimulationInputs(null);
+        RebuildSimulationInputs(_graphView.CurrentStateModel);
     }
 
     private void OnStateModelChanged(AnalyzedStateModel model)

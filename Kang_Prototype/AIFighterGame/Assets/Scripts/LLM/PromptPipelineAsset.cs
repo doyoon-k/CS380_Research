@@ -82,4 +82,7 @@ public class PromptPipelineLayoutSettings
     public Vector2 outputNodePosition = Vector2.zero;
     public bool inputPositionInitialized;
     public bool outputPositionInitialized;
+    public Vector3 viewPosition = Vector3.zero;
+    public Vector3 viewScale = Vector3.one;
+    public bool viewInitialized;
 }

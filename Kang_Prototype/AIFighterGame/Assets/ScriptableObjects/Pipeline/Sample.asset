@@ -19,20 +19,23 @@ MonoBehaviour:
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 84801d43b9f1d3943ba362bcf9f3309e, type: 2}
     userPromptTemplate: Greet to Mr. {{Name}}
-    jsonMaxRetries: 0
-    jsonRetryDelaySeconds: 0
-    customLinkTypeName: 
-    editorPosition: {x: -1144, y: 77}
-  - stepName: Step 2
-    stepKind: 0
-    ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
-    userPromptTemplate: Respond to {{response}}
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -720, y: 77}
+    editorPosition: {x: -1954, y: 67}
+  - stepName: Step 2
+    stepKind: 1
+    ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
+    userPromptTemplate: Answer to {{response}}
+    jsonMaxRetries: 3
+    jsonRetryDelaySeconds: 0.1
+    customLinkTypeName: 
+    editorPosition: {x: -1602, y: 67}
   layoutSettings:
-    inputNodePosition: {x: -1405, y: 97}
-    outputNodePosition: {x: -309, y: 97}
+    inputNodePosition: {x: -2130, y: 87}
+    outputNodePosition: {x: -1253, y: 87}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
+    viewPosition: {x: 2036, y: 149, z: 0}
+    viewScale: {x: 0.7561437, y: 0.7561437, z: 1}
+    viewInitialized: 1

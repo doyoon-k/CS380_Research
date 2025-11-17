@@ -23,8 +23,11 @@ public class PromptPipelineGraphView : GraphView
     private readonly HashSet<string> _inputKeys = new();
     private readonly HashSet<string> _outputKeys = new();
     private bool _pendingStateRefresh;
+    private Vector3 _lastViewPosition;
+    private Vector3 _lastViewScale = Vector3.one;
 
     public event Action<AnalyzedStateModel> StateModelChanged;
+    public AnalyzedStateModel CurrentStateModel => _stateModel;
 
     public PromptPipelineGraphView(Action markAssetDirty, Action<string> recordUndo)
     {
@@ -50,6 +53,9 @@ public class PromptPipelineGraphView : GraphView
         };
 
         OllamaSettingsChangeNotifier.SettingsChanged += OnOllamaSettingsChanged;
+        _lastViewPosition = GetCurrentViewPosition();
+        _lastViewScale = GetCurrentViewScale();
+        schedule.Execute(TrackViewTransform).Every(200);
     }
 
     public void Dispose()
@@ -81,6 +87,7 @@ public class PromptPipelineGraphView : GraphView
 
     private void Reload()
     {
+        bool restoredView = TryRestoreViewTransform();
         ClearGraph();
 
         if (_asset == null || _asset.steps == null)
@@ -91,7 +98,12 @@ public class PromptPipelineGraphView : GraphView
         BuildStepNodes();
         BuildExecutionEdgesFromAsset();
         RefreshStateAnalysis();
-        FrameAll();
+
+        if (!restoredView)
+        {
+            FrameAll();
+            PersistCurrentViewTransform();
+        }
     }
 
     private void ClearGraph()
@@ -644,6 +656,78 @@ public class PromptPipelineGraphView : GraphView
                 break;
             }
         }
+    }
+
+    private void TrackViewTransform()
+    {
+        if (_asset?.layoutSettings == null)
+        {
+            return;
+        }
+
+        Vector3 position = GetCurrentViewPosition();
+        Vector3 scale = GetCurrentViewScale();
+
+        if (HasSignificantDifference(position, _lastViewPosition) ||
+            HasSignificantDifference(scale, _lastViewScale))
+        {
+            _lastViewPosition = position;
+            _lastViewScale = scale;
+            _asset.layoutSettings.viewPosition = position;
+            _asset.layoutSettings.viewScale = scale;
+            _asset.layoutSettings.viewInitialized = true;
+            MarkAssetDirty();
+        }
+    }
+
+    private bool TryRestoreViewTransform()
+    {
+        if (_asset?.layoutSettings == null || !_asset.layoutSettings.viewInitialized)
+        {
+            return false;
+        }
+
+        UpdateViewTransform(_asset.layoutSettings.viewPosition, _asset.layoutSettings.viewScale);
+        _lastViewPosition = _asset.layoutSettings.viewPosition;
+        _lastViewScale = _asset.layoutSettings.viewScale;
+        return true;
+    }
+
+    private void PersistCurrentViewTransform()
+    {
+        _lastViewPosition = GetCurrentViewPosition();
+        _lastViewScale = GetCurrentViewScale();
+
+        if (_asset?.layoutSettings == null)
+        {
+            return;
+        }
+
+        _asset.layoutSettings.viewPosition = _lastViewPosition;
+        _asset.layoutSettings.viewScale = _lastViewScale;
+        _asset.layoutSettings.viewInitialized = true;
+        MarkAssetDirty();
+    }
+
+    private static bool HasSignificantDifference(Vector3 a, Vector3 b)
+    {
+        return (a - b).sqrMagnitude > 0.0001f;
+    }
+
+    private Vector3 GetCurrentViewPosition()
+    {
+        var translate = contentViewContainer.resolvedStyle.translate;
+        return new Vector3(
+            translate.x,
+            translate.y,
+            translate.z
+        );
+    }
+
+    private Vector3 GetCurrentViewScale()
+    {
+        var scale = contentViewContainer.resolvedStyle.scale;
+        return scale.value;
     }
 
     private Vector2 GetInputNodePosition()
