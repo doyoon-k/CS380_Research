@@ -17,6 +17,9 @@ public class PromptPipelineAsset : ScriptableObject
     [SerializeField]
     public List<PromptPipelineStep> steps = new();
 
+    [SerializeField]
+    public PromptPipelineLayoutSettings layoutSettings = new();
+
     /// <summary>
     /// Ensures we always have a valid step list when the asset is created or loaded.
     /// </summary>
@@ -26,6 +29,8 @@ public class PromptPipelineAsset : ScriptableObject
         {
             steps = new List<PromptPipelineStep>();
         }
+
+        layoutSettings ??= new PromptPipelineLayoutSettings();
     }
 }
 
@@ -68,4 +73,13 @@ public enum PromptPipelineStepKind
     JsonLlm = 0,
     CompletionLlm = 1,
     CustomLink = 2
+}
+
+[Serializable]
+public class PromptPipelineLayoutSettings
+{
+    public Vector2 inputNodePosition = new(-600f, 80f);
+    public Vector2 outputNodePosition = Vector2.zero;
+    public bool inputPositionInitialized;
+    public bool outputPositionInitialized;
 }

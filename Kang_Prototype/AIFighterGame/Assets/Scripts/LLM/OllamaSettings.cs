@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "OllamaSettings", menuName = "LLM/Ollama Settings")]
 public class OllamaSettings : ScriptableObject
 {
     [Header("Basic Settings")]
-    public string model = "deepseek-r1:7b";
+    public string model = "gemma3:4b-it-qat";
     public string format;
     public bool stream = false;
     public string keepAlive = null;
@@ -15,9 +18,9 @@ public class OllamaSettings : ScriptableObject
     [Tooltip("System prompt template; supports {{varName}} placeholders.")]
     public string systemPromptTemplate;
 
-    [TextArea(3, 20)]
-    [Tooltip("Example JSON output used by the analyzer to infer produced keys.")]
-    public string jsonOutputFormat = "{\"answer\":\"\"}";
+    [SerializeField]
+    [Tooltip("Structured definition that drives the JSON format enforced at runtime.")]
+    private List<JsonFieldDefinition> jsonFields = new();
 
     [Serializable]
     public class ModelParams
@@ -33,6 +36,22 @@ public class OllamaSettings : ScriptableObject
 
     [NonSerialized]
     private string _lastRenderedPrompt;
+
+    public IReadOnlyList<JsonFieldDefinition> JsonFields => jsonFields;
+
+    private void OnValidate()
+    {
+        jsonFields ??= new List<JsonFieldDefinition>();
+        RebuildFormatFromFields();
+    }
+
+    /// <summary>
+    /// Forces the format string to match the structured JSON field definitions.
+    /// </summary>
+    public void RebuildFormatFromFields()
+    {
+        format = JsonFieldDefinition.BuildSchema(jsonFields);
+    }
 
     /// <summary>
     /// Renders the system prompt with the given state dictionary and stores the result for later reuse.
@@ -50,4 +69,185 @@ public class OllamaSettings : ScriptableObject
     {
         return _lastRenderedPrompt;
     }
+}
+
+[Serializable]
+public class JsonFieldDefinition
+{
+    public string fieldName = "field";
+    public JsonFieldType fieldType = JsonFieldType.String;
+    public JsonArrayElementType arrayElementType = JsonArrayElementType.String;
+    [TextArea(1, 4)]
+    public string description;
+    [TextArea(1, 4)]
+    public string example;
+
+    public static string BuildSchema(List<JsonFieldDefinition> fields)
+    {
+        if (fields == null)
+        {
+            return string.Empty;
+        }
+
+        var properties = new JObject();
+        var required = new JArray();
+
+        foreach (var field in fields)
+        {
+            if (field == null || string.IsNullOrWhiteSpace(field.fieldName))
+            {
+                continue;
+            }
+
+            var schema = new JObject
+            {
+                ["type"] = field.GetTypeKeyword()
+            };
+
+            if (field.fieldType == JsonFieldType.Array)
+            {
+                var itemSchema = new JObject
+                {
+                    ["type"] = field.GetArrayItemKeyword()
+                };
+                schema["items"] = itemSchema;
+            }
+
+            if (!string.IsNullOrWhiteSpace(field.description))
+            {
+                schema["description"] = field.description;
+            }
+
+            if (field.TryCreateExampleToken(out var exampleToken))
+            {
+                schema["example"] = exampleToken;
+            }
+
+            properties[field.fieldName] = schema;
+            required.Add(field.fieldName);
+        }
+
+        if (!properties.HasValues)
+        {
+            return string.Empty;
+        }
+
+        var root = new JObject
+        {
+            ["type"] = "object",
+            ["properties"] = properties,
+            ["required"] = required
+        };
+
+        return root.ToString(Formatting.None);
+    }
+
+    private string GetTypeKeyword()
+    {
+        return fieldType switch
+        {
+            JsonFieldType.String => "string",
+            JsonFieldType.Number => "number",
+            JsonFieldType.Integer => "integer",
+            JsonFieldType.Boolean => "boolean",
+            JsonFieldType.Object => "object",
+            JsonFieldType.Array => "array",
+            _ => "string"
+        };
+    }
+
+    private string GetArrayItemKeyword()
+    {
+        return arrayElementType switch
+        {
+            JsonArrayElementType.String => "string",
+            JsonArrayElementType.Number => "number",
+            JsonArrayElementType.Integer => "integer",
+            JsonArrayElementType.Boolean => "boolean",
+            JsonArrayElementType.Object => "object",
+            _ => "string"
+        };
+    }
+
+    private bool TryCreateExampleToken(out JToken token)
+    {
+        token = null;
+        if (string.IsNullOrWhiteSpace(example))
+        {
+            return false;
+        }
+
+        switch (fieldType)
+        {
+            case JsonFieldType.Number:
+                if (double.TryParse(example, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberValue))
+                {
+                    token = new JValue(numberValue);
+                    return true;
+                }
+                break;
+            case JsonFieldType.Integer:
+                if (long.TryParse(example, NumberStyles.Any, CultureInfo.InvariantCulture, out long intValue))
+                {
+                    token = new JValue(intValue);
+                    return true;
+                }
+                break;
+            case JsonFieldType.Boolean:
+                if (bool.TryParse(example, out bool boolValue))
+                {
+                    token = new JValue(boolValue);
+                    return true;
+                }
+                break;
+            case JsonFieldType.Object:
+                try
+                {
+                    token = JToken.Parse(example);
+                    return true;
+                }
+                catch
+                {
+                    // Fall through and treat it as a string.
+                }
+                break;
+            case JsonFieldType.Array:
+                try
+                {
+                    var parsed = JToken.Parse(example);
+                    if (parsed is JArray)
+                    {
+                        token = parsed;
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Fall through and treat it as a string.
+                }
+                break;
+        }
+
+        token = new JValue(example);
+        return true;
+    }
+}
+
+public enum JsonFieldType
+{
+    String = 0,
+    Number = 1,
+    Integer = 2,
+    Boolean = 3,
+    Object = 4,
+    Array = 5
+}
+
+public enum JsonArrayElementType
+{
+    String = 0,
+    Number = 1,
+    Integer = 2,
+    Boolean = 3,
+    Object = 4
 }

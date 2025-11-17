@@ -126,28 +126,32 @@ public static class PipelineStateAnalyzer
     )
     {
         var settings = step.ollamaSettings;
-        if (settings == null || string.IsNullOrWhiteSpace(settings.jsonOutputFormat))
+        string schema = settings?.format;
+        if (settings == null || string.IsNullOrWhiteSpace(schema))
+        {
+            return;
+        }
+
+        string trimmed = schema.TrimStart();
+        if (trimmed.Length == 0 || (trimmed[0] != '{' && trimmed[0] != '['))
         {
             return;
         }
 
         try
         {
-            var token = JToken.Parse(settings.jsonOutputFormat);
-            if (token is JObject obj)
+            var token = JToken.Parse(schema);
+            foreach (string keyName in ExtractSchemaPropertyNames(token))
             {
-                foreach (JProperty prop in obj.Properties())
+                if (!string.IsNullOrWhiteSpace(keyName))
                 {
-                    if (!string.IsNullOrWhiteSpace(prop.Name))
-                    {
-                        RegisterKey(keyMap, prop.Name).producedByStepIndices.AddUnique(stepIndex);
-                    }
+                    RegisterKey(keyMap, keyName).producedByStepIndices.AddUnique(stepIndex);
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"PipelineStateAnalyzer: Failed to parse JSON output for step '{step.stepName}': {ex.Message}");
+            Debug.LogWarning($"PipelineStateAnalyzer: Failed to parse JSON format for step '{step.stepName}': {ex.Message}");
         }
     }
 
@@ -160,6 +164,28 @@ public static class PipelineStateAnalyzer
             {
                 yield return match.Groups[1].Value;
             }
+        }
+    }
+
+    private static IEnumerable<string> ExtractSchemaPropertyNames(JToken token)
+    {
+        if (token is not JObject obj)
+        {
+            yield break;
+        }
+
+        if (obj.TryGetValue("properties", out var propsToken) && propsToken is JObject propsObj)
+        {
+            foreach (JProperty prop in propsObj.Properties())
+            {
+                yield return prop.Name;
+            }
+            yield break;
+        }
+
+        foreach (JProperty prop in obj.Properties())
+        {
+            yield return prop.Name;
         }
     }
 

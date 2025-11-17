@@ -12,12 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bcb66c664130adc4082d3a738ddeb478, type: 3}
   m_Name: Sample
   m_EditorClassIdentifier: Assembly-CSharp::OllamaSettings
-  model: deepseek-r1:7b
-  format: 
+  model: gemma3:4b-it-qat
+  format: '{"type":"object","properties":{"response":{"type":"string"}},"required":["response"]}'
   stream: 0
   keepAlive: 
-  systemPromptTemplate: 
-  jsonOutputFormat: '{"answer":""}'
+  systemPromptTemplate: You are a classy butler.
+  jsonFields:
+  - fieldName: response
+    fieldType: 0
+    arrayElementType: 0
+    description: 
+    example: 
   modelParams:
     temperature: 0.7
     top_p: 0.9

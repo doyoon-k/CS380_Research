@@ -15,7 +15,6 @@ public class PromptPipelineGraphView : GraphView
     private readonly List<PromptPipelineStepNode> _stepNodes = new();
     private readonly List<Edge> _executionEdges = new();
     private readonly List<Edge> _stateEdges = new();
-    private StateBlackboardNode _stateBlackboardNode;
     private PipelineInputNode _inputNode;
     private PipelineOutputNode _outputNode;
     private AnalyzedStateModel _stateModel;
@@ -69,7 +68,6 @@ public class PromptPipelineGraphView : GraphView
             if (state.TryGetValue(key.keyName, out var value))
             {
                 key.lastValuePreview = value;
-                _stateBlackboardNode?.UpdatePreview(key.keyName, value);
             }
         }
     }
@@ -108,12 +106,6 @@ public class PromptPipelineGraphView : GraphView
             RemoveElement(node);
         }
         _stepNodes.Clear();
-
-        if (_stateBlackboardNode != null)
-        {
-            RemoveElement(_stateBlackboardNode);
-            _stateBlackboardNode = null;
-        }
 
         if (_inputNode != null)
         {
@@ -350,12 +342,6 @@ public class PromptPipelineGraphView : GraphView
         }
         _stateEdges.Clear();
 
-        if (_stateBlackboardNode != null)
-        {
-            RemoveElement(_stateBlackboardNode);
-            _stateBlackboardNode = null;
-        }
-
         if (_inputNode != null)
         {
             RemoveElement(_inputNode);
@@ -368,20 +354,16 @@ public class PromptPipelineGraphView : GraphView
             _outputNode = null;
         }
 
-        _stateBlackboardNode = new StateBlackboardNode();
-        _stateBlackboardNode.Bind(_stateModel);
-        _stateBlackboardNode.SetPosition(new Rect(-300, 360, 420, 360));
-        AddElement(_stateBlackboardNode);
-
         _inputNode = new PipelineInputNode();
         _inputNode.Bind(_stateModel);
-        _inputNode.SetPosition(new Rect(-600, 80, 240, 320));
+        Vector2 inputPosition = GetInputNodePosition();
+        _inputNode.SetPosition(new Rect(inputPosition, new Vector2(240, 320)));
         AddElement(_inputNode);
 
         _outputNode = new PipelineOutputNode();
         _outputNode.Bind(_stateModel);
-        float outputX = 320 * (_stepNodes.Count + 1);
-        _outputNode.SetPosition(new Rect(outputX, 80, 240, 320));
+        Vector2 outputPosition = GetOutputNodePosition();
+        _outputNode.SetPosition(new Rect(outputPosition, new Vector2(240, 320)));
         AddElement(_outputNode);
 
         CreateStateEdges();
@@ -395,6 +377,8 @@ public class PromptPipelineGraphView : GraphView
         }
         _stateEdges.Clear();
 
+        var allKeyNames = _stateModel?.keys?.Select(k => k.keyName).ToList() ?? new List<string>();
+
         for (int i = 0; i < _stepNodes.Count; i++)
         {
             var node = _stepNodes[i];
@@ -402,54 +386,116 @@ public class PromptPipelineGraphView : GraphView
             var writes = GetWrites(i);
 
             node.UpdateStateSummary(reads, writes);
-            node.UpdateAvailableStateKeys(_stateModel?.keys?.Select(k => k.keyName));
+            node.UpdateAvailableStateKeys(allKeyNames);
 
-            foreach (string key in reads)
+            ConnectExternalInputs(node, reads);
+            ConnectOutputs(node, writes);
+        }
+
+        ConnectStepDependencies();
+    }
+
+    private void ConnectExternalInputs(PromptPipelineStepNode node, List<string> reads)
+    {
+        if (_inputNode == null || reads == null || reads.Count == 0)
+        {
+            return;
+        }
+
+        var connectedKeys = new HashSet<string>();
+        foreach (string key in reads)
+        {
+            if (!_inputKeys.Contains(key) || !connectedKeys.Add(key))
             {
-                if (_stateBlackboardNode != null)
-                {
-                    var readPort = _stateBlackboardNode.GetReadPort(key);
-                    if (readPort != null)
-                    {
-                        var edge = readPort.ConnectTo(node.StateInPort);
-                        ConfigureStateEdge(edge);
-                    }
-                }
-
-                if (_inputKeys.Contains(key) && _inputNode != null)
-                {
-                    var inputPort = _inputNode.GetPort(key);
-                    if (inputPort != null)
-                    {
-                        var edge = inputPort.ConnectTo(node.StateInPort);
-                        ConfigureStateEdge(edge);
-                    }
-                }
+                continue;
             }
 
-            foreach (string key in writes)
+            var inputPort = _inputNode.GetPort(key);
+            TryConnectStateEdge(inputPort, node.StateInPort);
+        }
+    }
+
+    private void ConnectOutputs(PromptPipelineStepNode node, List<string> writes)
+    {
+        if (_outputNode == null || writes == null || writes.Count == 0)
+        {
+            return;
+        }
+
+        var connectedKeys = new HashSet<string>();
+        foreach (string key in writes)
+        {
+            if (!_outputKeys.Contains(key) || !connectedKeys.Add(key))
             {
-                if (_stateBlackboardNode != null)
+                continue;
+            }
+
+            var outputPort = _outputNode.GetPort(key);
+            TryConnectStateEdge(node.StateOutPort, outputPort);
+        }
+    }
+
+    private void ConnectStepDependencies()
+    {
+        if (_stateModel?.keys == null)
+        {
+            return;
+        }
+
+        var connectedPairs = new HashSet<(int from, int to)>();
+        foreach (AnalyzedStateKey key in _stateModel.keys)
+        {
+            if (key == null ||
+                key.producedByStepIndices == null ||
+                key.consumedByStepIndices == null)
+            {
+                continue;
+            }
+
+            foreach (int producerIndex in key.producedByStepIndices)
+            {
+                var producerNode = GetStepNode(producerIndex);
+                if (producerNode == null)
                 {
-                    var writePort = _stateBlackboardNode.GetWritePort(key);
-                    if (writePort != null)
-                    {
-                        var edge = node.StateOutPort.ConnectTo(writePort);
-                        ConfigureStateEdge(edge);
-                    }
+                    continue;
                 }
 
-                if (_outputKeys.Contains(key) && _outputNode != null)
+                foreach (int consumerIndex in key.consumedByStepIndices)
                 {
-                    var outputPort = _outputNode.GetPort(key);
-                    if (outputPort != null)
+                    if (producerIndex == consumerIndex)
                     {
-                        var edge = node.StateOutPort.ConnectTo(outputPort);
-                        ConfigureStateEdge(edge);
+                        continue;
                     }
+
+                    if (!connectedPairs.Add((producerIndex, consumerIndex)))
+                    {
+                        continue;
+                    }
+
+                    var consumerNode = GetStepNode(consumerIndex);
+                    if (consumerNode == null)
+                    {
+                        continue;
+                    }
+
+                    TryConnectStateEdge(producerNode.StateOutPort, consumerNode.StateInPort);
                 }
             }
         }
+    }
+
+    private PromptPipelineStepNode GetStepNode(int index) =>
+        index >= 0 && index < _stepNodes.Count ? _stepNodes[index] : null;
+
+    private void TryConnectStateEdge(Port from, Port to)
+    {
+        if (from == null || to == null)
+        {
+            return;
+        }
+
+        var edge = from.ConnectTo(to);
+        ConfigureStateEdge(edge);
     }
 
     private void ConfigureStateEdge(Edge edge)
@@ -480,6 +526,7 @@ public class PromptPipelineGraphView : GraphView
         bool requiresReorder = false;
         bool movedSteps = false;
 
+        bool movedUtilityNodes = false;
         if (change.movedElements != null)
         {
             foreach (var element in change.movedElements)
@@ -489,12 +536,21 @@ public class PromptPipelineGraphView : GraphView
                     node.PersistPosition();
                     movedSteps = true;
                 }
+                else if (element is PipelineInputNode || element is PipelineOutputNode)
+                {
+                    movedUtilityNodes = true;
+                }
             }
         }
 
         if (movedSteps)
         {
             MarkAssetDirty();
+        }
+
+        if (movedUtilityNodes)
+        {
+            PersistUtilityNodePositions();
         }
 
         if (change.edgesToCreate != null && change.edgesToCreate.Count > 0)
@@ -564,6 +620,68 @@ public class PromptPipelineGraphView : GraphView
 
         MarkAssetDirty();
         Reload();
+    }
+
+    private Vector2 GetInputNodePosition()
+    {
+        if (_asset?.layoutSettings == null)
+        {
+            return new Vector2(-600f, 80f);
+        }
+
+        if (!_asset.layoutSettings.inputPositionInitialized)
+        {
+            _asset.layoutSettings.inputNodePosition = new Vector2(-600f, 80f);
+            _asset.layoutSettings.inputPositionInitialized = true;
+            MarkAssetDirty();
+        }
+
+        return _asset.layoutSettings.inputNodePosition;
+    }
+
+    private Vector2 GetOutputNodePosition()
+    {
+        if (_asset?.layoutSettings == null)
+        {
+            return CalculateDefaultOutputNodePosition();
+        }
+
+        if (!_asset.layoutSettings.outputPositionInitialized)
+        {
+            _asset.layoutSettings.outputNodePosition = CalculateDefaultOutputNodePosition();
+            _asset.layoutSettings.outputPositionInitialized = true;
+            MarkAssetDirty();
+        }
+
+        return _asset.layoutSettings.outputNodePosition;
+    }
+
+    private Vector2 CalculateDefaultOutputNodePosition()
+    {
+        float x = 320f * Mathf.Max(1, _stepNodes.Count + 1);
+        return new Vector2(x, 80f);
+    }
+
+    private void PersistUtilityNodePositions()
+    {
+        if (_asset?.layoutSettings == null)
+        {
+            return;
+        }
+
+        if (_inputNode != null)
+        {
+            _asset.layoutSettings.inputNodePosition = _inputNode.GetPosition().position;
+            _asset.layoutSettings.inputPositionInitialized = true;
+        }
+
+        if (_outputNode != null)
+        {
+            _asset.layoutSettings.outputNodePosition = _outputNode.GetPosition().position;
+            _asset.layoutSettings.outputPositionInitialized = true;
+        }
+
+        MarkAssetDirty();
     }
 
     private List<PromptPipelineStepNode> BuildExecutionChain()
@@ -1056,99 +1174,6 @@ internal class PromptPipelineStepNode : Node
     }
 }
 
-internal class StateBlackboardNode : Node
-{
-    private readonly Dictionary<string, Port> _readPorts = new();
-    private readonly Dictionary<string, Port> _writePorts = new();
-    private readonly Dictionary<string, Label> _previewLabels = new();
-
-    public StateBlackboardNode()
-    {
-        title = "State Blackboard";
-    }
-
-    public void Bind(AnalyzedStateModel model)
-    {
-        _readPorts.Clear();
-        _writePorts.Clear();
-        _previewLabels.Clear();
-        extensionContainer.Clear();
-
-        var scroll = new ScrollView();
-        if (model == null || model.keys == null || model.keys.Count == 0)
-        {
-            scroll.Add(new Label("No state keys detected."));
-        }
-        else
-        {
-            foreach (AnalyzedStateKey key in model.keys)
-            {
-                var row = new VisualElement
-                {
-                    style =
-                    {
-                        flexDirection = FlexDirection.Row,
-                        alignItems = Align.Center,
-                        marginBottom = 4,
-                        marginTop = 2
-                    }
-                };
-
-                var writePort = CreatePort(Direction.Input);
-                writePort.style.marginRight = 6;
-                _writePorts[key.keyName] = writePort;
-                row.Add(writePort);
-
-                var keyLabel = new Label($"{key.keyName} ({key.kind})")
-                {
-                    style = { minWidth = 150 }
-                };
-                row.Add(keyLabel);
-
-                var preview = new Label(string.IsNullOrEmpty(key.lastValuePreview) ? "-" : key.lastValuePreview)
-                {
-                    style = { flexGrow = 1f }
-                };
-                _previewLabels[key.keyName] = preview;
-                row.Add(preview);
-
-                var readPort = CreatePort(Direction.Output);
-                readPort.style.marginLeft = 6;
-                _readPorts[key.keyName] = readPort;
-                row.Add(readPort);
-
-                scroll.Add(row);
-            }
-        }
-
-        extensionContainer.Add(scroll);
-        RefreshExpandedState();
-        RefreshPorts();
-    }
-
-    public Port GetReadPort(string keyName) =>
-        _readPorts.TryGetValue(keyName, out var port) ? port : null;
-
-    public Port GetWritePort(string keyName) =>
-        _writePorts.TryGetValue(keyName, out var port) ? port : null;
-
-    public void UpdatePreview(string keyName, string value)
-    {
-        if (_previewLabels.TryGetValue(keyName, out var label))
-        {
-            label.text = string.IsNullOrEmpty(value) ? "-" : value;
-        }
-    }
-
-    private Port CreatePort(Direction direction)
-    {
-        var port = InstantiatePort(Orientation.Horizontal, direction, Port.Capacity.Multi, typeof(string));
-        port.portName = string.Empty;
-        port.pickingMode = PickingMode.Ignore;
-        return port;
-    }
-}
-
 internal class PipelineInputNode : Node
 {
     private readonly Dictionary<string, Port> _ports = new();
@@ -1156,6 +1181,7 @@ internal class PipelineInputNode : Node
     public PipelineInputNode()
     {
         title = "Pipeline Input";
+        capabilities |= Capabilities.Movable;
     }
 
     public void Bind(AnalyzedStateModel model)
@@ -1191,6 +1217,7 @@ internal class PipelineOutputNode : Node
     public PipelineOutputNode()
     {
         title = "Pipeline Output";
+        capabilities |= Capabilities.Movable;
     }
 
     public void Bind(AnalyzedStateModel model)
