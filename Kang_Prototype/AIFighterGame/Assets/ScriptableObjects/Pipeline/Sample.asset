@@ -22,20 +22,20 @@ MonoBehaviour:
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -1954, y: 67}
+    editorPosition: {x: -635, y: 235}
   - stepName: Step 2
-    stepKind: 1
+    stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
     userPromptTemplate: Answer to {{response}}
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -1602, y: 67}
+    editorPosition: {x: -73, y: 235}
   layoutSettings:
-    inputNodePosition: {x: -2115, y: 91}
-    outputNodePosition: {x: -1263, y: 91}
+    inputNodePosition: {x: -839, y: 256}
+    outputNodePosition: {x: 551, y: 224}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 2387, y: -25.00001, z: 0}
+    viewPosition: {x: 1355, y: -118.99998, z: 0}
     viewScale: {x: 1.15, y: 1.15, z: 1}
     viewInitialized: 1

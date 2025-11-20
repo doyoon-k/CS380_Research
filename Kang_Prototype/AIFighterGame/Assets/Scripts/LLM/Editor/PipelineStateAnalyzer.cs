@@ -92,6 +92,8 @@ public static class PipelineStateAnalyzer
             .ThenBy(k => k.keyName, StringComparer.Ordinal)
             .ToList();
 
+        ComputeStepStates(asset, model);
+
         return model;
     }
 
@@ -198,6 +200,72 @@ public static class PipelineStateAnalyzer
         }
         return key;
     }
+
+    private static void ComputeStepStates(PromptPipelineAsset asset, AnalyzedStateModel model)
+    {
+        model.stepStates = new List<AnalyzedStepState>();
+        model.finalStateKeys = new List<string>();
+        if (asset == null || asset.steps == null || model.keys == null)
+        {
+            return;
+        }
+
+        int stepCount = asset.steps.Count;
+        if (stepCount == 0)
+        {
+            model.finalStateKeys = model.keys
+                .Where(k => k.kind == AnalyzedStateKeyKind.Input)
+                .Select(k => k.keyName)
+                .OrderBy(k => k, StringComparer.Ordinal)
+                .ToList();
+            return;
+        }
+        var producedByStep = new List<HashSet<string>>(stepCount);
+        for (int i = 0; i < stepCount; i++)
+        {
+            producedByStep.Add(new HashSet<string>(StringComparer.Ordinal));
+        }
+
+        foreach (AnalyzedStateKey key in model.keys)
+        {
+            foreach (int idx in key.producedByStepIndices)
+            {
+                if (idx >= 0 && idx < stepCount)
+                {
+                    producedByStep[idx].Add(key.keyName);
+                }
+            }
+        }
+
+        var currentKeys = new HashSet<string>(
+            model.keys.Where(k => k.kind == AnalyzedStateKeyKind.Input).Select(k => k.keyName),
+            StringComparer.Ordinal
+        );
+
+        for (int i = 0; i < stepCount; i++)
+        {
+            var produced = producedByStep[i];
+            var newKeys = produced.Where(k => !currentKeys.Contains(k)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+            foreach (string k in produced)
+            {
+                currentKeys.Add(k);
+            }
+
+            var snapshot = new AnalyzedStepState
+            {
+                stepIndex = i,
+                stateKeys = currentKeys.OrderBy(k => k, StringComparer.Ordinal).ToList(),
+                newKeys = newKeys
+            };
+
+            model.stepStates.Add(snapshot);
+        }
+
+        if (model.stepStates.Count > 0)
+        {
+            model.finalStateKeys = new List<string>(model.stepStates.Last().stateKeys);
+        }
+    }
 }
 
 [Serializable]
@@ -206,6 +274,8 @@ public class AnalyzedStateModel
     public List<AnalyzedStateKey> keys = new();
     public int stepCount;
     public bool hasCompletionStep;
+    public List<AnalyzedStepState> stepStates = new();
+    public List<string> finalStateKeys = new();
 }
 
 [Serializable]
@@ -216,6 +286,14 @@ public class AnalyzedStateKey
     public List<int> consumedByStepIndices = new();
     public AnalyzedStateKeyKind kind;
     public string lastValuePreview;
+}
+
+[Serializable]
+public class AnalyzedStepState
+{
+    public int stepIndex;
+    public List<string> stateKeys = new();
+    public List<string> newKeys = new();
 }
 
 public enum AnalyzedStateKeyKind

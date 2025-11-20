@@ -13,6 +13,7 @@ public class PromptPipelineGraphView : GraphView
     private readonly Action<string> _recordUndo;
     private PromptPipelineAsset _asset;
     private readonly List<PromptPipelineStepNode> _stepNodes = new();
+    private readonly List<StateSnapshotNode> _snapshotNodes = new();
     private readonly List<Edge> _executionEdges = new();
     private readonly List<Edge> _stateEdges = new();
     private PipelineInputNode _inputNode;
@@ -21,7 +22,6 @@ public class PromptPipelineGraphView : GraphView
     private readonly Dictionary<int, List<string>> _readsByStep = new();
     private readonly Dictionary<int, List<string>> _writesByStep = new();
     private readonly HashSet<string> _inputKeys = new();
-    private readonly HashSet<string> _outputKeys = new();
     private bool _pendingStateRefresh;
     private Vector3 _lastViewPosition;
     private Vector3 _lastViewScale = Vector3.one;
@@ -126,6 +126,12 @@ public class PromptPipelineGraphView : GraphView
         }
         _stepNodes.Clear();
 
+        foreach (var snap in _snapshotNodes)
+        {
+            RemoveElement(snap);
+        }
+        _snapshotNodes.Clear();
+
         if (_inputNode != null)
         {
             RemoveElement(_inputNode);
@@ -142,7 +148,6 @@ public class PromptPipelineGraphView : GraphView
         _readsByStep.Clear();
         _writesByStep.Clear();
         _inputKeys.Clear();
-        _outputKeys.Clear();
     }
 
     private void BuildStepNodes()
@@ -306,7 +311,6 @@ public class PromptPipelineGraphView : GraphView
         _readsByStep.Clear();
         _writesByStep.Clear();
         _inputKeys.Clear();
-        _outputKeys.Clear();
 
         if (_stateModel == null || _stateModel.keys == null)
         {
@@ -322,10 +326,6 @@ public class PromptPipelineGraphView : GraphView
             {
                 _inputKeys.Add(key.keyName);
             }
-            else if (key.kind == AnalyzedStateKeyKind.Output)
-            {
-                _outputKeys.Add(key.keyName);
-            }
 
             foreach (int idx in key.consumedByStepIndices)
             {
@@ -337,6 +337,7 @@ public class PromptPipelineGraphView : GraphView
                 AddKeyToMap(_writesByStep, idx, key.keyName);
             }
         }
+
     }
 
     private static void AddKeyToMap(Dictionary<int, List<string>> map, int index, string keyName)
@@ -373,6 +374,12 @@ public class PromptPipelineGraphView : GraphView
             _outputNode = null;
         }
 
+        foreach (var snap in _snapshotNodes)
+        {
+            RemoveElement(snap);
+        }
+        _snapshotNodes.Clear();
+
         _inputNode = new PipelineInputNode();
         _inputNode.Bind(_stateModel);
         Vector2 inputPosition = GetInputNodePosition();
@@ -380,12 +387,55 @@ public class PromptPipelineGraphView : GraphView
         AddElement(_inputNode);
 
         _outputNode = new PipelineOutputNode();
-        _outputNode.Bind(_stateModel);
+        _outputNode.Bind(_stateModel?.finalStateKeys);
         Vector2 outputPosition = GetOutputNodePosition();
         _outputNode.SetPosition(new Rect(outputPosition, new Vector2(240, 320)));
         AddElement(_outputNode);
 
+        BuildSnapshotNodes();
+
         CreateStateEdges();
+    }
+
+    private void BuildSnapshotNodes()
+    {
+        _snapshotNodes.Clear();
+
+        if (_stateModel?.stepStates == null || _stateModel.stepStates.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _stepNodes.Count && i < _stateModel.stepStates.Count; i++)
+        {
+            var stepNode = _stepNodes[i];
+            var state = _stateModel.stepStates[i];
+
+            var snapshot = new StateSnapshotNode(state);
+            Vector2 position = CalculateSnapshotPosition(i);
+            snapshot.SetPosition(new Rect(position, new Vector2(220, 280)));
+            AddElement(snapshot);
+            _snapshotNodes.Add(snapshot);
+        }
+    }
+
+    private Vector2 CalculateSnapshotPosition(int index)
+    {
+        var current = GetStepNode(index);
+        var next = GetStepNode(index + 1);
+        if (current == null)
+        {
+            return new Vector2(200f + index * 240f, 400f);
+        }
+
+        Vector2 currentPos = current.GetPosition().position;
+        if (next != null)
+        {
+            Vector2 nextPos = next.GetPosition().position;
+            return (currentPos + nextPos) * 0.5f + new Vector2(0f, 60f);
+        }
+
+        return currentPos + new Vector2(240f, 40f);
     }
 
     private void CreateStateEdges()
@@ -408,10 +458,10 @@ public class PromptPipelineGraphView : GraphView
             node.UpdateAvailableStateKeys(allKeyNames);
 
             ConnectExternalInputs(node, reads);
-            ConnectOutputs(node, writes);
+            ConnectSnapshots(i);
         }
 
-        ConnectStepDependencies();
+        ConnectOutputToFinalSnapshot();
     }
 
     private void ConnectExternalInputs(PromptPipelineStepNode node, List<string> reads)
@@ -434,72 +484,42 @@ public class PromptPipelineGraphView : GraphView
         }
     }
 
-    private void ConnectOutputs(PromptPipelineStepNode node, List<string> writes)
+    private void ConnectSnapshots(int stepIndex)
     {
-        if (_outputNode == null || writes == null || writes.Count == 0)
+        if (stepIndex < 0 || stepIndex >= _snapshotNodes.Count)
         {
             return;
         }
 
-        var connectedKeys = new HashSet<string>();
-        foreach (string key in writes)
-        {
-            if (!_outputKeys.Contains(key) || !connectedKeys.Add(key))
-            {
-                continue;
-            }
+        var stepNode = GetStepNode(stepIndex);
+        var snapshot = _snapshotNodes[stepIndex];
+        TryConnectStateEdge(stepNode?.StateOutPort, snapshot.StateInPort);
 
-            var outputPort = _outputNode.GetPort(key);
-            TryConnectStateEdge(node.StateOutPort, outputPort);
+        if (stepIndex + 1 < _stepNodes.Count)
+        {
+            var nextStep = GetStepNode(stepIndex + 1);
+            TryConnectStateEdge(snapshot.StateOutPort, nextStep?.StateInPort);
         }
     }
 
-    private void ConnectStepDependencies()
+    private void ConnectOutputToFinalSnapshot()
     {
-        if (_stateModel?.keys == null)
+        if (_outputNode == null)
         {
             return;
         }
 
-        var connectedPairs = new HashSet<(int from, int to)>();
-        foreach (AnalyzedStateKey key in _stateModel.keys)
+        var finalSnapshot = _snapshotNodes.LastOrDefault();
+        if (finalSnapshot == null)
         {
-            if (key == null ||
-                key.producedByStepIndices == null ||
-                key.consumedByStepIndices == null)
-            {
-                continue;
-            }
+            return;
+        }
 
-            foreach (int producerIndex in key.producedByStepIndices)
-            {
-                var producerNode = GetStepNode(producerIndex);
-                if (producerNode == null)
-                {
-                    continue;
-                }
-
-                foreach (int consumerIndex in key.consumedByStepIndices)
-                {
-                    if (producerIndex == consumerIndex)
-                    {
-                        continue;
-                    }
-
-                    if (!connectedPairs.Add((producerIndex, consumerIndex)))
-                    {
-                        continue;
-                    }
-
-                    var consumerNode = GetStepNode(consumerIndex);
-                    if (consumerNode == null)
-                    {
-                        continue;
-                    }
-
-                    TryConnectStateEdge(producerNode.StateOutPort, consumerNode.StateInPort);
-                }
-            }
+        var finalKeys = _stateModel?.finalStateKeys ?? new List<string>();
+        foreach (string key in finalKeys)
+        {
+            var port = _outputNode.GetPort(key);
+            TryConnectStateEdge(finalSnapshot.StateOutPort, port);
         }
     }
 
@@ -1459,21 +1479,21 @@ internal class PipelineOutputNode : Node
         capabilities |= Capabilities.Movable;
     }
 
-    public void Bind(AnalyzedStateModel model)
+    public void Bind(IEnumerable<string> outputKeys)
     {
         _ports.Clear();
         inputContainer.Clear();
         outputContainer.Clear();
 
-        if (model != null && model.keys != null)
+        if (outputKeys != null)
         {
-            foreach (var key in model.keys.Where(k => k.kind == AnalyzedStateKeyKind.Output))
+            foreach (string keyName in outputKeys)
             {
                 var port = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(string));
-                port.portName = key.keyName;
+                port.portName = keyName;
                 port.pickingMode = PickingMode.Ignore;
                 inputContainer.Add(port);
-                _ports[key.keyName] = port;
+                _ports[keyName] = port;
             }
         }
 
@@ -1483,4 +1503,59 @@ internal class PipelineOutputNode : Node
 
     public Port GetPort(string keyName) =>
         _ports.TryGetValue(keyName, out var port) ? port : null;
+}
+
+internal class StateSnapshotNode : Node
+{
+    public Port StateInPort { get; }
+    public Port StateOutPort { get; }
+
+    public StateSnapshotNode(AnalyzedStepState state)
+    {
+        int displayIndex = state != null ? state.stepIndex + 1 : 0;
+        title = $"State after Step {displayIndex}";
+        capabilities &= ~Capabilities.Deletable;
+        capabilities |= Capabilities.Movable | Capabilities.Selectable | Capabilities.Copiable;
+
+        StateInPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi, typeof(string));
+        StateInPort.portName = "State In";
+        StateInPort.pickingMode = PickingMode.Ignore;
+        inputContainer.Add(StateInPort);
+
+        StateOutPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi, typeof(string));
+        StateOutPort.portName = "State Out";
+        StateOutPort.pickingMode = PickingMode.Ignore;
+        outputContainer.Add(StateOutPort);
+
+        BuildBody(state);
+        RefreshExpandedState();
+        RefreshPorts();
+    }
+
+    private void BuildBody(AnalyzedStepState state)
+    {
+        extensionContainer.Clear();
+        var scroll = new ScrollView();
+        scroll.style.maxHeight = 200f;
+
+        if (state?.stateKeys == null || state.stateKeys.Count == 0)
+        {
+            scroll.Add(new Label("No state keys detected."));
+        }
+        else
+        {
+            var newSet = new HashSet<string>(state.newKeys ?? Enumerable.Empty<string>(), StringComparer.Ordinal);
+            foreach (string key in state.stateKeys)
+            {
+                var label = new Label(key);
+                if (newSet.Contains(key))
+                {
+                    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+                }
+                scroll.Add(label);
+            }
+        }
+
+        extensionContainer.Add(scroll);
+    }
 }
