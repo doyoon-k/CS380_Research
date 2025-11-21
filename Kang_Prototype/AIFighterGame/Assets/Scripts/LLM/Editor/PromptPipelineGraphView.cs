@@ -1012,9 +1012,11 @@ public class PromptPipelineGraphView : GraphView
         bool removedSteps = false;
         if (_asset != null)
         {
-            var stepsToRemove = selection
-                .OfType<PromptPipelineStepNode>()
-                .Select(n => n.Step)
+            var stepNodesToRemove = selection.OfType<PromptPipelineStepNode>().ToList();
+            var stepsToRemove = stepNodesToRemove.Select(n => n.Step).ToList();
+            var removedIndices = stepNodesToRemove
+                .Select(n => _stepNodes.IndexOf(n))
+                .Where(i => i >= 0)
                 .ToList();
 
             if (stepsToRemove.Count > 0)
@@ -1022,6 +1024,11 @@ public class PromptPipelineGraphView : GraphView
                 removedSteps = true;
                 ExecuteCommand("Delete Prompt Step", () =>
                 {
+                    if (removedIndices.Count > 0)
+                    {
+                        RemoveSnapshotDataForIndices(removedIndices);
+                    }
+
                     foreach (var step in stepsToRemove)
                     {
                         _asset.steps.Remove(step);
@@ -1039,6 +1046,33 @@ public class PromptPipelineGraphView : GraphView
         }
 
         return result;
+    }
+
+    private void RemoveSnapshotDataForIndices(IEnumerable<int> removedIndices)
+    {
+        if (_asset?.layoutSettings?.snapshotPositions == null || removedIndices == null)
+        {
+            return;
+        }
+
+        var positions = _asset.layoutSettings.snapshotPositions;
+        var sorted = removedIndices
+            .Distinct()
+            .Where(i => i >= 0 && i < positions.Count)
+            .OrderByDescending(i => i)
+            .ToList();
+
+        foreach (int idx in sorted)
+        {
+            positions.RemoveAt(idx);
+            if (idx >= 0 && idx < _snapshotPositionsCache.Count)
+            {
+                _snapshotPositionsCache.RemoveAt(idx);
+            }
+        }
+
+        _asset.layoutSettings.snapshotPositionsInitialized =
+            positions.Count == _asset.steps.Count && positions.Count > 0;
     }
 }
 
