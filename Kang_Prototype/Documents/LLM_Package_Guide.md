@@ -154,6 +154,35 @@ public class QuestBriefingChain : MonoBehaviour
 - CompletionChainLink는 한 번의 텍스트 완성 결과를 `PromptPipelineConstants.AnswerKey`(response)로 저장해 이후 단계나 출력에서 일관되게 접근할 수 있게 합니다.
 - 두 링크 모두 현재 등록된 `IOllamaService`(OllamaComponent 또는 명시적으로 전달한 서비스)를 사용하므로, 서비스가 등록되지 않았다면 예외가 발생합니다.
 
+### 6.1 PromptPipelineAsset 런타임 실행
+에디터에서 만든 PromptPipelineAsset은 `BuildExecutor(IOllamaService service)`로 바로 실행 준비를 할 수 있습니다. 씬에 OllamaComponent만 배치해 두면 됩니다.
+
+```csharp
+public class MissionPipelineRunner : MonoBehaviour
+{
+    public PromptPipelineAsset pipeline;
+    public OllamaComponent ollama;
+
+    private IEnumerator Start()
+    {
+        ollama ??= OllamaComponent.Instance;
+        if (pipeline == null || ollama == null) yield break;
+
+        var executor = pipeline.BuildExecutor(ollama);
+        var state = new Dictionary<string, string>
+        {
+            { "playerName", "Astra" },
+            { "sector", "Gamma-12" }
+        };
+
+        yield return StartCoroutine(executor.Execute(state, final =>
+        {
+            Debug.Log($"최종 답변: {final.GetValueOrDefault(PromptPipelineConstants.AnswerKey)}");
+        }));
+    }
+}
+```
+
 ## 7. 디버깅 & 트러블슈팅
 - **요청 로깅**: OllamaComponent.logLLMTraffic을 켜면 system/user prompt와 HTTP Request/Response 원문을 모두 확인할 수 있습니다.
 - **JSON 파싱 실패**: 모델이 JSON을 잘못 반환하면 경고와 함께 재시도하므로, 프롬프트에 "반드시 유효한 JSON 객체로만 답하라" 같은 지시를 넣어 안정성을 높입니다.

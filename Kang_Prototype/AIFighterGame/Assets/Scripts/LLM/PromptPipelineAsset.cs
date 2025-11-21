@@ -32,6 +32,97 @@ public class PromptPipelineAsset : ScriptableObject
 
         layoutSettings ??= new PromptPipelineLayoutSettings();
     }
+
+    /// <summary>
+    /// Builds a runnable executor for this pipeline using the provided IOllamaService.
+    /// </summary>
+    public StateSequentialChainExecutor BuildExecutor(IOllamaService service)
+    {
+        if (service == null)
+        {
+            throw new InvalidOperationException("IOllamaService is required to build a pipeline executor.");
+        }
+
+        var executor = new StateSequentialChainExecutor();
+
+        if (steps == null)
+        {
+            return executor;
+        }
+
+        foreach (var step in steps)
+        {
+            if (step == null)
+            {
+                continue;
+            }
+
+            executor.AddLink(CreateLink(step, service));
+        }
+
+        return executor;
+    }
+
+    private static IStateChainLink CreateLink(PromptPipelineStep step, IOllamaService service)
+    {
+        switch (step.stepKind)
+        {
+            case PromptPipelineStepKind.JsonLlm:
+                EnsureSettings(step);
+                return new JSONLLMStateChainLink(
+                    service,
+                    step.ollamaSettings,
+                    step.userPromptTemplate,
+                    step.jsonMaxRetries,
+                    step.jsonRetryDelaySeconds
+                );
+            case PromptPipelineStepKind.CompletionLlm:
+                EnsureSettings(step);
+                return new CompletionChainLink(
+                    service,
+                    step.ollamaSettings,
+                    step.userPromptTemplate
+                );
+            case PromptPipelineStepKind.CustomLink:
+                return InstantiateCustomLink(step);
+            default:
+                throw new InvalidOperationException($"Unsupported PromptPipelineStepKind: {step.stepKind}");
+        }
+    }
+
+    private static void EnsureSettings(PromptPipelineStep step)
+    {
+        if (step.ollamaSettings == null)
+        {
+            throw new InvalidOperationException($"Step '{step.stepName}' requires OllamaSettings.");
+        }
+    }
+
+    private static IStateChainLink InstantiateCustomLink(PromptPipelineStep step)
+    {
+        if (string.IsNullOrEmpty(step.customLinkTypeName))
+        {
+            throw new InvalidOperationException($"Custom link step '{step.stepName}' is missing a type name.");
+        }
+
+        var type = Type.GetType(step.customLinkTypeName);
+        if (type == null)
+        {
+            throw new InvalidOperationException($"Could not resolve custom link type '{step.customLinkTypeName}'.");
+        }
+
+        if (!typeof(IStateChainLink).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException($"Type '{step.customLinkTypeName}' does not implement IStateChainLink.");
+        }
+
+        if (Activator.CreateInstance(type) is not IStateChainLink instance)
+        {
+            throw new InvalidOperationException($"Failed to instantiate custom link '{step.customLinkTypeName}'.");
+        }
+
+        return instance;
+    }
 }
 
 /// <summary>

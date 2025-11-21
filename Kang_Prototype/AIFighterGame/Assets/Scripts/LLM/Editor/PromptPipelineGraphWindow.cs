@@ -29,6 +29,7 @@ public class PromptPipelineGraphWindow : EditorWindow
 
     private void OnEnable()
     {
+        Undo.undoRedoPerformed += OnUndoRedoPerformed;
         ConstructUI();
         if (_activeAsset != null)
         {
@@ -43,6 +44,7 @@ public class PromptPipelineGraphWindow : EditorWindow
 
     private void OnDisable()
     {
+        Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         if (_graphView != null)
         {
             _graphView.StateModelChanged -= OnStateModelChanged;
@@ -184,6 +186,22 @@ public class PromptPipelineGraphWindow : EditorWindow
     private void OnStateModelChanged(AnalyzedStateModel model)
     {
         RebuildSimulationInputs(model);
+    }
+
+    private void OnUndoRedoPerformed()
+    {
+        if (_activeAsset == null || _graphView == null)
+        {
+            return;
+        }
+
+        _graphView.SetAsset(_activeAsset);
+        RebuildSimulationInputs(_graphView.CurrentStateModel);
+        if (_simulationStatus != null)
+        {
+            _simulationStatus.text = "Undo/Redo applied";
+        }
+        Repaint();
     }
 
     private void RebuildSimulationInputs(AnalyzedStateModel model)

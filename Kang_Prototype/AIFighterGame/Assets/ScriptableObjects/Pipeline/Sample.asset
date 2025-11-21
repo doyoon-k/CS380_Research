@@ -30,12 +30,12 @@ MonoBehaviour:
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -12, y: 235}
+    editorPosition: {x: -11, y: 235}
   layoutSettings:
     inputNodePosition: {x: -839, y: 256}
     outputNodePosition: {x: 560, y: 256}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 1306, y: -95, z: 0}
-    viewScale: {x: 1, y: 1, z: 1}
+    viewPosition: {x: 840, y: -5, z: 0}
+    viewScale: {x: 0.8695652, y: 0.8695652, z: 1}
     viewInitialized: 1
