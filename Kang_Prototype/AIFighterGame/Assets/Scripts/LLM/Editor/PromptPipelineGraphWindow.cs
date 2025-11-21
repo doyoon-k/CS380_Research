@@ -10,6 +10,7 @@ public class PromptPipelineGraphWindow : EditorWindow
 {
     private PromptPipelineGraphView _graphView;
     private PromptPipelineAsset _activeAsset;
+    private PromptPipelineCommandManager _commandManager;
     private ObjectField _assetField;
     private ScrollView _simulationInputs;
     private Label _simulationStatus;
@@ -29,7 +30,6 @@ public class PromptPipelineGraphWindow : EditorWindow
 
     private void OnEnable()
     {
-        Undo.undoRedoPerformed += OnUndoRedoPerformed;
         ConstructUI();
         if (_activeAsset != null)
         {
@@ -44,7 +44,6 @@ public class PromptPipelineGraphWindow : EditorWindow
 
     private void OnDisable()
     {
-        Undo.undoRedoPerformed -= OnUndoRedoPerformed;
         if (_graphView != null)
         {
             _graphView.StateModelChanged -= OnStateModelChanged;
@@ -65,6 +64,7 @@ public class PromptPipelineGraphWindow : EditorWindow
 
         BuildToolbar();
         BuildMainArea();
+        rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
     }
 
     private void BuildToolbar()
@@ -105,10 +105,12 @@ public class PromptPipelineGraphWindow : EditorWindow
         var split = new TwoPaneSplitView(0, 600, TwoPaneSplitViewOrientation.Vertical);
 
         var graphContainer = new VisualElement { style = { flexGrow = 1f } };
-        _graphView = new PromptPipelineGraphView(MarkAssetDirty, RecordUndo);
+        _graphView = new PromptPipelineGraphView(MarkAssetDirty, ExecuteCommand);
         _graphView.StateModelChanged += OnStateModelChanged;
         graphContainer.Add(_graphView);
         split.Add(graphContainer);
+
+        _commandManager = new PromptPipelineCommandManager(() => _activeAsset, RefreshGraphAfterHistoryChange, MarkAssetDirty);
 
         var simulationContainer = new VisualElement
         {
@@ -179,6 +181,7 @@ public class PromptPipelineGraphWindow : EditorWindow
             ? $"Prompt Pipeline - {_activeAsset.displayName}"
             : "Prompt Pipeline");
 
+        _commandManager?.Reset();
         _graphView.SetAsset(_activeAsset);
         RebuildSimulationInputs(_graphView.CurrentStateModel);
     }
@@ -186,22 +189,6 @@ public class PromptPipelineGraphWindow : EditorWindow
     private void OnStateModelChanged(AnalyzedStateModel model)
     {
         RebuildSimulationInputs(model);
-    }
-
-    private void OnUndoRedoPerformed()
-    {
-        if (_activeAsset == null || _graphView == null)
-        {
-            return;
-        }
-
-        _graphView.SetAsset(_activeAsset);
-        RebuildSimulationInputs(_graphView.CurrentStateModel);
-        if (_simulationStatus != null)
-        {
-            _simulationStatus.text = "Undo/Redo applied";
-        }
-        Repaint();
     }
 
     private void RebuildSimulationInputs(AnalyzedStateModel model)
@@ -366,13 +353,46 @@ public class PromptPipelineGraphWindow : EditorWindow
         }
     }
 
-    private void RecordUndo(string label)
+    private void ExecuteCommand(string label, Action mutate) => _commandManager?.Execute(label, mutate);
+
+    private void RefreshGraphAfterHistoryChange()
     {
-        if (_activeAsset == null)
+        if (_activeAsset == null || _graphView == null)
         {
             return;
         }
 
-        Undo.RecordObject(_activeAsset, label);
+        _graphView.SetAsset(_activeAsset, skipSnapshotCache: true, skipSnapshotPersistence: true);
+        RebuildSimulationInputs(_graphView.CurrentStateModel);
+        if (_simulationStatus != null)
+        {
+            _simulationStatus.text = "Undo/Redo applied";
+        }
+        Repaint();
+    }
+
+    private void OnKeyDown(KeyDownEvent evt)
+    {
+        bool isCtrl = evt.ctrlKey || evt.commandKey;
+        if (!isCtrl)
+        {
+            return;
+        }
+
+        if (evt.keyCode == KeyCode.Z && evt.shiftKey)
+        {
+            _commandManager?.Redo();
+            evt.StopPropagation();
+        }
+        else if (evt.keyCode == KeyCode.Z)
+        {
+            _commandManager?.Undo();
+            evt.StopPropagation();
+        }
+        else if (evt.keyCode == KeyCode.Y)
+        {
+            _commandManager?.Redo();
+            evt.StopPropagation();
+        }
     }
 }

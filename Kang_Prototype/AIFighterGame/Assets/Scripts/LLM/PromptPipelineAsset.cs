@@ -34,6 +34,7 @@ public class PromptPipelineAsset : ScriptableObject
         }
 
         layoutSettings ??= new PromptPipelineLayoutSettings();
+        layoutSettings.snapshotPositions ??= new List<Vector2>();
     }
 
     /// <summary>
@@ -264,6 +265,8 @@ public class PromptPipelineLayoutSettings
     public Vector3 viewPosition = Vector3.zero;
     public Vector3 viewScale = Vector3.one;
     public bool viewInitialized;
+    public List<Vector2> snapshotPositions = new();
+    public bool snapshotPositionsInitialized;
 }
 
 [Serializable]

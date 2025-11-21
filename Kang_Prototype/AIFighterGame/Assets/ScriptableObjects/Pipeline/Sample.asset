@@ -22,7 +22,8 @@ MonoBehaviour:
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -875, y: 421}
+    customLinkParameters: []
+    editorPosition: {x: -999, y: 333}
   - stepName: Step 2
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
@@ -30,20 +31,27 @@ MonoBehaviour:
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -298, y: 402}
+    customLinkParameters: []
+    editorPosition: {x: -265, y: 333}
   - stepName: Step 3
-    stepKind: 2
+    stepKind: 0
     ollamaSettings: {fileID: 0}
     userPromptTemplate: 
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: 231, y: 421}
+    customLinkParameters: []
+    editorPosition: {x: 486, y: 333}
   layoutSettings:
     inputNodePosition: {x: -1219, y: 383}
-    outputNodePosition: {x: 881, y: 530}
+    outputNodePosition: {x: 1204, y: 398}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 484, y: -192, z: 0}
-    viewScale: {x: 1.15, y: 1.15, z: 1}
+    viewPosition: {x: 653, y: 100, z: 0}
+    viewScale: {x: 0.43232757, y: 0.43232757, z: 1}
     viewInitialized: 1
+    snapshotPositions:
+    - {x: -559, y: 507}
+    - {x: 213, y: 493}
+    - {x: 925, y: 523}
+    snapshotPositionsInitialized: 1

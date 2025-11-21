@@ -12,7 +12,7 @@ using System.Globalization;
 public class PromptPipelineGraphView : GraphView
 {
     private readonly Action _markAssetDirty;
-    private readonly Action<string> _recordUndo;
+    private readonly Action<string, Action> _executeCommand;
     private PromptPipelineAsset _asset;
     private readonly List<PromptPipelineStepNode> _stepNodes = new();
     private readonly List<StateSnapshotNode> _snapshotNodes = new();
@@ -21,20 +21,24 @@ public class PromptPipelineGraphView : GraphView
     private PipelineInputNode _inputNode;
     private PipelineOutputNode _outputNode;
     private AnalyzedStateModel _stateModel;
+    private readonly List<Vector2> _snapshotPositionsCache = new();
     private readonly Dictionary<int, List<string>> _readsByStep = new();
     private readonly Dictionary<int, List<string>> _writesByStep = new();
     private readonly HashSet<string> _inputKeys = new();
     private bool _pendingStateRefresh;
+    private bool _skipSnapshotCacheOnce;
+    private bool _ignoreSnapshotCacheOnce;
+    private bool _skipSnapshotPersistenceOnce;
     private Vector3 _lastViewPosition;
     private Vector3 _lastViewScale = Vector3.one;
 
     public event Action<AnalyzedStateModel> StateModelChanged;
     public AnalyzedStateModel CurrentStateModel => _stateModel;
 
-    public PromptPipelineGraphView(Action markAssetDirty, Action<string> recordUndo)
+    public PromptPipelineGraphView(Action markAssetDirty, Action<string, Action> executeCommand)
     {
         _markAssetDirty = markAssetDirty;
-        _recordUndo = recordUndo;
+        _executeCommand = executeCommand;
 
         style.flexGrow = 1f;
 
@@ -65,8 +69,11 @@ public class PromptPipelineGraphView : GraphView
         OllamaSettingsChangeNotifier.SettingsChanged -= OnOllamaSettingsChanged;
     }
 
-    public void SetAsset(PromptPipelineAsset asset)
+    public void SetAsset(PromptPipelineAsset asset, bool skipSnapshotCache = false, bool skipSnapshotPersistence = false)
     {
+        _skipSnapshotCacheOnce = skipSnapshotCache;
+        _ignoreSnapshotCacheOnce = skipSnapshotCache;
+        _skipSnapshotPersistenceOnce = skipSnapshotPersistence;
         _asset = asset;
         Reload();
     }
@@ -110,6 +117,20 @@ public class PromptPipelineGraphView : GraphView
 
     private void ClearGraph()
     {
+        if (!_skipSnapshotCacheOnce)
+        {
+            CacheSnapshotPositions();
+        }
+        else
+        {
+            _snapshotPositionsCache.Clear();
+        }
+        _skipSnapshotCacheOnce = false;
+        if (_ignoreSnapshotCacheOnce)
+        {
+            _snapshotPositionsCache.Clear();
+        }
+
         foreach (var edge in _executionEdges)
         {
             RemoveElement(edge);
@@ -166,7 +187,7 @@ public class PromptPipelineGraphView : GraphView
                 step,
                 i,
                 MarkAssetDirty,
-                RecordUndo,
+                (label, mutate) => ExecuteCommand(label, mutate),
                 RequestStateRefresh,
                 Reload,
                 () => _stateModel?.keys?.Select(k => k.keyName) ?? Enumerable.Empty<string>(),
@@ -237,26 +258,24 @@ public class PromptPipelineGraphView : GraphView
 
     private void DisconnectExecPort(Port port)
     {
-        if (port?.connections == null)
+        var edges = port?.connections?.ToList();
+        if (edges == null || edges.Count == 0)
         {
             return;
         }
 
-        var edges = port.connections.ToList();
-        if (edges.Count == 0)
+        ExecuteCommand("Disconnect Steps", () =>
         {
-            return;
-        }
+            foreach (var edge in edges)
+            {
+                edge.output?.Disconnect(edge);
+                edge.input?.Disconnect(edge);
+                _executionEdges.Remove(edge);
+                RemoveElement(edge);
+            }
 
-        foreach (var edge in edges)
-        {
-            edge.output?.Disconnect(edge);
-            edge.input?.Disconnect(edge);
-            _executionEdges.Remove(edge);
-            RemoveElement(edge);
-        }
-
-        EditorApplication.delayCall += ApplyExecutionOrderFromGraph;
+            ApplyExecutionOrderFromGraph();
+        }, refreshState: true, reloadAfter: true);
     }
 
     public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter adapter)
@@ -405,8 +424,14 @@ public class PromptPipelineGraphView : GraphView
 
         if (_stateModel?.stepStates == null || _stateModel.stepStates.Count == 0)
         {
+            _ignoreSnapshotCacheOnce = false;
             return;
         }
+
+        var storedPositions = _asset?.layoutSettings?.snapshotPositions;
+        bool useStored = _asset?.layoutSettings?.snapshotPositionsInitialized == true &&
+                         storedPositions != null &&
+                         storedPositions.Count == _stateModel.stepStates.Count;
 
         for (int i = 0; i < _stepNodes.Count && i < _stateModel.stepStates.Count; i++)
         {
@@ -414,30 +439,68 @@ public class PromptPipelineGraphView : GraphView
             var state = _stateModel.stepStates[i];
 
             var snapshot = new StateSnapshotNode(state);
-            Vector2 position = CalculateSnapshotPosition(i);
+            Vector2 position = Vector2.zero;
+            if (useStored && i < storedPositions.Count)
+            {
+                position = storedPositions[i];
+            }
+            else if (!_ignoreSnapshotCacheOnce && i < _snapshotPositionsCache.Count)
+            {
+                position = _snapshotPositionsCache[i];
+            }
             snapshot.SetPosition(new Rect(position, new Vector2(220, 280)));
             AddElement(snapshot);
             _snapshotNodes.Add(snapshot);
         }
+
+        _ignoreSnapshotCacheOnce = false;
+        _skipSnapshotPersistenceOnce = false;
     }
 
-    private Vector2 CalculateSnapshotPosition(int index)
+    private void CacheSnapshotPositions()
     {
-        var current = GetStepNode(index);
-        var next = GetStepNode(index + 1);
-        if (current == null)
+        _snapshotPositionsCache.Clear();
+        foreach (var snap in _snapshotNodes)
         {
-            return new Vector2(200f + index * 240f, 400f);
+            _snapshotPositionsCache.Add(snap.GetPosition().position);
+        }
+    }
+
+    private void PersistSnapshotPositions()
+    {
+        if (_asset?.layoutSettings == null)
+        {
+            return;
         }
 
-        Vector2 currentPos = current.GetPosition().position;
-        if (next != null)
+        var currentPositions = new List<Vector2>(_snapshotNodes.Count);
+        foreach (var snap in _snapshotNodes)
         {
-            Vector2 nextPos = next.GetPosition().position;
-            return (currentPos + nextPos) * 0.5f + new Vector2(0f, 60f);
+            currentPositions.Add(snap.GetPosition().position);
         }
 
-        return currentPos + new Vector2(240f, 40f);
+        var storedPositions = _asset.layoutSettings.snapshotPositions ?? new List<Vector2>();
+        bool changed = storedPositions.Count != currentPositions.Count;
+        if (!changed)
+        {
+            for (int i = 0; i < storedPositions.Count; i++)
+            {
+                if ((storedPositions[i] - currentPositions[i]).sqrMagnitude > 0.0001f)
+                {
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        if (!changed && _asset.layoutSettings.snapshotPositionsInitialized)
+        {
+            return;
+        }
+
+        _asset.layoutSettings.snapshotPositions = currentPositions;
+        _asset.layoutSettings.snapshotPositionsInitialized = true;
+        MarkAssetDirty();
     }
 
     private void CreateStateEdges()
@@ -566,32 +629,56 @@ public class PromptPipelineGraphView : GraphView
     {
         bool requiresReorder = false;
         bool movedSteps = false;
-
         bool movedUtilityNodes = false;
-        if (change.movedElements != null)
+        bool movedSnapshots = false;
+
+        if (change.movedElements != null && change.movedElements.Count > 0)
         {
-            foreach (var element in change.movedElements)
+            var movedElements = change.movedElements.ToList();
+            foreach (var element in movedElements)
             {
-                if (element is PromptPipelineStepNode node)
+                if (element is PromptPipelineStepNode)
                 {
-                    node.PersistPosition();
                     movedSteps = true;
                 }
                 else if (element is PipelineInputNode || element is PipelineOutputNode)
                 {
                     movedUtilityNodes = true;
                 }
+                else if (element is StateSnapshotNode)
+                {
+                    movedSnapshots = true;
+                }
             }
-        }
 
-        if (movedSteps)
-        {
-            MarkAssetDirty();
-        }
+            if (movedSteps || movedUtilityNodes || movedSnapshots)
+            {
+                ExecuteCommand("Move Nodes", () =>
+                {
+                    foreach (var element in movedElements)
+                    {
+                        if (element is PromptPipelineStepNode node)
+                        {
+                            node.PersistPosition();
+                        }
+                    }
 
-        if (movedUtilityNodes)
-        {
-            PersistUtilityNodePositions();
+                    if (movedUtilityNodes)
+                    {
+                        PersistUtilityNodePositions();
+                    }
+
+                    if (movedSnapshots)
+                    {
+                        PersistSnapshotPositions();
+                    }
+
+                    if (movedSteps)
+                    {
+                        MarkAssetDirty();
+                    }
+                });
+            }
         }
 
         if (change.edgesToCreate != null && change.edgesToCreate.Count > 0)
@@ -624,7 +711,10 @@ public class PromptPipelineGraphView : GraphView
 
         if (requiresReorder)
         {
-            EditorApplication.delayCall += ApplyExecutionOrderFromGraph;
+            ExecuteCommand("Connect/Disconnect Steps", () =>
+            {
+                ApplyExecutionOrderFromGraph();
+            }, refreshState: true, reloadAfter: true);
         }
 
         return change;
@@ -652,15 +742,8 @@ public class PromptPipelineGraphView : GraphView
             return;
         }
 
-        RecordUndo("Reorder Prompt Pipeline");
-        _asset.steps.Clear();
-        foreach (var node in orderedNodes)
-        {
-            _asset.steps.Add(node.Step);
-        }
-
+        _asset.steps = orderedNodes.Select(n => n.Step).ToList();
         MarkAssetDirty();
-        Reload();
     }
 
     private void OnOllamaSettingsChanged(OllamaSettings settings)
@@ -739,11 +822,7 @@ public class PromptPipelineGraphView : GraphView
     private Vector3 GetCurrentViewPosition()
     {
         var translate = contentViewContainer.resolvedStyle.translate;
-        return new Vector3(
-            translate.x,
-            translate.y,
-            translate.z
-        );
+        return new Vector3(translate.x, translate.y, translate.z);
     }
 
     private Vector3 GetCurrentViewScale()
@@ -883,7 +962,20 @@ public class PromptPipelineGraphView : GraphView
     }
 
     private void MarkAssetDirty() => _markAssetDirty?.Invoke();
-    private void RecordUndo(string label) => _recordUndo?.Invoke(label);
+
+    private void ExecuteCommand(string label, Action mutate, bool refreshState = false, bool reloadAfter = false)
+    {
+        _executeCommand?.Invoke(label, mutate);
+        if (refreshState)
+        {
+            RequestStateRefresh();
+        }
+
+        if (reloadAfter)
+        {
+            Reload();
+        }
+    }
 
     public void CreateStepAtCenter()
     {
@@ -901,17 +993,18 @@ public class PromptPipelineGraphView : GraphView
             return;
         }
 
-        RecordUndo("Add Prompt Step");
-        var step = new PromptPipelineStep
+        ExecuteCommand("Add Prompt Step", () =>
         {
-            stepName = $"Step {_asset.steps.Count + 1}",
-            stepKind = PromptPipelineStepKind.JsonLlm,
-            editorPosition = graphPosition
-        };
+            var step = new PromptPipelineStep
+            {
+                stepName = $"Step {_asset.steps.Count + 1}",
+                stepKind = PromptPipelineStepKind.JsonLlm,
+                editorPosition = graphPosition
+            };
 
-        _asset.steps.Add(step);
-        MarkAssetDirty();
-        Reload();
+            _asset.steps.Add(step);
+            MarkAssetDirty();
+        }, reloadAfter: true);
     }
 
     public override EventPropagation DeleteSelection()
@@ -927,12 +1020,14 @@ public class PromptPipelineGraphView : GraphView
             if (stepsToRemove.Count > 0)
             {
                 removedSteps = true;
-                RecordUndo("Delete Prompt Step");
-                foreach (var step in stepsToRemove)
+                ExecuteCommand("Delete Prompt Step", () =>
                 {
-                    _asset.steps.Remove(step);
-                }
-                MarkAssetDirty();
+                    foreach (var step in stepsToRemove)
+                    {
+                        _asset.steps.Remove(step);
+                    }
+                    MarkAssetDirty();
+                });
             }
         }
 
@@ -964,7 +1059,7 @@ internal enum EdgeCategory
 internal class PromptPipelineStepNode : Node
 {
     private readonly Action _markDirty;
-    private readonly Action<string> _recordUndo;
+    private readonly Action<string, Action> _executeCommand;
     private readonly Action _requestStateRefresh;
     private readonly Action _onStepKindChanged;
     private readonly Func<IEnumerable<string>> _stateKeyProvider;
@@ -1003,7 +1098,7 @@ internal class PromptPipelineStepNode : Node
         PromptPipelineStep step,
         int index,
         Action markDirty,
-        Action<string> recordUndo,
+        Action<string, Action> executeCommand,
         Action requestStateRefresh,
         Action onStepKindChanged,
         Func<IEnumerable<string>> stateKeyProvider,
@@ -1012,7 +1107,7 @@ internal class PromptPipelineStepNode : Node
     {
         Step = step;
         _markDirty = markDirty;
-        _recordUndo = recordUndo;
+        _executeCommand = executeCommand;
         _requestStateRefresh = requestStateRefresh;
         _onStepKindChanged = onStepKindChanged;
         _stateKeyProvider = stateKeyProvider;
@@ -1254,13 +1349,15 @@ internal class PromptPipelineStepNode : Node
 
     private void ApplyChange(string undoLabel, Action mutate, bool refreshState = true)
     {
-        _recordUndo?.Invoke(undoLabel);
-        mutate?.Invoke();
-        _markDirty?.Invoke();
-        if (refreshState)
+        _executeCommand?.Invoke(undoLabel, () =>
         {
-            _requestStateRefresh?.Invoke();
-        }
+            mutate?.Invoke();
+            _markDirty?.Invoke();
+            if (refreshState)
+            {
+                _requestStateRefresh?.Invoke();
+            }
+        });
     }
 
     private void RefreshSections()
