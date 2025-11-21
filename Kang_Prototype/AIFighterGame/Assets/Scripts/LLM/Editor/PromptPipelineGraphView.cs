@@ -1084,6 +1084,7 @@ internal class PromptPipelineStepNode : Node
 
             ApplyChange("Change Step Kind", () => step.stepKind = newKind, refreshState: false);
             _onStepKindChanged?.Invoke();
+            UpdateSettingsInspector();
         });
         extensionContainer.Add(_kindField);
 
@@ -1296,17 +1297,31 @@ internal class PromptPipelineStepNode : Node
             return;
         }
 
-        EditorGUI.BeginChangeCheck();
-        _settingsEditor.OnInspectorGUI();
-        if (EditorGUI.EndChangeCheck())
+        bool isJsonStep = Step.stepKind == PromptPipelineStepKind.JsonLlm;
+        OllamaSettingsEditor.JsonFieldsEnabled = isJsonStep;
+        OllamaSettingsEditor.JsonFieldsDisabledMessage = isJsonStep
+            ? null
+            : "Completion steps always produce 'answer'. JSON Output Fields are ignored for this step kind.";
+
+        try
         {
-            var settings = Step.ollamaSettings;
-            if (settings != null)
+            EditorGUI.BeginChangeCheck();
+            _settingsEditor.OnInspectorGUI();
+            if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(settings, "Edit Ollama Settings");
-                EditorUtility.SetDirty(settings);
-                OllamaSettingsChangeNotifier.RaiseChanged(settings);
+                var settings = Step.ollamaSettings;
+                if (settings != null)
+                {
+                    Undo.RecordObject(settings, "Edit Ollama Settings");
+                    EditorUtility.SetDirty(settings);
+                    OllamaSettingsChangeNotifier.RaiseChanged(settings);
+                }
             }
+        }
+        finally
+        {
+            OllamaSettingsEditor.JsonFieldsEnabled = true;
+            OllamaSettingsEditor.JsonFieldsDisabledMessage = null;
         }
     }
 

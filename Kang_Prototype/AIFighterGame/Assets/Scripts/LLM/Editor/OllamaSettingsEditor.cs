@@ -4,6 +4,9 @@ using UnityEngine;
 [CustomEditor(typeof(OllamaSettings))]
 public class OllamaSettingsEditor : Editor
 {
+    public static bool JsonFieldsEnabled = true;
+    public static string JsonFieldsDisabledMessage;
+
     private SerializedProperty _modelProp;
     private SerializedProperty _streamProp;
     private SerializedProperty _keepAliveProp;
@@ -61,65 +64,72 @@ public class OllamaSettingsEditor : Editor
         bool changed = false;
 
         EditorGUILayout.LabelField("JSON Output Fields", EditorStyles.boldLabel);
+        if (!JsonFieldsEnabled && !string.IsNullOrEmpty(JsonFieldsDisabledMessage))
+        {
+            EditorGUILayout.HelpBox(JsonFieldsDisabledMessage, MessageType.Info);
+        }
+
         EditorGUILayout.HelpBox(
             "Add the keys you expect from the LLM. The Format field sent to Ollama and the analyzer's produced keys are generated from this list.",
             MessageType.Info
         );
 
         EditorGUI.BeginChangeCheck();
-
-        for (int i = 0; i < _jsonFieldsProp.arraySize; i++)
+        using (new EditorGUI.DisabledScope(!JsonFieldsEnabled))
         {
-            var element = _jsonFieldsProp.GetArrayElementAtIndex(i);
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            for (int i = 0; i < _jsonFieldsProp.arraySize; i++)
             {
-                EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.PropertyField(element.FindPropertyRelative(nameof(JsonFieldDefinition.fieldName)), new GUIContent("Field Name"));
-                if (GUILayout.Button("X", GUILayout.Width(24f)))
+                var element = _jsonFieldsProp.GetArrayElementAtIndex(i);
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
-                    _jsonFieldsProp.DeleteArrayElementAtIndex(i);
-                    changed = true;
-                    EditorGUILayout.EndHorizontal();
-                    break;
-                }
-                EditorGUILayout.EndHorizontal();
-
-                var fieldTypeProp = element.FindPropertyRelative(nameof(JsonFieldDefinition.fieldType));
-                EditorGUILayout.PropertyField(fieldTypeProp, new GUIContent("Type"));
-
-                if ((JsonFieldType)fieldTypeProp.enumValueIndex == JsonFieldType.Array)
-                {
-                    using (new EditorGUI.IndentLevelScope())
+                    EditorGUILayout.BeginHorizontal();
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative(nameof(JsonFieldDefinition.fieldName)), new GUIContent("Field Name"));
+                    if (GUILayout.Button("X", GUILayout.Width(24f)))
                     {
-                        EditorGUILayout.PropertyField(
-                            element.FindPropertyRelative(nameof(JsonFieldDefinition.arrayElementType)),
-                            new GUIContent("Element Type")
-                        );
+                        _jsonFieldsProp.DeleteArrayElementAtIndex(i);
+                        changed = true;
+                        EditorGUILayout.EndHorizontal();
+                        break;
                     }
-                }
+                    EditorGUILayout.EndHorizontal();
 
-                EditorGUILayout.PropertyField(element.FindPropertyRelative(nameof(JsonFieldDefinition.example)), new GUIContent("Example"));
-                EditorGUILayout.PropertyField(element.FindPropertyRelative(nameof(JsonFieldDefinition.description)), new GUIContent("Description"));
+                    var fieldTypeProp = element.FindPropertyRelative(nameof(JsonFieldDefinition.fieldType));
+                    EditorGUILayout.PropertyField(fieldTypeProp, new GUIContent("Type"));
+
+                    if ((JsonFieldType)fieldTypeProp.enumValueIndex == JsonFieldType.Array)
+                    {
+                        using (new EditorGUI.IndentLevelScope())
+                        {
+                            EditorGUILayout.PropertyField(
+                                element.FindPropertyRelative(nameof(JsonFieldDefinition.arrayElementType)),
+                                new GUIContent("Element Type")
+                            );
+                        }
+                    }
+
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative(nameof(JsonFieldDefinition.example)), new GUIContent("Example"));
+                    EditorGUILayout.PropertyField(element.FindPropertyRelative(nameof(JsonFieldDefinition.description)), new GUIContent("Description"));
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("+ Add Field", GUILayout.Width(140f)))
+                {
+                    int newIndex = _jsonFieldsProp.arraySize;
+                    _jsonFieldsProp.InsertArrayElementAtIndex(newIndex);
+                    var newElement = _jsonFieldsProp.GetArrayElementAtIndex(newIndex);
+                    newElement.FindPropertyRelative(nameof(JsonFieldDefinition.fieldName)).stringValue = "field";
+                    newElement.FindPropertyRelative(nameof(JsonFieldDefinition.fieldType)).enumValueIndex = (int)JsonFieldType.String;
+                    newElement.FindPropertyRelative(nameof(JsonFieldDefinition.example)).stringValue = string.Empty;
+                    newElement.FindPropertyRelative(nameof(JsonFieldDefinition.description)).stringValue = string.Empty;
+                    changed = true;
+                }
             }
         }
 
         changed |= EditorGUI.EndChangeCheck();
-
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("+ Add Field", GUILayout.Width(140f)))
-            {
-                int newIndex = _jsonFieldsProp.arraySize;
-                _jsonFieldsProp.InsertArrayElementAtIndex(newIndex);
-                var newElement = _jsonFieldsProp.GetArrayElementAtIndex(newIndex);
-                newElement.FindPropertyRelative(nameof(JsonFieldDefinition.fieldName)).stringValue = "field";
-                newElement.FindPropertyRelative(nameof(JsonFieldDefinition.fieldType)).enumValueIndex = (int)JsonFieldType.String;
-                newElement.FindPropertyRelative(nameof(JsonFieldDefinition.example)).stringValue = string.Empty;
-                newElement.FindPropertyRelative(nameof(JsonFieldDefinition.description)).stringValue = string.Empty;
-                changed = true;
-            }
-        }
 
         return changed;
     }

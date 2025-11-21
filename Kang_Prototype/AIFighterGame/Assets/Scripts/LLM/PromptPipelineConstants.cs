@@ -1,4 +1,4 @@
 public static class PromptPipelineConstants
 {
-    public const string AnswerKey = "answer";
+    public const string AnswerKey = "response";
 }

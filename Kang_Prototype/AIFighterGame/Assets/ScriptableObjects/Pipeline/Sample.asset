@@ -24,18 +24,18 @@ MonoBehaviour:
     customLinkTypeName: 
     editorPosition: {x: -635, y: 235}
   - stepName: Step 2
-    stepKind: 0
+    stepKind: 1
     ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
     userPromptTemplate: Answer to {{response}}
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
-    editorPosition: {x: -73, y: 235}
+    editorPosition: {x: -12, y: 235}
   layoutSettings:
     inputNodePosition: {x: -839, y: 256}
-    outputNodePosition: {x: 551, y: 224}
+    outputNodePosition: {x: 560, y: 256}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 1355, y: -118.99998, z: 0}
-    viewScale: {x: 1.15, y: 1.15, z: 1}
+    viewPosition: {x: 1306, y: -95, z: 0}
+    viewScale: {x: 1, y: 1, z: 1}
     viewInitialized: 1

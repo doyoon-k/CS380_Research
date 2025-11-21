@@ -1,49 +1,57 @@
-# LLM ÆĞÅ°Áö °¡ÀÌµå
+ï»¿# LLM íŒ¨í‚¤ì§€ ê°€ì´ë“œ
 
-## 1. °³¿ä
-Assets/Scripts/LLM Æú´õ´Â ·ÎÄÃ¿¡ ¶ç¿î Ollama ¼­¹ö¿Í Åë½ÅÇÏ¿© ÅØ½ºÆ® »ı¼º, ´ëÈ­, ÀÓº£µù ÃßÃâÀ» Ã³¸®ÇÏ´Â Unity ·¡ÆÛÀÔ´Ï´Ù. OllamaComponent°¡ HTTP ¿äÃ»¡¤ÀÀ´äÀ» °ü¸®ÇÏ°í, OllamaSettings°¡ ¸ğµ¨/ÇÁ·ÒÇÁÆ®/»ùÇÃ¸µ ÆÄ¶ó¹ÌÅÍ¸¦ ¹­¾î ¾À Àü¹İ¿¡¼­ Àç»ç¿ëÇÒ ¼ö ÀÖ°Ô ÇØ Áİ´Ï´Ù. ¿©±â¿¡ StateSequentialChainExecutor¿Í JSONLLMStateChainLink¸¦ ´õÇÏ¸é LLMÀÌ ¹İÈ¯ÇÑ JSON »óÅÂ¸¦ ¾ÈÀüÇÏ°Ô Àç½Ãµµ¡¤º´ÇÕÇÏ´Â ÆÄÀÌÇÁ¶óÀÎÀ» ±¸¼ºÇÒ ¼ö ÀÖ½À´Ï´Ù.
+## 1. ê°œìš”
+Assets/Scripts/LLM í´ë”ëŠ” ë¡œì»¬ì— ë„ìš´ Ollama ì„œë²„ì™€ í†µì‹ í•˜ì—¬ í…ìŠ¤íŠ¸ ìƒì„±, ëŒ€í™”, ì„ë² ë”© ì¶”ì¶œì„ ì²˜ë¦¬í•˜ëŠ” Unity ë˜í¼ì…ë‹ˆë‹¤. ëª¨ë“  ë„¤íŠ¸ì›Œí¬ í˜¸ì¶œì€ `IOllamaService` ì¸í„°í˜ì´ìŠ¤ë¡œ ë…¸ì¶œë˜ë©°, ëŸ°íƒ€ì„ì—ì„œëŠ” `OllamaComponent`, ì—ë””í„° ë„êµ¬ì—ì„œëŠ” `OllamaEditorService`ê°€ ë™ì¼í•œ `OllamaHttpWorker`ë¥¼ ê³µìœ í•©ë‹ˆë‹¤. `OllamaServiceLocator`ê°€ í™œì„± ì„œë¹„ìŠ¤ë¥¼ ì œê³µí•˜ê³ , `OllamaAutoLoader`ê°€ ëª¨ë¸ë³„ ollama serve í”„ë¡œì„¸ìŠ¤ë¥¼ ê´€ë¦¬í•©ë‹ˆë‹¤. `StateSequentialChainExecutor`ì™€ `JSONLLMStateChainLink`/`CompletionChainLink`ë¥¼ ì¡°í•©í•˜ë©´ JSON ìƒíƒœ ë³‘í•©ê³¼ ë‹¨ìˆœ ë‹µë³€ ëˆ„ì ì„ ì•ˆì „í•˜ê²Œ ì¬ì‹œë„í•˜ë©´ì„œ ì²´ì¸ í˜•íƒœë¡œ ë¬¶ì„ ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 
-## 2. ÁÖ¿ä ½ºÅ©¸³Æ®
-|°æ·Î|¼³¸í|
+## 2. ì£¼ìš” ìŠ¤í¬ë¦½íŠ¸
+|ê²½ë¡œ|ì„¤ëª…|
 |---|---|
-|Assets/Scripts/LLM/OllamaComponent.cs|½Ì±ÛÅæ MonoBehaviour. /api/generate, /api/chat, /api/embed ¿äÃ»À» ¸¸µé°í, ÀÀ´ä ½ºÆ®¸®¹Ö°ú ·Î±ëÀ» Ã³¸®ÇÕ´Ï´Ù.|
-|Assets/Scripts/LLM/OllamaSettings.cs|ScriptableObject. ¸ğµ¨¸í, ½Ã½ºÅÛ ÇÁ·ÒÇÁÆ® ÅÛÇÃ¸´, »ùÇÃ¸µ ÆÄ¶ó¹ÌÅÍ(ModelParams)¸¦ ¿¡¼ÂÀ¸·Î º¸°üÇÕ´Ï´Ù.|
-|Assets/Scripts/LLM/OllamaAutoLoader.cs|¸ğµ¨º°·Î ollama serve ÇÁ·Î¼¼½º¸¦ ÀÚµ¿ ±âµ¿ÇÏ°í Æ÷Æ®¸¦ ÇÒ´çÇÕ´Ï´Ù. Unity Á¾·á ½Ã ¸ğµç ¼­¹ö¸¦ Á¤¸®ÇÕ´Ï´Ù.|
-|Assets/Scripts/LLM/ProcessWrapper.cs|Windows Job Object¸¦ ÀÌ¿ëÇØ Ollama ÇÏÀ§ ÇÁ·Î¼¼½º¸¦ ºÎ¸ğ°¡ Á×À¸¸é ÇÔ²² Á¾·á½ÃÅ°´Â ÇïÆÛÀÔ´Ï´Ù.|
-|Assets/Scripts/LLM/PromptTemplate.cs|{{varName}} Ä¡È¯À» ¼öÇàÇÏ¿© »óÅÂ °ªÀ» ½Ã½ºÅÛ ÇÁ·ÒÇÁÆ®¿¡ »ğÀÔÇÕ´Ï´Ù.|
-|Assets/Scripts/LLM/IStateChainLink.cs|»óÅÂ µñ¼Å³Ê¸®¸¦ ÀÔ·Â/Ãâ·ÂÀ¸·Î »ç¿ëÇÏ´Â Ã¼ÀÎ ÀÎÅÍÆäÀÌ½ºÀÔ´Ï´Ù.|
-|Assets/Scripts/LLM/StateSequentialChainExecutor.cs|¿©·¯ IStateChainLink¸¦ ÄÚ·çÆ¾À¸·Î ¼øÂ÷ ½ÇÇàÇØ »óÅÂ¸¦ Èê·Áº¸³À´Ï´Ù.|
-|Assets/Scripts/LLM/JSONLLMStateChainLink.cs|LLM ÀÀ´äÀ» JSONÀ¸·Î ÆÄ½ÌÇÏ¿© »óÅÂ¿¡ º´ÇÕÇÕ´Ï´Ù. ÆÄ½Ì ½ÇÆĞ ½Ã Àç½Ãµµ¿Í µô·¹ÀÌ¸¦ Áö¿øÇÕ´Ï´Ù.|
-|Assets/Scripts/LLM/demo.cs|OllamaComponent API 3Á¾(Generate/Chat/Embed)À» È£ÃâÇÏ´Â ±âº» ¿¹Á¦°¡ ÁÖ¼®À¸·Î Æ÷ÇÔµÇ¾î ÀÖ½À´Ï´Ù.|
+|Assets/Scripts/LLM/IOllamaService.cs|ëŸ°íƒ€ì„/ì—ë””í„°ê°€ ê³µìœ í•˜ëŠ” Ollama í˜¸ì¶œ ì¸í„°í˜ì´ìŠ¤. ëª¨ë“  ë©”ì„œë“œëŠ” IEnumeratorë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/OllamaServiceLocator.cs|í™œì„± `IOllamaService` ë“±ë¡Â·ì¡°íšŒ í—¬í¼. ì²´ì¸ ë§í¬ë“¤ì´ ì—¬ê¸°ì„œ ì„œë¹„ìŠ¤ë¥¼ ê°€ì ¸ì˜µë‹ˆë‹¤.|
+|Assets/Scripts/LLM/OllamaComponent.cs|ì‹±ê¸€í†¤ MonoBehaviour. `IOllamaService`ë¥¼ êµ¬í˜„í•´ HTTP í˜¸ì¶œì„ êµ¬ë™í•˜ê³  ì„œë¹„ìŠ¤ ë¡œì¼€ì´í„°ì— ìì‹ ì„ ë“±ë¡í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/OllamaHttpWorker.cs|ìˆœìˆ˜ C# HTTP ì›Œì»¤. ëŸ°íƒ€ì„ ì»´í¬ë„ŒíŠ¸ì™€ ì—ë””í„° ì„œë¹„ìŠ¤ê°€ ê³µí†µìœ¼ë¡œ ì‚¬ìš©í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/OllamaSettings.cs|ScriptableObject. ëª¨ë¸ëª…, ì‹œìŠ¤í…œ í”„ë¡¬í”„íŠ¸ í…œí”Œë¦¿, ìƒ˜í”Œë§ íŒŒë¼ë¯¸í„°(ModelParams), JSON Output Fieldsë¥¼ ì—ì…‹ìœ¼ë¡œ ê´€ë¦¬í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/OllamaAutoLoader.cs|ëª¨ë¸ë³„ë¡œ ollama serve í”„ë¡œì„¸ìŠ¤ë¥¼ ìë™ ê¸°ë™Â·ì¢…ë£Œí•˜ë©° í¬íŠ¸ë¥¼ í• ë‹¹í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/ProcessWrapper.cs|Windows Job Objectë¡œ Ollama í•˜ìœ„ í”„ë¡œì„¸ìŠ¤ë¥¼ ë¶€ëª¨ì™€ í•¨ê»˜ ì •ë¦¬í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/PromptTemplate.cs|{{varName}} ì¹˜í™˜ì„ ìˆ˜í–‰í•˜ì—¬ ìƒíƒœ ê°’ì„ í”„ë¡¬í”„íŠ¸ì— ì‚½ì…í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/IStateChainLink.cs|ìƒíƒœ ë”•ì…”ë„ˆë¦¬ë¥¼ ì…ë ¥/ì¶œë ¥ìœ¼ë¡œ ì‚¬ìš©í•˜ëŠ” ì²´ì¸ ì¸í„°í˜ì´ìŠ¤ì…ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/StateSequentialChainExecutor.cs|ì—¬ëŸ¬ IStateChainLinkë¥¼ ì½”ë£¨í‹´ìœ¼ë¡œ ìˆœì°¨ ì‹¤í–‰í•´ ìƒíƒœë¥¼ ì „ë‹¬í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/JSONLLMStateChainLink.cs|LLM ì‘ë‹µì„ JSONìœ¼ë¡œ íŒŒì‹±í•´ ìƒíƒœì— ë³‘í•©í•˜ê³  ì‹¤íŒ¨ ì‹œ ì¬ì‹œë„í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/CompletionChainLink.cs|í…ìŠ¤íŠ¸ ì™„ì„± í˜¸ì¶œì„ ìˆ˜í–‰í•´ ê²°ê³¼ë¥¼ `PromptPipelineConstants.AnswerKey`(ê¸°ë³¸: `response`)ì— ì €ì¥í•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/PromptPipelineAsset.cs|ê·¸ë˜í”„ ì—ë””í„°ê°€ ì‚¬ìš©í•˜ëŠ” ì„ í˜• íŒŒì´í”„ë¼ì¸ ì •ì˜(StepKind: Json, Completion, Custom) ScriptableObjectì…ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/PromptPipelineConstants.cs|íŒŒì´í”„ë¼ì¸ì—ì„œ ì˜ˆì•½í•œ ìƒíƒœ í‚¤ ëª¨ìŒ. í˜„ì¬ëŠ” AnswerKey(`response`)ë¥¼ ì œê³µí•©ë‹ˆë‹¤.|
+|Assets/Scripts/LLM/demo.cs|OllamaComponent API 3ì¢…(Generate/Chat/Embed) í˜¸ì¶œ ì˜ˆì œê°€ ì£¼ì„ìœ¼ë¡œ í¬í•¨ë˜ì–´ ìˆìŠµë‹ˆë‹¤.|
 
-## 3. µ¿ÀÛ Èå¸§
-1. °ÔÀÓ ÇÃ·¹ÀÌ ÄÚµå°¡ OllamaAutoLoader.GetServerAddress(model)À» È£ÃâÇÏ¸é ÇØ´ç ¸ğµ¨ Àü¿ë ollama serve ÇÁ·Î¼¼½º°¡ ÀÚµ¿ ±¸µ¿µÇ°í °íÀ¯ Æ÷Æ®¸¦ ºÎ¿©¹Ş½À´Ï´Ù.
-2. OllamaSettings ¿¡¼ÂÀº ½Ã½ºÅÛ ÇÁ·ÒÇÁÆ® ÅÛÇÃ¸´°ú ¸ğµ¨ ÆÄ¶ó¹ÌÅÍ¸¦ °®°í ÀÖÀ¸¸ç, ÇÊ¿ä ½Ã RenderSystemPrompt°¡ »óÅÂ °ªÀ» ÅÛÇÃ¸´¿¡ Ä¡È¯ÇÕ´Ï´Ù.
-3. ¾À ¾îµò°¡¿¡ Á¸ÀçÇÏ´Â OllamaComponent°¡ GenerateCompletion, ChatCompletion, Embed Áß ÇÏ³ª¸¦ È£Ãâ¹Ş¾Æ HTTP ¿äÃ» º»¹®À» Á¶¸³ÇÕ´Ï´Ù.
-4. UnityWebRequest°¡ Ollama REST ¿£µåÆ÷ÀÎÆ®(/api/generate, /api/chat, /api/embed)¿¡ POST¸¦ º¸³½ µÚ, ÀÀ´äÀ» ÁÙ ´ÜÀ§ È¤Àº ÅëÂ°·Î Äİ¹é¿¡ Àü´ŞÇÕ´Ï´Ù.
-5. StateSequentialChainExecutor¿Í JSONLLMStateChainLink¸¦ È°¿ëÇÏ¸é JSON ÀÀ´äÀ» »óÅÂ µñ¼Å³Ê¸®¿¡ º´ÇÕÇÏ¸é¼­ Ã¼ÀÌ´×ÇÒ ¼ö ÀÖ½À´Ï´Ù.
+## 3. ë™ì‘ íë¦„
+1. ëŸ°íƒ€ì„ì˜ OllamaComponentê°€ Awakeì—ì„œ `OllamaServiceLocator`ì— ìì‹ ì„ ë“±ë¡í•˜ê³  ë‚´ë¶€ `OllamaHttpWorker`ë¥¼ ì¤€ë¹„í•©ë‹ˆë‹¤. ì—ë””í„° ê·¸ë˜í”„/ì‹œë®¬ë ˆì´í„°ëŠ” ê¸°ë³¸ì ìœ¼ë¡œ `OllamaEditorService`ë¥¼ ì‚¬ìš©í•´ ë™ì¼í•œ ì›Œì»¤ë¥¼ í˜¸ì¶œí•©ë‹ˆë‹¤.
+2. LLM í˜¸ì¶œ ì‹œ OllamaAutoLoader.GetServerAddress(model)ì´ ì‹¤í–‰ë˜ì–´ í•´ë‹¹ ëª¨ë¸ ì „ìš© ollama serve í”„ë¡œì„¸ìŠ¤ë¥¼ ìë™ ê¸°ë™í•˜ê³  í¬íŠ¸ë¥¼ í• ë‹¹í•©ë‹ˆë‹¤.
+3. OllamaSettings ì—ì…‹ì€ ì‹œìŠ¤í…œ í”„ë¡¬í”„íŠ¸ í…œí”Œë¦¿ê³¼ ëª¨ë¸ íŒŒë¼ë¯¸í„°, JSON Output Fieldsë¥¼ ë³´ê´€í•˜ë©° RenderSystemPromptë¡œ ìƒíƒœ ì¹˜í™˜ì„ ìˆ˜í–‰í•©ë‹ˆë‹¤.
+4. ê²Œì„/íˆ´ ì½”ë“œëŠ” OllamaComponent ì¸ìŠ¤í„´ìŠ¤ë‚˜ `OllamaServiceLocator.Current`(ë˜ëŠ” ì£¼ì…í•œ IOllamaService)ë¥¼ í†µí•´ GenerateCompletion, ChatCompletion, Embedë¥¼ ìš”ì²­í•©ë‹ˆë‹¤.
+5. OllamaHttpWorkerê°€ /api/generate, /api/chat, /api/embed ìš”ì²­ì„ ë§Œë“¤ê³ , ìŠ¤íŠ¸ë¦¬ë° ì—¬ë¶€ì— ë”°ë¼ ì¤„ ë‹¨ìœ„ ë˜ëŠ” ì „ì²´ ì‘ë‹µì„ ì½œë°±ì— ì „ë‹¬í•©ë‹ˆë‹¤.
+6. StateSequentialChainExecutorê°€ JSONLLMStateChainLink/CompletionChainLinkë¥¼ ìˆœì°¨ ì‹¤í–‰í•´ JSON í•„ë“œëŠ” ìƒíƒœì— ë³‘í•©í•˜ê³ , í…ìŠ¤íŠ¸ ì‘ë‹µì€ `response` í‚¤ì— ëˆ„ì í•©ë‹ˆë‹¤.
 
-## 4. ¼³Ä¡ ¹× ÁØºñ
+## 4. ì„¤ì¹˜ ë° ì¤€ë¹„
 
-### 4.1 Ollama »çÀü ÁØºñ
-- °³¹ß PC¿¡ Ollama¸¦ ¼³Ä¡ÇÏ°í ollama pull deepseek-r1:7bÃ³·³ ÇÊ¿äÇÑ ¸ğµ¨À» ³»·Á¹Ş½À´Ï´Ù.
-- GPU ·¹ÀÌ¾î ¼ö µî °øÅë È¯°æ º¯¼ö´Â OllamaAutoLoader°¡ ÀÚµ¿ ÁöÁ¤(OLLAMA_NUM_GPU_LAYERS=100, OLLAMA_KEEP_ALIVE=-1)ÇÏ¹Ç·Î º°µµ ¼³Á¤ÀÌ ÇÊ¿ä ¾ø½À´Ï´Ù.
-- Ollama ¼­¹ö´Â ·±Å¸ÀÓ/¿¡µğÅÍ ¸ğµÎ¿¡¼­ ÀÚµ¿ °ü¸®µÇÁö¸¸, ¼öµ¿À¸·Î Á¾·áÇØ¾ß ÇÒ °æ¿ì Unity ¸Ş´º/¿¡µğÅÍ Á¾·á¸¸À¸·Îµµ Á¤¸®µË´Ï´Ù.
+### 4.1 Ollama ì‚¬ì „ ì¤€ë¹„
+- ê°œë°œ PCì— Ollamaë¥¼ ì„¤ì¹˜í•˜ê³  `ollama pull deepseek-r1:7b`ì²˜ëŸ¼ í•„ìš”í•œ ëª¨ë¸ì„ ë‚´ë ¤ë°›ìŠµë‹ˆë‹¤.
+- GPU ë ˆì´ì–´ ìˆ˜ ë“± ê³µí†µ í™˜ê²½ ë³€ìˆ˜ëŠ” OllamaAutoLoaderê°€ ìë™ ì§€ì •(OLLAMA_NUM_GPU_LAYERS=100, OLLAMA_KEEP_ALIVE=-1)í•˜ë¯€ë¡œ ë³„ë„ ì„¤ì •ì´ í•„ìš” ì—†ìŠµë‹ˆë‹¤.
+- Ollama ì„œë²„ëŠ” ëŸ°íƒ€ì„/ì—ë””í„° ëª¨ë‘ì—ì„œ ìë™ ê´€ë¦¬ë˜ì§€ë§Œ, ìˆ˜ë™ ì¢…ë£Œê°€ í•„ìš”í•˜ë©´ Unity ì¢…ë£Œë§Œìœ¼ë¡œë„ ì •ë¦¬ë©ë‹ˆë‹¤.
 
-### 4.2 Unity ¿¡µğÅÍ ¼³Á¤
-1. ÇÁ·ÎÁ§Æ® ºä¿¡¼­ Create > LLM > Ollama Settings¸¦ ¼±ÅÃÇØ ¼³Á¤ ¿¡¼ÂÀ» »ı¼ºÇÕ´Ï´Ù.
-2. ¸ğµ¨¸í(model), ÀÀ´ä Çü½Ä(ormat, ÇÊ¿ä ½Ã JSON ½ºÅ°¸¶ ¹®ÀÚ¿­), ½ºÆ®¸®¹Ö ¿©ºÎ(stream), »ùÇÃ¸µ ÆÄ¶ó¹ÌÅÍ(ModelParams)¸¦ ÁöÁ¤ÇÕ´Ï´Ù.
-3. ½Ã½ºÅÛ ÇÁ·ÒÇÁÆ® ÅÛÇÃ¸´¿¡ {{playerName}}, {{planet}}Ã³·³ »óÅÂ Å°¸¦ ³Ö¾îµÎ¸é Ã¼ÀÎ¿¡¼­ ÀÚµ¿ Ä¡È¯µË´Ï´Ù.
-4. ¾À¿¡ ºó GameObject¸¦ ¸¸µé°í OllamaComponent¸¦ ºÙ¿© ½Ì±ÛÅæ ÀÎ½ºÅÏ½º¸¦ È®º¸ÇÕ´Ï´Ù. µğ¹ö±ëÀÌ ÇÊ¿äÇÏ¸é logLLMTrafficÀ» ÄÑ¼­ ¿äÃ»/ÀÀ´äÀ» ÄÜ¼Ö¿¡ ±â·ÏÇÕ´Ï´Ù.
-5. LLMÀ» È£ÃâÇÒ ½ºÅ©¸³Æ®(MonoBehaviour)¿¡¼­ public OllamaComponent ollama;¿Í public OllamaSettings settings;¸¦ ³ëÃâÇÑ µÚ, ÀÎ½ºÆåÅÍ¿¡¼­ ·¹ÆÛ·±½º¸¦ ¿¬°áÇÕ´Ï´Ù.
+### 4.2 Unity ì—ë””í„° ì„¤ì •
+1. í”„ë¡œì íŠ¸ ë·°ì—ì„œ Create > LLM > Ollama Settingsë¥¼ ì„ íƒí•´ ì„¤ì • ì—ì…‹ì„ ìƒì„±í•©ë‹ˆë‹¤.
+2. ëª¨ë¸ëª…(model), ì‘ë‹µ í˜•ì‹(format, í•„ìš” ì‹œ JSON ìŠ¤í‚¤ë§ˆ ë¬¸ìì—´), ìŠ¤íŠ¸ë¦¬ë° ì—¬ë¶€(stream), ìƒ˜í”Œë§ íŒŒë¼ë¯¸í„°(ModelParams)ë¥¼ ì§€ì •í•©ë‹ˆë‹¤.
+3. ì‹œìŠ¤í…œ í”„ë¡¬í”„íŠ¸ í…œí”Œë¦¿ì— {{playerName}}, {{planet}}ì²˜ëŸ¼ ìƒíƒœ í‚¤ë¥¼ ë„£ì–´ë‘ë©´ ì²´ì¸ì—ì„œ ìë™ ì¹˜í™˜ë©ë‹ˆë‹¤.
+4. ì”¬ì— ë¹ˆ GameObjectë¥¼ ë§Œë“¤ê³  OllamaComponentë¥¼ ë¶™ì—¬ ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤ë¥¼ í™•ë³´í•©ë‹ˆë‹¤. ë””ë²„ê¹…ì´ í•„ìš”í•˜ë©´ logLLMTrafficì„ ì¼œì„œ ìš”ì²­/ì‘ë‹µì„ ì½˜ì†”ì— ê¸°ë¡í•©ë‹ˆë‹¤.
+5. LLMì„ í˜¸ì¶œí•  ìŠ¤í¬ë¦½íŠ¸(MonoBehaviour)ì—ì„œ `public OllamaComponent ollama;`ì™€ `public OllamaSettings settings;`ë¥¼ ë…¸ì¶œí•œ ë’¤, ì¸ìŠ¤í™í„°ì—ì„œ ë ˆí¼ëŸ°ìŠ¤ë¥¼ ì—°ê²°í•©ë‹ˆë‹¤.
 
-## 5. API »ç¿ë¹ı
+## 5. API ì‚¬ìš©ë²•
+ì•„ë˜ ì˜ˆì œëŠ” OllamaComponentë¥¼ ì§ì ‘ í˜¸ì¶œí•˜ì§€ë§Œ ë™ì¼í•œ ì‹œê·¸ë‹ˆì²˜ì˜ `IOllamaService`(ì˜ˆ: `OllamaServiceLocator.Current`, `OllamaEditorService`)ì—ë„ ê·¸ëŒ€ë¡œ ì ìš©ë©ë‹ˆë‹¤.
 
-### 5.1 GenerateCompletion (´ÜÀÏ ÇÁ·ÒÇÁÆ®)
-- OllamaSettings.systemPromptTemplateÀÇ ¿øº» ¹®ÀÚ¿­À» ±×´ë·Î system prompt·Î »ç¿ëÇÕ´Ï´Ù.
-- »ç¿ëÀÚ ÇÁ·ÒÇÁÆ® ¹®ÀÚ¿­°ú ÀÀ´ä Äİ¹é¸¸ ³Ñ±â¸é µË´Ï´Ù.
+### 5.1 GenerateCompletion (ë‹¨ì¼ í”„ë¡¬í”„íŠ¸)
+- OllamaSettings.systemPromptTemplateì˜ ì›ë³¸ ë¬¸ìì—´ì„ ê·¸ëŒ€ë¡œ system promptë¡œ ì‚¬ìš©í•©ë‹ˆë‹¤.
+- ì‚¬ìš©ì í”„ë¡¬í”„íŠ¸ ë¬¸ìì—´ê³¼ ì‘ë‹µ ì½œë°±ë§Œ ë„˜ê¸°ë©´ ë©ë‹ˆë‹¤.
 
-`csharp
+```csharp
 public class NewsHeadlineGenerator : MonoBehaviour
 {
     public OllamaComponent ollama;
@@ -58,12 +66,12 @@ public class NewsHeadlineGenerator : MonoBehaviour
         );
     }
 }
-`
+```
 
-### 5.2 GenerateCompletionWithState (»óÅÂ Ä¡È¯)
-- Dictionary<string, string> »óÅÂ¸¦ ³Ñ±â¸é RenderSystemPrompt ¡æ _lastRenderedPrompt ¼ø¼­·Î Ä¡È¯µÈ system prompt°¡ »ç¿ëµË´Ï´Ù.
+### 5.2 GenerateCompletionWithState (ìƒíƒœ ì¹˜í™˜)
+- Dictionary<string, string> ìƒíƒœë¥¼ ë„˜ê¸°ë©´ RenderSystemPrompt â†’ _lastRenderedPrompt ìˆœì„œë¡œ ì¹˜í™˜ëœ system promptê°€ ì‚¬ìš©ë©ë‹ˆë‹¤.
 
-`csharp
+```csharp
 var state = new Dictionary<string, string>
 {
     { "playerName", "Astra" },
@@ -76,13 +84,13 @@ ollama.GenerateCompletionWithState(
     state,
     response => Debug.Log(response)
 );
-`
+```
 
-### 5.3 ChatCompletion (¸ÖÆ¼ ¸Ş½ÃÁö)
-- ChatMessage ¹è¿­¿¡ system/user/assistant ¿ªÇÒÀ» ¸í½ÃÇÕ´Ï´Ù.
-- settings.streamÀÌ 	rue¸é ÁÙ ´ÜÀ§·Î Äİ¹éµË´Ï´Ù.
+### 5.3 ChatCompletion (ë©€í‹° ë©”ì‹œì§€)
+- ChatMessage ë°°ì—´ì— system/user/assistant ì—­í• ì„ ëª…ì‹œí•©ë‹ˆë‹¤.
+- settings.streamì´ trueë©´ ì¤„ ë‹¨ìœ„ë¡œ ì½œë°±ë©ë‹ˆë‹¤.
 
-`csharp
+```csharp
 var messages = new[]
 {
     new ChatMessage { role = "system", content = "You are a diplomatic aide." },
@@ -93,24 +101,23 @@ ollama.ChatCompletion(settings, messages, chunk =>
 {
     Debug.Log("Assistant:\n" + chunk);
 });
-`
+```
 
-### 5.4 Embed (ÀÓº£µù ÃßÃâ)
-- ¹®ÀÚ¿­ ¹è¿­À» ³Ñ±â¸é /api/embed ÀÀ´äÀ» loat[][]·Î ÆÄ½ÌÇÏ¿© Äİ¹é¿¡ Àü´ŞÇÕ´Ï´Ù.
+### 5.4 Embed (ì„ë² ë”© ì¶”ì¶œ)
+- ë¬¸ìì—´ ë°°ì—´ì„ ë„˜ê¸°ë©´ /api/embed ì‘ë‹µì„ float[][]ë¡œ íŒŒì‹±í•˜ì—¬ ì½œë°±ì— ì „ë‹¬í•©ë‹ˆë‹¤.
 
-`csharp
+```csharp
 var texts = new[] { "Helium futures", "Quantum fuel" };
 ollama.Embed(settings, texts, vectors =>
 {
     Debug.Log($"Received {vectors.Length} embedding(s). First length = {vectors[0].Length}");
 });
-`
+```
 
-## 6. »óÅÂ Ã¼ÀÎ È°¿ë
+## 6. ìƒíƒœ ì²´ì¸ í™œìš©
+StateSequentialChainExecutorëŠ” ì½”ë£¨í‹´ìœ¼ë¡œ ì‘ë™í•˜ë¯€ë¡œ í˜¸ì¶œì¸¡ì—ì„œë„ StartCoroutineìœ¼ë¡œ ì‹¤í–‰í•´ì•¼ í•©ë‹ˆë‹¤. JSON íŒŒì‹±ê³¼ ì¼ë°˜ ë‹µë³€ ì €ì¥ì„ í•¨ê»˜ ì—®ëŠ” ì˜ˆì‹œëŠ” ì•„ë˜ì™€ ê°™ìŠµë‹ˆë‹¤.
 
-StateSequentialChainExecutor´Â ÄÚ·çÆ¾À¸·Î ÀÛµ¿ÇÏ¹Ç·Î È£ÃâÃø¿¡¼­µµ StartCoroutineÀ¸·Î ½ÇÇàÇØ¾ß ÇÕ´Ï´Ù.
-
-`csharp
+```csharp
 public class QuestBriefingChain : MonoBehaviour
 {
     public OllamaSettings settings;
@@ -118,7 +125,14 @@ public class QuestBriefingChain : MonoBehaviour
     private IEnumerator Start()
     {
         var executor = new StateSequentialChainExecutor();
-        executor.AddLink(new JSONLLMStateChainLink(settings, maxRetries: 3, delayBetweenRetries: 0.2f));
+        executor.AddLink(new JSONLLMStateChainLink(
+            settings,
+            "Return { \"mission_summary\": \"...\", \"threat_level\": \"...\" }",
+            maxRetries: 3,
+            delayBetweenRetries: 0.2f));
+        executor.AddLink(new CompletionChainLink(
+            settings,
+            "Write a radio message about {{mission_summary}} (threat: {{threat_level}})."));
 
         var initial = new Dictionary<string, string>
         {
@@ -128,60 +142,63 @@ public class QuestBriefingChain : MonoBehaviour
 
         yield return StartCoroutine(executor.Execute(initial, state =>
         {
-            Debug.Log($"¹Ì¼Ç ¿ä¾à: {state.GetValueOrDefault("mission_summary")}");
-            Debug.Log($"À§Çùµµ: {state.GetValueOrDefault("threat_level")}");
+            Debug.Log($"ë¯¸ì…˜ ìš”ì•½: {state.GetValueOrDefault("mission_summary")}");
+            Debug.Log($"ìœ„í˜‘ë„: {state.GetValueOrDefault("threat_level")}");
+            Debug.Log($"ìµœì¢… ë‹µë³€: {state.GetValueOrDefault(PromptPipelineConstants.AnswerKey)}");
         }));
     }
 }
-`
+```
 
-- JSONLLMStateChainLink´Â JToken.Parse¿¡ ½ÇÆĞÇÏ°Å³ª °´Ã¼ Å¸ÀÔÀÌ ¾Æ´Ò ¶§ _maxRetries¸¸Å­ Àç½ÃµµÇÕ´Ï´Ù.
-- Ã¼ÀÎ ¸µÅ©¸¦ ´õ Ãß°¡ÇØ ¸ÖÆ¼½ºÅÜ ¿öÅ©ÇÃ·Î¿ì(¿¹: ¿ä¾à ¡æ ÀÓ¹« »ı¼º ¡æ ´ë»ç »ı¼º)¸¦ ±¸¼ºÇÒ ¼ö ÀÖ½À´Ï´Ù.
+- JSONLLMStateChainLinkëŠ” ì •ì˜ëœ JSON Output Fieldsë¥¼ ê¸°ì¤€ìœ¼ë¡œ ì‘ë‹µì„ íŒŒì‹±í•˜ë©°, ì‹¤íŒ¨ ì‹œ ì„¤ì •í•œ ìµœëŒ€ íšŸìˆ˜ë§Œí¼ ì¬ì‹œë„í•©ë‹ˆë‹¤.
+- CompletionChainLinkëŠ” í•œ ë²ˆì˜ í…ìŠ¤íŠ¸ ì™„ì„± ê²°ê³¼ë¥¼ `PromptPipelineConstants.AnswerKey`(response)ë¡œ ì €ì¥í•´ ì´í›„ ë‹¨ê³„ë‚˜ ì¶œë ¥ì—ì„œ ì¼ê´€ë˜ê²Œ ì ‘ê·¼í•  ìˆ˜ ìˆê²Œ í•©ë‹ˆë‹¤.
+- ë‘ ë§í¬ ëª¨ë‘ í˜„ì¬ ë“±ë¡ëœ `IOllamaService`(OllamaComponent ë˜ëŠ” ëª…ì‹œì ìœ¼ë¡œ ì „ë‹¬í•œ ì„œë¹„ìŠ¤)ë¥¼ ì‚¬ìš©í•˜ë¯€ë¡œ, ì„œë¹„ìŠ¤ê°€ ë“±ë¡ë˜ì§€ ì•Šì•˜ë‹¤ë©´ ì˜ˆì™¸ê°€ ë°œìƒí•©ë‹ˆë‹¤.
 
-## 7. µğ¹ö±ë & Æ®·¯ºí½´ÆÃ
-- **¿äÃ» ·Î±ë**: OllamaComponent.logLLMTrafficÀ» ÄÑ¸é system/user prompt¿Í HTTP Request/Response ¿ø¹®À» ¸ğµÎ È®ÀÎÇÒ ¼ö ÀÖ½À´Ï´Ù.
-- **JSON ÆÄ½Ì ½ÇÆĞ**: ¸ğµ¨ÀÌ JSONÀ» Àß¸ø ¹İÈ¯ÇÏ¸é °æ°í¿Í ÇÔ²² Àç½ÃµµÇÏ¹Ç·Î, ÇÁ·ÒÇÁÆ®¿¡ "¹İµå½Ã À¯È¿ÇÑ JSON °´Ã¼·Î¸¸ ´äÇÏ¶ó" °°Àº Áö½Ã¸¦ ³Ö¾î ¾ÈÁ¤¼ºÀ» ³ôÀÔ´Ï´Ù.
-- **¼­¹ö Ãæµ¹**: ¸ğµ¨º° Ollama ÇÁ·Î¼¼½º°¡ ÀÀ´äÇÏÁö ¾ÊÀ¸¸é OllamaAutoLoader.StopAllServers()¸¦ È£ÃâÇÏ°Å³ª Unity¸¦ Àç½ÃÀÛÇØ ÇÁ·Î¼¼½º¸¦ Àç±âµ¿ÇÏ¼¼¿ä.
-- **³×Æ®¿öÅ©/¸®¼Ò½º**: Ollama°¡ GPU¸¦ »ç¿ëÇÒ ¼ö ¾øÀ» ¶§´Â OLLAMA_NUM_GPU_LAYERS °ªÀ» ¼öÁ¤ÇÏ°Å³ª ¸ğµ¨À» ´õ ÀÛÀº ¹öÀüÀ¸·Î ±³Ã¼ÇÏ¼¼¿ä.
-- **½ºÆ®¸®¹Ö ÆÄ½Ì**: settings.stream == trueÀÏ ¶§´Â ÀÀ´äÀÌ ÁÙ ´ÜÀ§·Î µé¾î¿À¹Ç·Î UI¿¡ ´©ÀûÇÏ°Å³ª ¸¶Áö¸· ÁÙ¿¡¼­ ¸¶¹«¸® ·ÎÁ÷À» ¼öÇàÇØ¾ß ÇÕ´Ï´Ù.
+## 7. ë””ë²„ê¹… & íŠ¸ëŸ¬ë¸”ìŠˆíŒ…
+- **ìš”ì²­ ë¡œê¹…**: OllamaComponent.logLLMTrafficì„ ì¼œë©´ system/user promptì™€ HTTP Request/Response ì›ë¬¸ì„ ëª¨ë‘ í™•ì¸í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+- **JSON íŒŒì‹± ì‹¤íŒ¨**: ëª¨ë¸ì´ JSONì„ ì˜ëª» ë°˜í™˜í•˜ë©´ ê²½ê³ ì™€ í•¨ê»˜ ì¬ì‹œë„í•˜ë¯€ë¡œ, í”„ë¡¬í”„íŠ¸ì— "ë°˜ë“œì‹œ ìœ íš¨í•œ JSON ê°ì²´ë¡œë§Œ ë‹µí•˜ë¼" ê°™ì€ ì§€ì‹œë¥¼ ë„£ì–´ ì•ˆì •ì„±ì„ ë†’ì…ë‹ˆë‹¤.
+- **ì„œë²„ ì¶©ëŒ**: ëª¨ë¸ë³„ Ollama í”„ë¡œì„¸ìŠ¤ê°€ ì‘ë‹µí•˜ì§€ ì•Šìœ¼ë©´ OllamaAutoLoader.StopAllServers()ë¥¼ í˜¸ì¶œí•˜ê±°ë‚˜ Unityë¥¼ ì¬ì‹œì‘í•´ í”„ë¡œì„¸ìŠ¤ë¥¼ ì¬ê¸°ë™í•˜ì„¸ìš”.
+- **ë„¤íŠ¸ì›Œí¬/ë¦¬ì†ŒìŠ¤**: Ollamaê°€ GPUë¥¼ ì‚¬ìš©í•  ìˆ˜ ì—†ì„ ë•ŒëŠ” OLLAMA_NUM_GPU_LAYERS ê°’ì„ ìˆ˜ì •í•˜ê±°ë‚˜ ëª¨ë¸ì„ ë” ì‘ì€ ë²„ì „ìœ¼ë¡œ êµì²´í•˜ì„¸ìš”.
+- **ìŠ¤íŠ¸ë¦¬ë° íŒŒì‹±**: settings.stream == trueì¼ ë•ŒëŠ” ì‘ë‹µì´ ì¤„ ë‹¨ìœ„ë¡œ ë“¤ì–´ì˜¤ë¯€ë¡œ UIì— ëˆ„ì í•˜ê±°ë‚˜ ë§ˆì§€ë§‰ ì¤„ì—ì„œ ë§ˆë¬´ë¦¬ ë¡œì§ì„ ìˆ˜í–‰í•´ì•¼ í•©ë‹ˆë‹¤.
+- **ì„œë¹„ìŠ¤ ë¯¸ë“±ë¡ ì˜¤ë¥˜**: ì²´ì¸ ë§í¬ëŠ” `OllamaServiceLocator.Require()`ë¥¼ í˜¸ì¶œí•˜ë¯€ë¡œ, ëŸ°íƒ€ì„ì—ëŠ” OllamaComponentê°€ ì”¬ì— ì¡´ì¬í•˜ê±°ë‚˜ `OllamaServiceLocator.Register(customService)`ë¥¼ ì§ì ‘ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤. ì—ë””í„° ì‹œë®¬ë ˆì´í„°ëŠ” ê¸°ë³¸ì ìœ¼ë¡œ OllamaEditorServiceë¥¼ ì‚¬ìš©í•©ë‹ˆë‹¤.
 
-## 8. È®Àå ¾ÆÀÌµğ¾î
-- IStateChainLink¸¦ »ó¼ÓÇØ Ä¿½ºÅÒ ¸µÅ©(¿¹: º¤ÅÍ ÀÓº£µù »ı¼º ÈÄ DB ÀúÀå, ÇÔ¼ö È£Ãâ °á°ú¸¦ »óÅÂ¿¡ ÁÖÀÔ)¸¦ Ãß°¡ÇÕ´Ï´Ù.
-- PromptTemplate¸¦ ´ëÃ¼/È®ÀåÇÏ¿© Á¶°ÇºÎ ºí·Ï, ¹İº¹ ±¸¹® µî ´õ Ç³ºÎÇÑ ÅÛÇÃ¸´ ±â´ÉÀ» ±¸ÇöÇÒ ¼ö ÀÖ½À´Ï´Ù.
-- OllamaSettings ¿¡¼ÂÀ» ¿©·¯ °³ ¸¸µé¾î ¸ğµ¨º° ¶Ç´Â ¿ëµµº°(¼­»ç, °æÁ¦, ÀüÅõ) ÆÄ¶ó¹ÌÅÍ¸¦ ºĞ¸®ÇÕ´Ï´Ù.
-- ÀÓº£µù API¸¦ Vector DB(¿¹: SQLite + cosine)¿Í °áÇÕÇÏ¸é °ÔÀÓ ³» Áö½Ä º£ÀÌ½º °Ë»öÀÌ³ª NPC ±â¾ï ½Ã½ºÅÛÀ» ±¸ÃàÇÒ ¼ö ÀÖ½À´Ï´Ù.
+## 8. í™•ì¥ ì•„ì´ë””ì–´
+- IStateChainLinkë¥¼ ìƒì†í•´ ì»¤ìŠ¤í…€ ë§í¬(ì˜ˆ: ë²¡í„° ì„ë² ë”© ìƒì„± í›„ DB ì €ì¥, í•¨ìˆ˜ í˜¸ì¶œ ê²°ê³¼ë¥¼ ìƒíƒœì— ì£¼ì…)ë¥¼ ì¶”ê°€í•©ë‹ˆë‹¤.
+- PromptTemplateë¥¼ ëŒ€ì²´/í™•ì¥í•˜ì—¬ ì¡°ê±´ë¶€ ë¸”ë¡, ë°˜ë³µ êµ¬ë¬¸ ë“± ë” í’ë¶€í•œ í…œí”Œë¦¿ ê¸°ëŠ¥ì„ êµ¬í˜„í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+- OllamaSettings ì—ì…‹ì„ ì—¬ëŸ¬ ê°œ ë§Œë“¤ì–´ ëª¨ë¸ë³„ ë˜ëŠ” ìš©ë„ë³„(ì„œì‚¬, ê²½ì œ, ì „íˆ¬) íŒŒë¼ë¯¸í„°ë¥¼ ë¶„ë¦¬í•©ë‹ˆë‹¤.
+- ì„ë² ë”© APIë¥¼ Vector DB(ì˜ˆ: SQLite + cosine)ì™€ ê²°í•©í•˜ë©´ ê²Œì„ ë‚´ ì§€ì‹ ë² ì´ìŠ¤ ê²€ìƒ‰ì´ë‚˜ NPC ê¸°ì–µ ì‹œìŠ¤í…œì„ êµ¬ì¶•í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 
-## 9. Prompt Pipeline ±×·¡ÇÁ ¿¡µğÅÍ »ç¿ë¹ı
-»õ·Î¿î ±×·¡ÇÁ ¿¡µğÅÍ´Â ScriptableObject ±â¹İÀÇ PromptPipelineAssetÀ» ½Ã°¢ÀûÀ¸·Î ¼³°èÇÏ°í, »óÅÂ Å° Èå¸§À» °ËÁõÇÏ¸ç, Áï½Ã ½Ã¹Ä·¹ÀÌ¼ÇÇÒ ¼ö ÀÖµµ·Ï µ½´Â µµ±¸ÀÔ´Ï´Ù. ¾Æ·¡ ¼ø¼­¸¦ Âü°íÇØ È°¿ëÇÏ¼¼¿ä.
+## 9. Prompt Pipeline ê·¸ë˜í”„ ì—ë””í„° ì‚¬ìš©ë²•
+ìƒˆë¡œìš´ ê·¸ë˜í”„ ì—ë””í„°ëŠ” ScriptableObject ê¸°ë°˜ì˜ PromptPipelineAssetì„ ì‹œê°ì ìœ¼ë¡œ ì„¤ê³„í•˜ê³ , ìƒíƒœ í‚¤ íë¦„ì„ ê²€ì¦í•˜ë©°, ì¦‰ì‹œ ì‹œë®¬ë ˆì´ì…˜í•  ìˆ˜ ìˆë„ë¡ ë•ëŠ” ë„êµ¬ì…ë‹ˆë‹¤. ì•„ë˜ ìˆœì„œë¥¼ ì°¸ê³ í•´ í™œìš©í•˜ì„¸ìš”.
 
-### 9.1 ¿¡µğÅÍ ¿­±â¿Í ÀÚ»ê ¼±ÅÃ
-1. Unity ¸Ş´º¿¡¼­ Window > LLM > Prompt Pipeline Editor¸¦ Å¬¸¯ÇØ Ã¢À» ¿±´Ï´Ù.
-2. »ó´Ü Åø¹ÙÀÇ Pipeline Asset ÇÊµå¿¡ ±âÁ¸ ÀÚ»êÀ» ÁöÁ¤ÇÏ°Å³ª, Project Ã¢¿¡¼­ Create > LLM > Prompt PipelineÀ» ÅëÇØ »õ ÀÚ»êÀ» ¸¸µç µÚ µå·¡±×ÇØ ³Ö½À´Ï´Ù.
-3. Åø¹Ù ¹öÆ°:
-   - Save: ÇöÀç ÀÚ»êÀ» ÀúÀåÇÕ´Ï´Ù.
-   - Validate: Analyzer °á°ú(´Ü°è ¼ö, »óÅÂ Å° ¼ö)¸¦ ÆË¾÷À¸·Î È®ÀÎÇÕ´Ï´Ù.
-   - Run: ÀÔ·Â ÆĞ³Î °ªÀ¸·Î Áï½Ã ½Ã¹Ä·¹ÀÌ¼ÇÀ» ¼öÇàÇÕ´Ï´Ù.
-   - Ping Asset: Project Ã¢¿¡¼­ ÇØ´ç ÀÚ»êÀ» ÇÏÀÌ¶óÀÌÆ®ÇÕ´Ï´Ù.
+### 9.1 ì—ë””í„° ì—´ê¸°ì™€ ìì‚° ì„ íƒ
+1. Unity ë©”ë‰´ì—ì„œ Window > LLM > Prompt Pipeline Editorë¥¼ í´ë¦­í•´ ì°½ì„ ì—½ë‹ˆë‹¤.
+2. ìƒë‹¨ íˆ´ë°”ì˜ Pipeline Asset í•„ë“œì— ê¸°ì¡´ ìì‚°ì„ ì§€ì •í•˜ê±°ë‚˜, Project ì°½ì—ì„œ Create > LLM > Prompt Pipelineì„ í†µí•´ ìƒˆ ìì‚°ì„ ë§Œë“  ë’¤ ë“œë˜ê·¸í•´ ë„£ìŠµë‹ˆë‹¤.
+3. íˆ´ë°” ë²„íŠ¼:
+   - Save: í˜„ì¬ ìì‚°ì„ ì €ì¥í•©ë‹ˆë‹¤.
+   - Validate: Analyzer ê²°ê³¼(ë‹¨ê³„ ìˆ˜, ìƒíƒœ í‚¤ ìˆ˜)ë¥¼ íŒì—…ìœ¼ë¡œ í™•ì¸í•©ë‹ˆë‹¤.
+   - Run: ì…ë ¥ íŒ¨ë„ ê°’ìœ¼ë¡œ ì¦‰ì‹œ ì‹œë®¬ë ˆì´ì…˜ì„ ìˆ˜í–‰í•©ë‹ˆë‹¤.
+   - Ping Asset: Project ì°½ì—ì„œ í•´ë‹¹ ìì‚°ì„ í•˜ì´ë¼ì´íŠ¸í•©ë‹ˆë‹¤.
 
-### 9.2 ±×·¡ÇÁ ±¸¼º ¿ä¼Ò ÀÌÇØ
-- Step Node: °¢ PromptPipelineStepÀ» ³ªÅ¸³»¸ç, Å¸ÀÌÆ²¿¡´Â ¼ø¹ø/ÀÌ¸§/StepKind°¡ Ç¥½ÃµÇ°í »ö»óÀ¸·Î Á¾·ù¸¦ ±¸ºĞÇÕ´Ï´Ù. »ó´Ü Exec Æ÷Æ®´Â ½ÇÇà ¼ø¼­¸¦ ³ªÅ¸³»¸ç ÇÏ³ªÀÇ ¼±Çü Ã¼ÀÎ¸¸ Çã¿ëµË´Ï´Ù. ÇÏ´Ü State Æ÷Æ®´Â Analyzer°¡ ÀÚµ¿À¸·Î »óÅÂ Å°¸¦ ¿¬°áÇÏ´Â ½Ã°¢È­ Àü¿ë Æ÷Æ®ÀÔ´Ï´Ù.
-- Node º»¹®¿¡¼­ OllamaSettings, User Prompt Template, JSON Àç½Ãµµ ¿É¼Ç, Custom Link Å¸ÀÔ¸íÀ» ¹Ù·Î ÆíÁıÇÒ ¼ö ÀÖ½À´Ï´Ù. Insert State Key ¹öÆ°Àº Analyzer°¡ Ã£¾Æ³½ Å°¸¦ µå·Ó´Ù¿îÀ¸·Î º¸¿© ÁÖ°í ÅÛÇÃ¸´¿¡ {{keyName}} Çü½ÄÀ¸·Î »ğÀÔÇÕ´Ï´Ù.
-- State Flow Connections: Analyzer°¡ °¨ÁöÇÑ Å°¸¦ ±âÁØÀ¸·Î Pipeline Input/Output ³ëµå¿Í Step ³ëµå°¡ Á÷Á¢ ¿¬°áµË´Ï´Ù. °¢ StepÀÇ Reads/Writes ¶óº§¸¸ ºÁµµ Àü¡¤ÈÄ ´Ü°è¿¡¼­ ¾î¶² °ªÀÌ ¿À°¡´ÂÁö ÇÑ´«¿¡ ÆÄ¾ÇÇÒ ¼ö ÀÖ½À´Ï´Ù.
-- Pipeline Input/Output Node: ¿ÜºÎ ÀÔ·ÂÀÌ ÇÊ¿äÇÑ Å°¿Í ÃÖÁ¾À¸·Î ³ëÃâµÇ´Â Å°¸¦ Áı¾àÇÏ°í Step Node¿Í ÀÚµ¿ ¿¬°áÇÕ´Ï´Ù.
-- OllamaSettings Inspector: Format ÇÊµå´Â Á÷Á¢ ¼öÁ¤ÇÏÁö ¾Ê°í JSON Output Fields ºô´õ¸¦ ÅëÇØ °ü¸®ÇÕ´Ï´Ù. + Add Field ¹öÆ°À¸·Î Å°¸¦ Ãß°¡ÇÏ°í Field Name/Type/Example/DescriptionÀ» ÀÔ·ÂÇÏ¸é JSON Schema°¡ ÀÚµ¿ »ı¼ºµÇ¾î Analyzer¿Í Runtime Format¿¡ µ¿½Ã¿¡ ¹İ¿µµË´Ï´Ù. Array Å¸ÀÔÀ» ¼±ÅÃÇÏ¸é Element Typeµµ ÇÔ²² ÁöÁ¤ÇØ ¹è¿­ ÀÀ´ä ±¸Á¶¸¦ ¸ğµ¨¸µÇÒ ¼ö ÀÖ½À´Ï´Ù.
+### 9.2 ê·¸ë˜í”„ êµ¬ì„± ìš”ì†Œ ì´í•´
+- Step Node: ê° PromptPipelineStepì„ ë‚˜íƒ€ë‚´ë©°, íƒ€ì´í‹€ì—ëŠ” ìˆœë²ˆ/ì´ë¦„/StepKindê°€ í‘œì‹œë˜ê³  ìƒ‰ìƒìœ¼ë¡œ ì¢…ë¥˜ë¥¼ êµ¬ë¶„í•©ë‹ˆë‹¤. ìƒë‹¨ Exec í¬íŠ¸ëŠ” ì‹¤í–‰ ìˆœì„œë¥¼ ë‚˜íƒ€ë‚´ë©° í•˜ë‚˜ì˜ ì„ í˜• ì²´ì¸ë§Œ í—ˆìš©ë©ë‹ˆë‹¤. í•˜ë‹¨ State í¬íŠ¸ëŠ” Analyzerê°€ ìë™ìœ¼ë¡œ ìƒíƒœ í‚¤ë¥¼ ì—°ê²°í•˜ëŠ” ì‹œê°í™” ì „ìš© í¬íŠ¸ì…ë‹ˆë‹¤.
+- Step Kind: Json LLMì€ JSON Output Fields ê¸°ë°˜ìœ¼ë¡œ í‚¤ë¥¼ ìƒì‚°í•˜ê³  ì¬ì‹œë„ ì˜µì…˜ì„ ì‚¬ìš©í•©ë‹ˆë‹¤. Completion LLMì€ ë‹¨ìˆœ í…ìŠ¤íŠ¸ ì™„ì„±ìœ¼ë¡œ `response` í‚¤ë¥¼ ì¶œë ¥í•˜ë©° JSON Output FieldsëŠ” ë¬´ì‹œë©ë‹ˆë‹¤. Custom LinkëŠ” IStateChainLink êµ¬í˜„ì²´ëª…ì„ Stringìœ¼ë¡œ ì…ë ¥í•´ ì‹¤í–‰í•©ë‹ˆë‹¤.
+- Node ë³¸ë¬¸ì—ì„œ OllamaSettings, User Prompt Template, JSON ì¬ì‹œë„ ì˜µì…˜, Custom Link íƒ€ì…ëª…ì„ ë°”ë¡œ í¸ì§‘í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤. Insert State Key ë²„íŠ¼ì€ Analyzerê°€ ì°¾ì•„ë‚¸ í‚¤ë¥¼ ë“œë¡­ë‹¤ìš´ìœ¼ë¡œ ë³´ì—¬ ì£¼ê³  í…œí”Œë¦¿ì— {{keyName}} í˜•ì‹ìœ¼ë¡œ ì‚½ì…í•©ë‹ˆë‹¤.
+- State Flow Connections: Analyzerê°€ ê°ì§€í•œ í‚¤ë¥¼ ê¸°ì¤€ìœ¼ë¡œ Pipeline Input/Output ë…¸ë“œì™€ Step ë…¸ë“œê°€ ì§ì ‘ ì—°ê²°ë©ë‹ˆë‹¤. ê° Stepì˜ Reads/Writes ë¼ë²¨ë§Œ ë´ë„ ì „Â·í›„ ë‹¨ê³„ì—ì„œ ì–´ë–¤ ê°’ì´ ì˜¤ê°€ëŠ”ì§€ í•œëˆˆì— íŒŒì•…í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+- Pipeline Input/Output Node: ì™¸ë¶€ ì…ë ¥ì´ í•„ìš”í•œ í‚¤ì™€ ìµœì¢…ìœ¼ë¡œ ë…¸ì¶œë˜ëŠ” í‚¤ë¥¼ ì§‘ì•½í•˜ê³  Step Nodeì™€ ìë™ ì—°ê²°í•©ë‹ˆë‹¤.
+- OllamaSettings Inspector: Format í•„ë“œëŠ” ì§ì ‘ ìˆ˜ì •í•˜ì§€ ì•Šê³  JSON Output Fields ë¹Œë”ë¥¼ í†µí•´ ê´€ë¦¬í•©ë‹ˆë‹¤. + Add Field ë²„íŠ¼ìœ¼ë¡œ í‚¤ë¥¼ ì¶”ê°€í•˜ê³  Field Name/Type/Example/Descriptionì„ ì…ë ¥í•˜ë©´ JSON Schemaê°€ ìë™ ìƒì„±ë˜ì–´ Analyzerì™€ Runtime Formatì— ë™ì‹œì— ë°˜ì˜ë©ë‹ˆë‹¤. Array íƒ€ì…ì„ ì„ íƒí•˜ë©´ Element Typeë„ í•¨ê»˜ ì§€ì •í•´ ë°°ì—´ ì‘ë‹µ êµ¬ì¡°ë¥¼ ëª¨ë¸ë§í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
 
-### 9.3 ½ÇÇà ¼ø¼­ º¯°æ
-1. Step NodeÀÇ Exec In/Out Æ÷Æ®¸¦ µå·¡±×ÇØ »õ ¿¬°áÀ» ¸¸µé¸é ±×·¡ÇÁ°¡ À¯È¿ÇÑ ¼±Çü Ã¼ÀÎÀÎÁö °Ë»çÇÕ´Ï´Ù.
-2. Ã¼ÀÎÀÌ ¿Ã¹Ù¸£¸é PromptPipelineAsset.steps ¸®½ºÆ®°¡ ÇØ´ç ¼ø¼­·Î ÀçÁ¤·ÄµÇ°í Analyzer°¡ Àç½ÇÇàµË´Ï´Ù.
-3. ºĞ±â³ª ·çÇÁ°¡ »ı±â¸é ÄÜ¼Ö¿¡ °æ°í°¡ ÂïÈ÷¸ç ±âÁ¸ ¼ø¼­°¡ À¯ÁöµÇ¹Ç·Î, ´ÜÀÏ Ã¼ÀÎÀÌ µÇµµ·Ï ´Ù½Ã ¿¬°áÇØ¾ß ÇÕ´Ï´Ù.
+### 9.3 ì‹¤í–‰ ìˆœì„œ ë³€ê²½
+1. Step Nodeì˜ Exec In/Out í¬íŠ¸ë¥¼ ë“œë˜ê·¸í•´ ìƒˆ ì—°ê²°ì„ ë§Œë“¤ë©´ ê·¸ë˜í”„ê°€ ìœ íš¨í•œ ì„ í˜• ì²´ì¸ì¸ì§€ ê²€ì‚¬í•©ë‹ˆë‹¤.
+2. ì²´ì¸ì´ ì˜¬ë°”ë¥´ë©´ PromptPipelineAsset.steps ë¦¬ìŠ¤íŠ¸ê°€ í•´ë‹¹ ìˆœì„œë¡œ ì¬ì •ë ¬ë˜ê³  Analyzerê°€ ì¬ì‹¤í–‰ë©ë‹ˆë‹¤.
+3. ë¶„ê¸°ë‚˜ ë£¨í”„ê°€ ìƒê¸°ë©´ ì½˜ì†”ì— ê²½ê³ ê°€ ì°íˆë©° ê¸°ì¡´ ìˆœì„œê°€ ìœ ì§€ë˜ë¯€ë¡œ, ë‹¨ì¼ ì²´ì¸ì´ ë˜ë„ë¡ ë‹¤ì‹œ ì—°ê²°í•´ì•¼ í•©ë‹ˆë‹¤.
 
-### 9.4 ½Ã¹Ä·¹ÀÌ¼Ç ÆĞ³Î
-1. Analyzer°¡ InputÀ¸·Î ºĞ·ùÇÑ Å°µéÀÌ ¿ìÃø ÆĞ³Î ÅØ½ºÆ® ÇÊµå·Î Ç¥½ÃµË´Ï´Ù. Å×½ºÆ® °ª, JSON Á¶°¢ µîÀ» ÀÔ·ÂÇÏ¼¼¿ä.
-2. Run Pipeline ¹öÆ°À» ´©¸£¸é EditorCoroutineRunner°¡ StateSequentialChainExecutor¸¦ ±¸¼ºÇØ ¸ğµç StepÀ» ¼øÂ÷ ½ÇÇàÇÕ´Ï´Ù.
-3. ¿Ï·áµÇ¸é »óÅÂ ¶óº§¿¡ ½Ã°£ÀÌ °»½ÅµÇ°í, Pipeline Output ³ëµå¸¦ ÅëÇØ ¾î¶² Å°°¡ ¿ÜºÎ·Î ³ëÃâµÇ´ÂÁö È®ÀÎÇÒ ¼ö ÀÖ½À´Ï´Ù. ½ÇÆĞÇÏ¸é ¶óº§°ú Console ¸ğµÎ¿¡ ¿À·ù ¸Ş½ÃÁö°¡ Ãâ·ÂµË´Ï´Ù.
+### 9.4 ì‹œë®¬ë ˆì´ì…˜ íŒ¨ë„
+1. Analyzerê°€ Inputìœ¼ë¡œ ë¶„ë¥˜í•œ í‚¤ë“¤ì´ ìš°ì¸¡ íŒ¨ë„ í…ìŠ¤íŠ¸ í•„ë“œë¡œ í‘œì‹œë©ë‹ˆë‹¤. í…ŒìŠ¤íŠ¸ ê°’, JSON ì¡°ê° ë“±ì„ ì…ë ¥í•˜ì„¸ìš”.
+2. Run Pipeline ë²„íŠ¼ì„ ëˆ„ë¥´ë©´ EditorCoroutineRunnerê°€ StateSequentialChainExecutorë¥¼ êµ¬ì„±í•´ ëª¨ë“  Stepì„ ìˆœì°¨ ì‹¤í–‰í•©ë‹ˆë‹¤. OllamaComponentê°€ ì—†ì„ ë•ŒëŠ” ìë™ìœ¼ë¡œ OllamaEditorServiceê°€ ì‚¬ìš©ë©ë‹ˆë‹¤.
+3. ì™„ë£Œë˜ë©´ ìƒíƒœ ë¼ë²¨ì— ì‹œê°„ì´ ê°±ì‹ ë˜ê³ , Pipeline Output ë…¸ë“œë¥¼ í†µí•´ ì–´ë–¤ í‚¤ê°€ ì™¸ë¶€ë¡œ ë…¸ì¶œë˜ëŠ”ì§€ í™•ì¸í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤. ì‹¤íŒ¨í•˜ë©´ ë¼ë²¨ê³¼ Console ëª¨ë‘ì— ì˜¤ë¥˜ ë©”ì‹œì§€ê°€ ì¶œë ¥ë©ë‹ˆë‹¤.
 
-### 9.5 ÆÁ
-- ¾À¿¡ OllamaComponent ÀÎ½ºÅÏ½º°¡ ¾øÀ¸¸é ½Ã¹Ä·¹ÀÌ¼ÇÀÌ ÀÀ´äÀ» ¹ŞÁö ¸øÇÒ ¼ö ÀÖÀ¸´Ï ¹Ì¸® ¹èÄ¡ÇØ µÎ¼¼¿ä.
-- Custom Link ´Ü°è´Â Analyzer°¡ ÀĞ±â/¾²±â Å°¸¦ ÃßÀûÇÏÁö ¾ÊÀ¸¹Ç·Î ÇÊ¿äÇÑ Å°¸¦ ¹®¼­·Î º°µµ ±â·ÏÇÏ´Â °ÍÀÌ ÁÁ½À´Ï´Ù.
-- ±×·¡ÇÁ Ã¢À» ´İ¾Ò´Ù°¡ ´Ù½Ã ¿­¸é Analyzer°¡ Àç½ÇÇàµÇ¾î »óÅÂ°¡ ÃÖ½ÅÀ¸·Î À¯ÁöµË´Ï´Ù. Undo/Redoµµ ÀÚµ¿ ±â·ÏµÇ¹Ç·Î ÀÚÀ¯·Ó°Ô ÆíÁıÇØµµ µË´Ï´Ù.
-
+### 9.5 íŒ
+- Completion ë‹¨ê³„ì˜ ìµœì¢… ë‹µë³€ì€ í•­ìƒ `PromptPipelineConstants.AnswerKey`(`response`)ì— ì €ì¥ë˜ë¯€ë¡œ í›„ì† ë‹¨ê³„ë‚˜ ì¶œë ¥ ë…¸ë“œì—ì„œ ì´ í‚¤ë¥¼ ì°¸ì¡°í•˜ì„¸ìš”.
+- Custom Link ë‹¨ê³„ëŠ” Analyzerê°€ ì½ê¸°/ì“°ê¸° í‚¤ë¥¼ ì¶”ì í•˜ì§€ ì•Šìœ¼ë¯€ë¡œ í•„ìš”í•œ í‚¤ë¥¼ ë¬¸ì„œë¡œ ë³„ë„ ê¸°ë¡í•˜ëŠ” ê²ƒì´ ì¢‹ìŠµë‹ˆë‹¤.
+- ê·¸ë˜í”„ ì°½ì„ ë‹«ì•˜ë‹¤ê°€ ë‹¤ì‹œ ì—´ë©´ Analyzerê°€ ì¬ì‹¤í–‰ë˜ì–´ ìƒíƒœê°€ ìµœì‹ ìœ¼ë¡œ ìœ ì§€ë©ë‹ˆë‹¤. Undo/Redoë„ ìë™ ê¸°ë¡ë˜ë¯€ë¡œ ììœ ë¡­ê²Œ í¸ì§‘í•´ë„ ë©ë‹ˆë‹¤.
