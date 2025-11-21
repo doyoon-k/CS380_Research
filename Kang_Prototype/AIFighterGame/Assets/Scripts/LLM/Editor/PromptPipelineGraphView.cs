@@ -31,6 +31,9 @@ public class PromptPipelineGraphView : GraphView
     private bool _skipSnapshotPersistenceOnce;
     private Vector3 _lastViewPosition;
     private Vector3 _lastViewScale = Vector3.one;
+    private Vector2 _lastMouseScreenPosition;
+    private Vector2 _lastMouseGraphPosition;
+    private bool _hasLastMousePosition;
 
     public event Action<AnalyzedStateModel> StateModelChanged;
     public AnalyzedStateModel CurrentStateModel => _stateModel;
@@ -51,10 +54,14 @@ public class PromptPipelineGraphView : GraphView
         this.AddManipulator(new SelectionDragger());
         this.AddManipulator(new RectangleSelector());
 
+        RegisterCallback<MouseDownEvent>(OnMouseDownStorePosition, TrickleDown.TrickleDown);
+
         graphViewChanged = OnGraphViewChanged;
         nodeCreationRequest = ctx =>
         {
-            Vector2 graphPosition = contentViewContainer.WorldToLocal(ctx.screenMousePosition);
+            Vector2 graphPosition = _hasLastMousePosition
+                ? _lastMouseGraphPosition
+                : contentViewContainer.WorldToLocal(ctx.screenMousePosition);
             CreateStepAt(graphPosition);
         };
 
@@ -713,7 +720,7 @@ public class PromptPipelineGraphView : GraphView
         {
             ExecuteCommand("Connect/Disconnect Steps", () =>
             {
-                ApplyExecutionOrderFromGraph();
+                ApplyExecutionOrderFromGraph(logWarning: false);
             }, refreshState: true, reloadAfter: true);
         }
 
@@ -728,7 +735,7 @@ public class PromptPipelineGraphView : GraphView
                inputKind == StepPortKind.ExecIn;
     }
 
-    private void ApplyExecutionOrderFromGraph()
+    private void ApplyExecutionOrderFromGraph(bool logWarning = false)
     {
         if (_asset == null || _stepNodes.Count == 0)
         {
@@ -738,7 +745,10 @@ public class PromptPipelineGraphView : GraphView
         var orderedNodes = BuildExecutionChain();
         if (orderedNodes == null || orderedNodes.Count != _asset.steps.Count)
         {
-            Debug.LogWarning("Prompt Pipeline graph must form a single linear chain before order can be updated.");
+            if (logWarning)
+            {
+                Debug.LogWarning("Prompt Pipeline graph must form a single linear chain before order can be updated.");
+            }
             return;
         }
 
@@ -829,6 +839,13 @@ public class PromptPipelineGraphView : GraphView
     {
         var scale = contentViewContainer.resolvedStyle.scale;
         return scale.value;
+    }
+
+    private void OnMouseDownStorePosition(MouseDownEvent evt)
+    {
+        _lastMouseScreenPosition = evt.mousePosition;
+        _lastMouseGraphPosition = contentViewContainer.WorldToLocal(evt.mousePosition);
+        _hasLastMousePosition = true;
     }
 
     private Vector2 GetInputNodePosition()
@@ -1003,6 +1020,7 @@ public class PromptPipelineGraphView : GraphView
             };
 
             _asset.steps.Add(step);
+            SetInitialSnapshotPositionForNewStep(graphPosition);
             MarkAssetDirty();
         }, reloadAfter: true);
     }
@@ -1071,8 +1089,31 @@ public class PromptPipelineGraphView : GraphView
             }
         }
 
+        int targetCount = Math.Max(0, (_asset.steps?.Count ?? 0) - sorted.Count);
         _asset.layoutSettings.snapshotPositionsInitialized =
-            positions.Count == _asset.steps.Count && positions.Count > 0;
+            positions.Count == targetCount && positions.Count > 0;
+    }
+
+    private void SetInitialSnapshotPositionForNewStep(Vector2 stepGraphPosition)
+    {
+        if (_asset?.layoutSettings == null)
+        {
+            return;
+        }
+
+        var layout = _asset.layoutSettings;
+        layout.snapshotPositions ??= new List<Vector2>();
+
+        int newIndex = Mathf.Max(0, (_asset.steps?.Count ?? 0) - 1);
+        while (layout.snapshotPositions.Count <= newIndex)
+        {
+            layout.snapshotPositions.Add(Vector2.zero);
+        }
+
+        const float stepWidth = 320f;
+        const float offset = 60f;
+        layout.snapshotPositions[newIndex] = stepGraphPosition + new Vector2(stepWidth + offset, 0f);
+        layout.snapshotPositionsInitialized = true;
     }
 }
 

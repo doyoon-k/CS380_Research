@@ -15,24 +15,15 @@ MonoBehaviour:
   displayName: New Prompt Pipeline
   description: 
   steps:
-  - stepName: Greeting
+  - stepName: Step 1
     stepKind: 0
-    ollamaSettings: {fileID: 11400000, guid: 84801d43b9f1d3943ba362bcf9f3309e, type: 2}
-    userPromptTemplate: Greet to Mr. {{Name}}
+    ollamaSettings: {fileID: 0}
+    userPromptTemplate: 
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
     customLinkParameters: []
-    editorPosition: {x: -999, y: 333}
-  - stepName: Step 2
-    stepKind: 0
-    ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
-    userPromptTemplate: Answer to {{response}}
-    jsonMaxRetries: 3
-    jsonRetryDelaySeconds: 0.1
-    customLinkTypeName: 
-    customLinkParameters: []
-    editorPosition: {x: -265, y: 333}
+    editorPosition: {x: -906, y: 363}
   - stepName: Step 3
     stepKind: 0
     ollamaSettings: {fileID: 0}
@@ -41,17 +32,26 @@ MonoBehaviour:
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: 
     customLinkParameters: []
-    editorPosition: {x: 486, y: 333}
+    editorPosition: {x: -99, y: 383}
+  - stepName: Step 3
+    stepKind: 0
+    ollamaSettings: {fileID: 0}
+    userPromptTemplate: 
+    jsonMaxRetries: 3
+    jsonRetryDelaySeconds: 0.1
+    customLinkTypeName: 
+    customLinkParameters: []
+    editorPosition: {x: 671, y: 381}
   layoutSettings:
     inputNodePosition: {x: -1219, y: 383}
-    outputNodePosition: {x: 1204, y: 398}
+    outputNodePosition: {x: 1226, y: 427}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 653, y: 100, z: 0}
+    viewPosition: {x: 537, y: 83, z: 0}
     viewScale: {x: 0.43232757, y: 0.43232757, z: 1}
     viewInitialized: 1
     snapshotPositions:
-    - {x: -559, y: 507}
-    - {x: 213, y: 493}
-    - {x: 925, y: 523}
+    - {x: -489, y: 527}
+    - {x: 362, y: 481}
+    - {x: 1053, y: 428}
     snapshotPositionsInitialized: 1
