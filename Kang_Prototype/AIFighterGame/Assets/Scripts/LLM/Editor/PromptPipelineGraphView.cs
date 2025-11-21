@@ -6,6 +6,8 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Reflection;
+using System.Globalization;
 
 public class PromptPipelineGraphView : GraphView
 {
@@ -980,7 +982,8 @@ internal class PromptPipelineStepNode : Node
     private readonly TextField _userPromptField;
     private readonly IntegerField _maxRetriesField;
     private readonly FloatField _retryDelayField;
-    private readonly TextField _customTypeField;
+    private readonly DropdownField _customTypeDropdown;
+    private readonly VisualElement _customParamsContainer;
     private readonly Button _insertStateKeyButton;
     private readonly Label _readsLabel;
     private readonly Label _writesLabel;
@@ -1160,12 +1163,40 @@ internal class PromptPipelineStepNode : Node
 
         _customOptionsContainer = new VisualElement { style = { flexDirection = FlexDirection.Column } };
         _customOptionsContainer.Add(new Label("Custom Link Options"));
-        _customTypeField = new TextField("Type Name") { value = step.customLinkTypeName };
-        _customTypeField.RegisterValueChangedCallback(evt =>
+
+        string initialCustomLabel = CustomLinkTypeProvider.FindLabelForType(step.customLinkTypeName)
+            ?? CustomLinkTypeProvider.Labels.FirstOrDefault();
+
+        var customTypeLabels = CustomLinkTypeProvider.Labels.Any()
+            ? CustomLinkTypeProvider.Labels.ToList()
+            : new List<string> { "(No Custom Link types found)" };
+        _customTypeDropdown = new DropdownField(
+            "Known Types",
+            customTypeLabels,
+            initialCustomLabel);
+        _customTypeDropdown.SetEnabled(CustomLinkTypeProvider.Labels.Any());
+        _customTypeDropdown.RegisterValueChangedCallback(evt =>
         {
-            ApplyChange("Edit Custom Link Type", () => step.customLinkTypeName = evt.newValue, refreshState: false);
+            string selected = evt.newValue;
+            if (CustomLinkTypeProvider.TryResolveTypeName(selected, out string typeName))
+            {
+                ApplyChange("Select Custom Link Type", () =>
+                {
+                    step.customLinkTypeName = typeName;
+                    SyncParamsWithConstructor(typeName, force: true);
+                }, refreshState: false);
+            }
         });
-        _customOptionsContainer.Add(_customTypeField);
+        _customOptionsContainer.Add(_customTypeDropdown);
+
+        _customParamsContainer = new VisualElement { style = { flexDirection = FlexDirection.Column } };
+        _customParamsContainer.Add(new Label("Custom Parameters (auto-detected from constructor; edit to override)"));
+        var addParamButton = new Button(OnAddCustomParameter)
+        {
+            text = "Add Parameter"
+        };
+        _customParamsContainer.Add(addParamButton);
+        _customOptionsContainer.Add(_customParamsContainer);
         extensionContainer.Add(_customOptionsContainer);
 
         _readsLabel = new Label("Reads: -");
@@ -1174,6 +1205,8 @@ internal class PromptPipelineStepNode : Node
         extensionContainer.Add(_writesLabel);
 
         RefreshSections();
+        RebuildCustomParamsUI();
+        SyncParamsWithConstructor(step.customLinkTypeName, force: false);
         UpdateSettingsInspector();
         RefreshExpandedState();
         if (expanded)
@@ -1240,6 +1273,153 @@ internal class PromptPipelineStepNode : Node
         UpdateHeaderStyle();
     }
 
+    private void SyncParamsWithConstructor(string typeName, bool force)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+        {
+            return;
+        }
+
+        var type = Type.GetType(typeName);
+        if (type == null)
+        {
+            return;
+        }
+
+        // Do not overwrite if already have params unless forced.
+        if (!force && Step.customLinkParameters != null && Step.customLinkParameters.Count > 0)
+        {
+            return;
+        }
+
+        var ctor = CustomLinkTypeProvider.FindConstructorParameters(type);
+        if (ctor == null || ctor.Length == 0)
+        {
+            return;
+        }
+
+        ApplyChange("Sync Custom Params", () =>
+        {
+            Step.customLinkParameters = ctor
+                .Select(p => new CustomLinkParameter { key = p.Name, value = string.Empty })
+                .ToList();
+            RebuildCustomParamsUI();
+        }, refreshState: false);
+    }
+
+    private void RebuildCustomParamsUI()
+    {
+        if (Step.customLinkParameters == null)
+        {
+            Step.customLinkParameters = new List<CustomLinkParameter>();
+        }
+
+        // Clear existing rows except the header and add button (first two elements)
+        while (_customParamsContainer.childCount > 2)
+        {
+            _customParamsContainer.RemoveAt(_customParamsContainer.childCount - 1);
+        }
+
+        for (int i = 0; i < Step.customLinkParameters.Count; i++)
+        {
+            AddParamRow(i);
+        }
+    }
+
+    private void AddParamRow(int index)
+    {
+        var param = Step.customLinkParameters[index];
+        var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginBottom = 2, alignItems = Align.Center } };
+
+        var keyLabel = new Label(param.key ?? "(unnamed)")
+        {
+            style =
+            {
+                minWidth = 120,
+                maxWidth = 200,
+                unityFontStyleAndWeight = FontStyle.Bold,
+                marginRight = 6
+            }
+        };
+        row.Add(keyLabel);
+
+        var valueField = new TextField()
+        {
+            value = param.value,
+            style = { flexGrow = 1f, marginRight = 4 }
+        };
+        var warningLabel = new Label
+        {
+            style =
+            {
+                color = Color.red,
+                unityFontStyleAndWeight = FontStyle.Italic,
+                display = DisplayStyle.None,
+                marginLeft = 4
+            }
+        };
+
+        var parameterInfo = CustomLinkTypeProvider.FindParameter(Step.customLinkTypeName, param.key);
+        valueField.RegisterValueChangedCallback(evt =>
+        {
+            ApplyChange("Edit Custom Param Value", () => param.value = evt.newValue, refreshState: false);
+            ValidateParamValue(parameterInfo, evt.newValue, warningLabel);
+        });
+        row.Add(valueField);
+        row.Add(warningLabel);
+
+        // initial validation
+        ValidateParamValue(parameterInfo, param.value, warningLabel);
+
+        var removeButton = new Button(() =>
+        {
+            ApplyChange("Remove Custom Param", () =>
+            {
+                Step.customLinkParameters.RemoveAt(index);
+                RebuildCustomParamsUI();
+            }, refreshState: false);
+        })
+        { text = "X", style = { width = 24, height = 20 } };
+        row.Add(removeButton);
+
+        _customParamsContainer.Add(row);
+    }
+
+    private void OnAddCustomParameter()
+    {
+        ApplyChange("Add Custom Param", () =>
+        {
+            Step.customLinkParameters.Add(new CustomLinkParameter { key = "key", value = string.Empty });
+            RebuildCustomParamsUI();
+        }, refreshState: false);
+    }
+
+    private void ValidateParamValue(ParameterInfo parameterInfo, string value, Label warningLabel)
+    {
+        if (warningLabel == null)
+        {
+            return;
+        }
+
+        string error = null;
+        if (parameterInfo != null)
+        {
+            Type targetType = parameterInfo.ParameterType;
+            error = targetType switch
+            {
+                Type t when t == typeof(int) && !int.TryParse(value, out _) => "Requires int",
+                Type t when t == typeof(long) && !long.TryParse(value, out _) => "Requires long",
+                Type t when t == typeof(float) && !float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out _) => "Requires float",
+                Type t when t == typeof(double) && !double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out _) => "Requires double",
+                Type t when t == typeof(bool) && !bool.TryParse(value, out _) => "Requires bool (true/false)",
+                _ => null
+            };
+        }
+
+        warningLabel.style.display = string.IsNullOrEmpty(error) ? DisplayStyle.None : DisplayStyle.Flex;
+        warningLabel.text = error ?? string.Empty;
+    }
+
     private void OnInsertStateKeyClicked()
     {
         if (_availableKeys == null || _availableKeys.Count == 0)
@@ -1301,7 +1481,7 @@ internal class PromptPipelineStepNode : Node
         OllamaSettingsEditor.JsonFieldsEnabled = isJsonStep;
         OllamaSettingsEditor.JsonFieldsDisabledMessage = isJsonStep
             ? null
-            : "Completion steps always produce 'answer'. JSON Output Fields are ignored for this step kind.";
+            : "Completion steps always produce 'response'. JSON Output Fields are ignored for this step kind.";
 
         try
         {
@@ -1482,6 +1662,122 @@ internal class PipelineInputNode : Node
 
     public Port GetPort(string keyName) =>
         _ports.TryGetValue(keyName, out var port) ? port : null;
+}
+
+internal static class CustomLinkTypeProvider
+{
+    private static readonly List<LinkTypeInfo> _types;
+    private static readonly List<string> _labels;
+    private static readonly Dictionary<string, string> _labelToType;
+
+    static CustomLinkTypeProvider()
+    {
+        _types = new List<LinkTypeInfo>();
+        _labelToType = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (Type t in TypeCache.GetTypesDerivedFrom<IStateChainLink>())
+        {
+            if (t == null || t.IsAbstract || t.IsGenericTypeDefinition)
+                continue;
+
+            if (t.GetConstructor(Type.EmptyTypes) == null)
+                continue;
+
+            string label = $"{t.FullName} ({t.Assembly.GetName().Name})";
+            string typeName = t.AssemblyQualifiedName;
+
+            if (string.IsNullOrEmpty(label) || string.IsNullOrEmpty(typeName))
+                continue;
+
+            _types.Add(new LinkTypeInfo(label, typeName, t.FullName));
+            if (!_labelToType.ContainsKey(label))
+            {
+                _labelToType.Add(label, typeName);
+            }
+        }
+
+        _types.Sort((a, b) => string.CompareOrdinal(a.Label, b.Label));
+        _labels = _types.Select(t => t.Label).ToList();
+    }
+
+    public static IReadOnlyList<string> Labels => _labels;
+
+    public static bool TryResolveTypeName(string label, out string typeName)
+    {
+        return _labelToType.TryGetValue(label, out typeName);
+    }
+
+    public static string FindLabelForType(string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+        {
+            return null;
+        }
+
+        // Match assembly-qualified first, then full name.
+        var match = _types.FirstOrDefault(t =>
+            string.Equals(t.AssemblyQualifiedName, typeName, StringComparison.Ordinal) ||
+            string.Equals(t.FullName, typeName, StringComparison.Ordinal));
+        return match.Label;
+    }
+
+    public static ParameterInfo FindParameter(string typeName, string paramName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName) || string.IsNullOrWhiteSpace(paramName))
+        {
+            return null;
+        }
+
+        var type = Type.GetType(typeName);
+        if (type == null)
+        {
+            return null;
+        }
+
+        var parameters = FindConstructorParameters(type);
+        return parameters.FirstOrDefault(p =>
+            string.Equals(p.Name, paramName, StringComparison.Ordinal));
+    }
+
+    public static ParameterInfo[] FindConstructorParameters(Type type)
+    {
+        if (type == null)
+        {
+            return Array.Empty<ParameterInfo>();
+        }
+
+        // Prefer Dictionary<string,string> ctor (already handled downstream); skip it for param syncing.
+        var candidates = type
+            .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .Where(c =>
+            {
+                var parameters = c.GetParameters();
+                if (parameters.Length == 1 &&
+                    parameters[0].ParameterType == typeof(Dictionary<string, string>))
+                {
+                    return false;
+                }
+                return parameters.Length > 0;
+            })
+            .OrderByDescending(c => c.GetParameters().Length)
+            .ToList();
+
+        return candidates.FirstOrDefault()?.GetParameters() ?? Array.Empty<ParameterInfo>();
+    }
+
+    private readonly struct LinkTypeInfo
+    {
+        public string Label { get; }
+        public string AssemblyQualifiedName { get; }
+        public string FullName { get; }
+
+        public LinkTypeInfo(string label, string assemblyQualifiedName, string fullName)
+        {
+            Label = label;
+            AssemblyQualifiedName = assemblyQualifiedName;
+            FullName = fullName;
+        }
+    }
 }
 
 internal class PipelineOutputNode : Node

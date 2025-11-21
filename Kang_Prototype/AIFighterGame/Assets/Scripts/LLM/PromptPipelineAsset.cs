@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+using System.Globalization;
+using System.Reflection;
 
 /// <summary>
 /// ScriptableObject that stores a linear prompt pipeline definition used by the GraphView editor.
@@ -116,12 +119,94 @@ public class PromptPipelineAsset : ScriptableObject
             throw new InvalidOperationException($"Type '{step.customLinkTypeName}' does not implement IStateChainLink.");
         }
 
+        var args = (step.customLinkParameters ?? new List<CustomLinkParameter>())
+            .Where(p => p != null && !string.IsNullOrWhiteSpace(p.key))
+            .ToDictionary(p => p.key, p => p.value ?? string.Empty, StringComparer.Ordinal);
+
+        // Prefer a constructor that accepts Dictionary<string, string> for custom parameters.
+        var dictCtor = type.GetConstructor(new[] { typeof(Dictionary<string, string>) });
+        if (dictCtor != null)
+        {
+            if (dictCtor.Invoke(new object[] { args }) is IStateChainLink dictInstance)
+            {
+                return dictInstance;
+            }
+        }
+
+        // Try to bind simple constructors (string/int/float/double/bool/long) by parameter name.
+        var bindableCtor = FindBindableConstructor(type);
+        if (bindableCtor != null)
+        {
+            var ctorArgs = BuildConstructorArguments(bindableCtor, args);
+            if (bindableCtor.Invoke(ctorArgs) is IStateChainLink boundInstance)
+            {
+                return boundInstance;
+            }
+        }
+
+        // Fallback to parameterless ctor.
         if (Activator.CreateInstance(type) is not IStateChainLink instance)
         {
             throw new InvalidOperationException($"Failed to instantiate custom link '{step.customLinkTypeName}'.");
         }
 
         return instance;
+    }
+
+    private static ConstructorInfo FindBindableConstructor(Type type)
+    {
+        return type
+            .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .Where(c => c.GetParameters().Length > 0)
+            .OrderByDescending(c => c.GetParameters().Length)
+            .FirstOrDefault(c => c.GetParameters().All(CanBindParameter));
+    }
+
+    private static bool CanBindParameter(ParameterInfo p)
+    {
+        Type t = p.ParameterType;
+        return t == typeof(string) ||
+               t == typeof(int) || t == typeof(long) ||
+               t == typeof(float) || t == typeof(double) ||
+               t == typeof(bool);
+    }
+
+    private static object[] BuildConstructorArguments(ConstructorInfo ctor, Dictionary<string, string> args)
+    {
+        var parameters = ctor.GetParameters();
+        var result = new object[parameters.Length];
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            var p = parameters[i];
+            string input = args != null && args.TryGetValue(p.Name, out var val) ? val : string.Empty;
+            result[i] = ConvertValue(input, p.ParameterType);
+        }
+        return result;
+    }
+
+    private static object ConvertValue(string value, Type targetType)
+    {
+        try
+        {
+            if (targetType == typeof(string))
+                return value ?? string.Empty;
+            if (targetType == typeof(int))
+                return int.TryParse(value, out var i) ? i : 0;
+            if (targetType == typeof(long))
+                return long.TryParse(value, out var l) ? l : 0L;
+            if (targetType == typeof(float))
+                return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) ? f : 0f;
+            if (targetType == typeof(double))
+                return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0d;
+            if (targetType == typeof(bool))
+                return bool.TryParse(value, out var b) && b;
+
+            return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;
+        }
     }
 }
 
@@ -152,6 +237,9 @@ public class PromptPipelineStep
     [Tooltip("Full type name implementing IStateChainLink (Type.GetType resolvable).")]
     public string customLinkTypeName;
 
+    [SerializeField]
+    public List<CustomLinkParameter> customLinkParameters = new();
+
     [HideInInspector]
     public Vector2 editorPosition;
 }
@@ -176,4 +264,11 @@ public class PromptPipelineLayoutSettings
     public Vector3 viewPosition = Vector3.zero;
     public Vector3 viewScale = Vector3.one;
     public bool viewInitialized;
+}
+
+[Serializable]
+public class CustomLinkParameter
+{
+    public string key;
+    public string value;
 }
