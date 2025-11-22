@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcb66c664130adc4082d3a738ddeb478, type: 3}
+  m_Name: NewSkillGeneration
+  m_EditorClassIdentifier: Assembly-CSharp::OllamaSettings
+  model: gemma3:4b-it-qat
+  format: '{"type":"object","properties":{"NewSkill":{"type":"object","properties":{"abilityName":{"type":"string"},"primitiveActions":{"type":"array","items":{"type":"object","properties":{"primitiveId":{"type":"string","enum":["FireProjectile","ExplosiveProjectile","PiercingProjectile","MeleeStrike","SpinAttack","GroundSlam","Dash","AirDash","MultiJump","Blink","ShieldBuff","InstantHeal","InvulnerabilityWindow","DamageReductionBuff","Stun","Slow"]}},"required":["primitiveId"],"additionalProperties":false}},"abilityDescription":{"type":"string"}},"required":["abilityName","primitiveActions","abilityDescription"],"additionalProperties":false}},"required":["NewSkill"],"additionalProperties":false}'
+  stream: 0
+  keepAlive: 
+  systemPromptTemplate: "Developer message\r\nYou are tasked with designing fun,
+    thematic active abilities for a cute, playful roguelike action game.\r\nInputs:\r\n-
+    The item the player has just absorbed.\r\n- The current numeric stats for the
+    player character.\r\n- The current flavor description of the character.\r\nInstructions:\r\n1.
+    Consider what kind of active ability would best suit the item's theme and the
+    character's current build and flavor.\r\n2. Select 1\u20133 primitive actions
+    from the list below to create a simple, cohesive ability. Use ONLY these primitive
+    action ids:\r\nAttack-related primitives:\r\n- FireProjectile (fires a basic
+    projectile forward)\r\n- ExplosiveProjectile (fires a projectile that explodes
+    in a small area)\r\n- PiercingProjectile (fires a projectile that passes through
+    multiple enemies)\r\n- MeleeStrike (performs a short-range swing or hit in front)\r\n-
+    SpinAttack (spins in place, striking nearby enemies)\r\n- GroundSlam (slams the
+    ground, damaging enemies within a small radius)\r\nMovement-related primitives:\r\n-
+    Dash (quick burst forward in facing direction)\r\n- AirDash (dash while airborne)\r\n-
+    MultiJump (extra jumps before landing)\r\n- Blink (short-range teleport in facing
+    direction)\r\nDefense-related primitives:\r\n- ShieldBuff (temporary shield absorbs
+    damage)\r\n- InstantHeal (instantly recover health)\r\n- InvulnerabilityWindow
+    (brief invulnerability)\r\n- DamageReductionBuff (temporarily reduces damage
+    taken)\r\nUtility-related primitives:\r\n- Stun (momentarily stop enemies from
+    acting)\r\n- Slow (temporarily slow enemies' movement and actions)\r\n3. Create
+    both a short, flavorful ability name (1\u20133 words) and a concise, playful
+    description (1\u20132 short sentences):\r\n- The name should be catchy and fit
+    the game's tone.\r\n- The description should convey what the ability looks and
+    feels like when used\u2014how the character moves, attacks, or influences enemies.\r\n-
+    Avoid referencing raw stat names like AttackPower, MovementSpeed, cooldown, or
+    DPS.\r\n- Use lighthearted, indirect language suitable for a charming action
+    game.\r\n"
+  jsonFields:
+  - fieldName: NewSkill
+    fieldType: 4
+    arrayElementType: 0
+    children:
+    - fieldName: abilityName
+      fieldType: 0
+      arrayElementType: 0
+      children: []
+      enumOptions: []
+      minValue: 
+      maxValue: 
+    - fieldName: primitiveActions
+      fieldType: 5
+      arrayElementType: 4
+      children:
+      - fieldName: primitiveId
+        fieldType: 0
+        arrayElementType: 0
+        children: []
+        enumOptions:
+        - FireProjectile
+        - ExplosiveProjectile
+        - PiercingProjectile
+        - MeleeStrike
+        - SpinAttack
+        - GroundSlam
+        - Dash
+        - AirDash
+        - MultiJump
+        - Blink
+        - ShieldBuff
+        - InstantHeal
+        - InvulnerabilityWindow
+        - DamageReductionBuff
+        - Stun
+        - Slow
+        minValue: 
+        maxValue: 
+      enumOptions: []
+      minValue: 
+      maxValue: 
+    - fieldName: abilityDescription
+      fieldType: 0
+      arrayElementType: 0
+      children: []
+      enumOptions: []
+      minValue: 
+      maxValue: 
+    enumOptions: []
+    minValue: 
+    maxValue: 
+  modelParams:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 40
+    num_predict: 0
+    repeat_penalty: 1.1

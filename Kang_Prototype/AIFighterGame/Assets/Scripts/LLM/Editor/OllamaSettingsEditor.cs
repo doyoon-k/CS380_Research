@@ -9,6 +9,9 @@ public class OllamaSettingsEditor : Editor
     public static bool JsonFieldsEnabled = true;
     public static string JsonFieldsDisabledMessage;
 
+    // Unity serialization depth limit is 10; we keep a stricter ceiling to avoid hitting it.
+    private const int MaxNestingDepth = 6;
+
     private readonly Dictionary<string, ReorderableList> _listCache = new();
     private readonly Dictionary<string, int> _selectionByPath = new();
     private SerializedProperty _modelProp;
@@ -77,6 +80,9 @@ public class OllamaSettingsEditor : Editor
             "Add the keys you expect from the LLM. The Format field sent to Ollama and the analyzer's produced keys are generated from this list.",
             MessageType.Info
         );
+
+        // Clamp excessive nesting to avoid Unity serialization depth limit errors.
+        ClampDepth(_jsonFieldsProp, 0);
 
         EditorGUI.BeginChangeCheck();
         using (new EditorGUI.DisabledScope(!JsonFieldsEnabled))
@@ -272,10 +278,46 @@ public class OllamaSettingsEditor : Editor
             if (needsChildren)
             {
                 var childrenProp = element.FindPropertyRelative(nameof(JsonFieldDefinition.children));
-                var childList = GetOrCreateList(childrenProp, "Child Fields");
-                childList.DoLayoutList();
-                changed |= DrawSelectedFieldDetails(childrenProp, depth + 1);
+                if (depth >= MaxNestingDepth)
+                {
+                    EditorGUILayout.HelpBox($"Reached max nesting depth ({MaxNestingDepth}). Further child fields are not serialized.", MessageType.Warning);
+                    changed |= ClampDepth(childrenProp, depth + 1);
+                }
+                else
+                {
+                    var childList = GetOrCreateList(childrenProp, "Child Fields");
+                    childList.DoLayoutList();
+                    changed |= DrawSelectedFieldDetails(childrenProp, depth + 1);
+                }
             }
+        }
+
+        return changed;
+    }
+
+    private bool ClampDepth(SerializedProperty listProp, int depth)
+    {
+        bool changed = false;
+        if (listProp == null)
+        {
+            return changed;
+        }
+
+        if (depth > MaxNestingDepth)
+        {
+            while (listProp.arraySize > 0)
+            {
+                listProp.DeleteArrayElementAtIndex(listProp.arraySize - 1);
+                changed = true;
+            }
+            return changed;
+        }
+
+        for (int i = 0; i < listProp.arraySize; i++)
+        {
+            var element = listProp.GetArrayElementAtIndex(i);
+            var children = element.FindPropertyRelative(nameof(JsonFieldDefinition.children));
+            changed |= ClampDepth(children, depth + 1);
         }
 
         return changed;
