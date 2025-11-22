@@ -23,7 +23,6 @@ public class PromptPipelineGraphView : GraphView
     private AnalyzedStateModel _stateModel;
     private readonly List<Vector2> _snapshotPositionsCache = new();
     private readonly Dictionary<int, List<string>> _readsByStep = new();
-    private readonly Dictionary<int, List<string>> _writesByStep = new();
     private readonly HashSet<string> _inputKeys = new();
     private bool _pendingStateRefresh;
     private bool _skipSnapshotCacheOnce;
@@ -176,7 +175,6 @@ public class PromptPipelineGraphView : GraphView
 
         _stateModel = null;
         _readsByStep.Clear();
-        _writesByStep.Clear();
         _inputKeys.Clear();
     }
 
@@ -337,7 +335,6 @@ public class PromptPipelineGraphView : GraphView
     private void BuildStateLookups()
     {
         _readsByStep.Clear();
-        _writesByStep.Clear();
         _inputKeys.Clear();
 
         if (_stateModel == null || _stateModel.keys == null)
@@ -360,10 +357,6 @@ public class PromptPipelineGraphView : GraphView
                 AddKeyToMap(_readsByStep, idx, key.keyName);
             }
 
-            foreach (int idx in key.producedByStepIndices)
-            {
-                AddKeyToMap(_writesByStep, idx, key.keyName);
-            }
         }
 
     }
@@ -524,10 +517,9 @@ public class PromptPipelineGraphView : GraphView
         {
             var node = _stepNodes[i];
             var reads = GetReads(i);
-            var writes = GetWrites(i);
+            var availableKeys = GetAvailableKeysBeforeStep(i);
 
-            node.UpdateStateSummary(reads, writes);
-            node.UpdateAvailableStateKeys(allKeyNames);
+            node.UpdateAvailableStateKeys(availableKeys);
 
             ConnectExternalInputs(node, reads);
             ConnectSnapshots(i);
@@ -627,9 +619,38 @@ public class PromptPipelineGraphView : GraphView
         return _readsByStep.TryGetValue(index, out var list) ? list : new List<string>();
     }
 
-    private List<string> GetWrites(int index)
+    private List<string> GetAvailableKeysBeforeStep(int index)
     {
-        return _writesByStep.TryGetValue(index, out var list) ? list : new List<string>();
+        if (_stateModel == null)
+        {
+            return new List<string>();
+        }
+
+        // Inputs are always available.
+        var inputKeys = _stateModel.keys?
+            .Where(k => k.kind == AnalyzedStateKeyKind.Input)
+            .Select(k => k.keyName)
+            .ToList() ?? new List<string>();
+
+        if (_stateModel.stepStates == null || _stateModel.stepStates.Count == 0)
+        {
+            return inputKeys;
+        }
+
+        // For the first step, only inputs are guaranteed.
+        if (index <= 0)
+        {
+            return inputKeys;
+        }
+
+        int snapshotIndex = Math.Min(index - 1, _stateModel.stepStates.Count - 1);
+        var snapshot = _stateModel.stepStates[snapshotIndex];
+        if (snapshot?.stateKeys != null && snapshot.stateKeys.Count > 0)
+        {
+            return snapshot.stateKeys;
+        }
+
+        return inputKeys;
     }
 
     private GraphViewChange OnGraphViewChanged(GraphViewChange change)
@@ -973,7 +994,6 @@ public class PromptPipelineGraphView : GraphView
     {
         for (int i = 0; i < _stepNodes.Count; i++)
         {
-            _stepNodes[i].UpdateStateSummary(GetReads(i), GetWrites(i));
             _stepNodes[i].UpdateDisplayIndex(i);
         }
     }
@@ -1155,8 +1175,6 @@ internal class PromptPipelineStepNode : Node
     private readonly DropdownField _customTypeDropdown;
     private readonly VisualElement _customParamsContainer;
     private readonly Button _insertStateKeyButton;
-    private readonly Label _readsLabel;
-    private readonly Label _writesLabel;
     private readonly VisualElement _jsonOptionsContainer;
     private readonly VisualElement _customOptionsContainer;
 
@@ -1270,6 +1288,7 @@ internal class PromptPipelineStepNode : Node
         {
             ApplyChange("Assign Ollama Settings", () => step.ollamaSettings = evt.newValue as OllamaSettings);
             UpdateSettingsInspector();
+            UpdatePromptInputsEnabled();
         });
         extensionContainer.Add(_settingsField);
 
@@ -1371,16 +1390,12 @@ internal class PromptPipelineStepNode : Node
         _customOptionsContainer.Add(_customParamsContainer);
         extensionContainer.Add(_customOptionsContainer);
 
-        _readsLabel = new Label("Reads: -");
-        _writesLabel = new Label("Writes: -");
-        extensionContainer.Add(_readsLabel);
-        extensionContainer.Add(_writesLabel);
-
         RefreshSections();
         RebuildCustomParamsUI();
         bool forceParamSync = Step.customLinkParameters == null || Step.customLinkParameters.Count == 0;
         SyncParamsWithConstructor(step.customLinkTypeName, force: forceParamSync);
         UpdateSettingsInspector();
+        UpdatePromptInputsEnabled();
         RefreshExpandedState();
         if (expanded)
         {
@@ -1401,16 +1416,10 @@ internal class PromptPipelineStepNode : Node
         _expandedMonitor = schedule.Execute(MonitorExpandedState).Every(200);
     }
 
-    public void UpdateStateSummary(IReadOnlyCollection<string> reads, IReadOnlyCollection<string> writes)
-    {
-        _readsLabel.text = $"Reads: {(reads == null || reads.Count == 0 ? "-" : string.Join(", ", reads))}";
-        _writesLabel.text = $"Writes: {(writes == null || writes.Count == 0 ? "-" : string.Join(", ", writes))}";
-    }
-
     public void UpdateAvailableStateKeys(IEnumerable<string> keys)
     {
         _availableKeys = keys?.Distinct().ToList() ?? new List<string>();
-        _insertStateKeyButton.SetEnabled(_availableKeys.Count > 0);
+        UpdatePromptInputsEnabled();
     }
 
     public void UpdateDisplayIndex(int index)
@@ -1436,6 +1445,13 @@ internal class PromptPipelineStepNode : Node
                 _requestStateRefresh?.Invoke();
             }
         });
+    }
+
+    private void UpdatePromptInputsEnabled()
+    {
+        bool hasSettings = Step?.ollamaSettings != null;
+        _userPromptField?.SetEnabled(hasSettings);
+        _insertStateKeyButton?.SetEnabled(hasSettings && _availableKeys != null && _availableKeys.Count > 0);
     }
 
     private void RefreshSections()

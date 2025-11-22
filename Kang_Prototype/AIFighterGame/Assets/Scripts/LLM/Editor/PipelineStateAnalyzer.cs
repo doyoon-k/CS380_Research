@@ -41,7 +41,7 @@ public static class PipelineStateAnalyzer
                     CollectPromptKeys(step, keyMap, i);
                     break;
                 case PromptPipelineStepKind.CustomLink:
-                    // MVP ignores custom link read/write inference.
+                    CollectCustomLinkKeys(step, keyMap, i);
                     break;
             }
 
@@ -118,6 +118,27 @@ public static class PipelineStateAnalyzer
             {
                 RegisterKey(keyMap, key).consumedByStepIndices.AddUnique(stepIndex);
             }
+        }
+    }
+
+    private static void CollectCustomLinkKeys(
+        PromptPipelineStep step,
+        Dictionary<string, AnalyzedStateKey> keyMap,
+        int stepIndex)
+    {
+        if (string.IsNullOrWhiteSpace(step.customLinkTypeName))
+        {
+            return;
+        }
+
+        if (!CustomLinkStateResolver.TryResolve(step.customLinkTypeName, out var writes))
+        {
+            return;
+        }
+
+        foreach (string key in writes)
+        {
+            RegisterKey(keyMap, key).producedByStepIndices.AddUnique(stepIndex);
         }
     }
 

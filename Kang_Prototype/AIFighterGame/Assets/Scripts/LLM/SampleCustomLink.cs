@@ -6,7 +6,7 @@ using System.Collections.Generic;
 /// Example custom link for testing: writes a greeting into state["greeting"].
 /// Shows how constructor parameters (string/int) are auto-bound from Custom Parameters.
 /// </summary>
-public class SampleCustomLink : IStateChainLink
+public class SampleCustomLink : IStateChainLink, ICustomLinkStateProvider
 {
     private readonly string _name;
     private readonly string _title;
@@ -31,5 +31,10 @@ public class SampleCustomLink : IStateChainLink
         state["greeting"] = $"Hello {_title} {_name} (Lv {_level}), welcome aboard.";
         onDone?.Invoke(state);
         yield break;
+    }
+
+    public IEnumerable<string> GetWrites()
+    {
+        yield return "greeting";
     }
 }
