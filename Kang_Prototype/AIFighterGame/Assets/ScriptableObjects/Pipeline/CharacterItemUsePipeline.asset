@@ -14,14 +14,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PromptPipelineAsset
   displayName: CharacterItemUsePipeline
   description: 
-  steps: []
+  steps:
+  - stepName: Step 1
+    stepKind: 0
+    ollamaSettings: {fileID: 11400000, guid: f223fef346f752e4d8c7cb70dfa28e2d, type: 2}
+    userPromptTemplate: "Item:\n- Name: {{item_name}}\n- Description: {{item_description}}\n\nCurrent
+      stats:\nAttackPower: {{AttackPower}}\nAttackSpeed: {{AttackSpeed}}\nProjectileRange:
+      {{ProjectileRange}}\nMovementSpeed: {{MovementSpeed}}\nMaxHealth: {{MaxHealth}}\nDefense:
+      {{Defense}}\nJumpPower: {{JumpPower}}\nCooldownHaste: {{CooldownHaste}}\n\nCurrent
+      Character description:\n\"{{current_character_description}}\"\n\nTask:\nBased
+      on this item and the current character state, choose 1\u20134 stats to modify.\nFor
+      each chosen stat, propose:\n- \"stat\": which stat to change,\n- \"changeType\":
+      \"additive\" or \"multiplicative\",\n- \"value\": a reasonable numeric amount
+      that fits the item\u2019s theme and the current build.\n\nThen write a short
+      updated character description in simple English that reflects how the character
+      has changed after absorbing this item.\n"
+    jsonMaxRetries: 3
+    jsonRetryDelaySeconds: 0.1
+    customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    customLinkParameters:
+    - key: name
+      value: 
+    - key: title
+      value: 
+    - key: level
+      value: 
+    editorPosition: {x: -609, y: -4}
   layoutSettings:
-    inputNodePosition: {x: -600, y: 80}
-    outputNodePosition: {x: 0, y: 0}
-    inputPositionInitialized: 0
-    outputPositionInitialized: 0
-    viewPosition: {x: 0, y: 0, z: 0}
-    viewScale: {x: 1, y: 1, z: 1}
-    viewInitialized: 0
-    snapshotPositions: []
-    snapshotPositionsInitialized: 0
+    inputNodePosition: {x: -956, y: 56}
+    outputNodePosition: {x: 123, y: -116}
+    inputPositionInitialized: 1
+    outputPositionInitialized: 1
+    viewPosition: {x: 1843, y: -1992, z: 0}
+    viewScale: {x: 1.15, y: 1.15, z: 1}
+    viewInitialized: 1
+    snapshotPositions:
+    - {x: -146, y: 25}
+    snapshotPositionsInitialized: 1

@@ -13,11 +13,74 @@ MonoBehaviour:
   m_Name: GenerateNewSkill
   m_EditorClassIdentifier: Assembly-CSharp::OllamaSettings
   model: gemma3:4b-it-qat
-  format: 
+  format: '{"type":"object","properties":{"statChanges":{"type":"array","items":{"type":"object","properties":{"stat":{"type":"string","enum":["AttackPower","AttackSpeed","ProjectileRange","MovementSpeed","MaxHealth","Defense","JumpPower","CooldownHaste"]},"changeType":{"type":"string","enum":["additive","multiplicative"]},"value":{"type":"number"}},"required":["stat","changeType","value"],"additionalProperties":false}},"newDescription":{"type":"string"}},"required":["statChanges","newDescription"],"additionalProperties":false}'
   stream: 0
   keepAlive: 
-  systemPromptTemplate: 
-  jsonFields: []
+  systemPromptTemplate: "# Role and Objective\r\nDesign and implement stat changes
+    for a roguelike action game in response to items the player absorbs.\r\n# Instructions\r\n-
+    Begin with a concise checklist (3-7 bullets) of what you will do; keep items
+    conceptual, not implementation-level.\r\n- Receive as input:\r\n- The item the
+    player has just absorbed.\r\n- The current numeric stats of the player character.\r\n-
+    The current flavor description of the character.\r\n- Output stat changes and
+    an updated flavor description as follows:\r\n1. Choose 1\u20134 stats to change
+    that thematically match both the absorbed item's properties and the character's
+    current build. If no stats are appropriately affected, you may return zero stat
+    changes.\r\n2. For each chosen stat, define:\r\n- `stat`: one of\r\n- `AttackPower`,
+    `AttackSpeed`, `ProjectileRange`, `MovementSpeed`,\r\n- `MaxHealth`, `Defense`,
+    `JumpPower`, `CooldownHaste`\r\n- `changeType`: either \"additive\" or \"multiplicative\"\r\n-
+    `value`: integer or float (additive typically between -5.0 and 5.0; multiplicative
+    typically between 0.5 and 2.0)\r\n3. - Write 1\u20132 short English sentences
+    describing how the character feels, moves, or behaves after absorbing the item.\r\n-
+    Focus on posture, movement style, attitude, or combat rhythm, not on numbers.\r\n-
+    Describe the change indirectly, like how they act in the world, not by stating
+    raw stat changes.\r\n4. Ensure all changes are clearly justified, directly tied
+    to the item and current stats."
+  jsonFields:
+  - fieldName: statChanges
+    fieldType: 5
+    arrayElementType: 4
+    children:
+    - fieldName: stat
+      fieldType: 0
+      arrayElementType: 0
+      children: []
+      enumOptions:
+      - AttackPower
+      - AttackSpeed
+      - ProjectileRange
+      - MovementSpeed
+      - MaxHealth
+      - Defense
+      - JumpPower
+      - CooldownHaste
+      minValue: 
+      maxValue: 
+    - fieldName: changeType
+      fieldType: 0
+      arrayElementType: 0
+      children: []
+      enumOptions:
+      - additive
+      - multiplicative
+      minValue: 
+      maxValue: 
+    - fieldName: value
+      fieldType: 1
+      arrayElementType: 0
+      children: []
+      enumOptions: []
+      minValue: 
+      maxValue: 
+    enumOptions: []
+    minValue: 
+    maxValue: 
+  - fieldName: newDescription
+    fieldType: 0
+    arrayElementType: 0
+    children: []
+    enumOptions: []
+    minValue: 
+    maxValue: 
   modelParams:
     temperature: 0.7
     top_p: 0.9

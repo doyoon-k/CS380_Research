@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -79,10 +80,12 @@ public class JsonFieldDefinition
     public JsonArrayElementType arrayElementType = JsonArrayElementType.String;
     [SerializeField]
     public List<JsonFieldDefinition> children = new();
-    [TextArea(1, 4)]
-    public string description;
-    [TextArea(1, 4)]
-    public string example;
+    [SerializeField]
+    public List<string> enumOptions = new();
+    [SerializeField]
+    public string minValue;
+    [SerializeField]
+    public string maxValue;
 
     public static string BuildSchema(List<JsonFieldDefinition> fields)
     {
@@ -127,12 +130,14 @@ public class JsonFieldDefinition
             return null;
         }
 
-        return new JObject
+        var obj = new JObject
         {
             ["type"] = "object",
             ["properties"] = properties,
             ["required"] = required
         };
+        obj["additionalProperties"] = false;
+        return obj;
     }
 
     private static JObject BuildSchemaForField(JsonFieldDefinition field)
@@ -154,15 +159,17 @@ public class JsonFieldDefinition
                 break;
         }
 
-        if (!string.IsNullOrWhiteSpace(field.description))
+        var enums = NormalizeEnums(field.enumOptions);
+        if (enums.Count > 0)
         {
-            schema["description"] = field.description;
+            schema["enum"] = new JArray(enums);
+        }
+        else if (field.fieldType == JsonFieldType.Object)
+        {
+            schema["additionalProperties"] = false;
         }
 
-        if (field.TryCreateExampleToken(out var exampleToken))
-        {
-            schema["example"] = exampleToken;
-        }
+        AppendNumericBounds(schema, field);
 
         return schema;
     }
@@ -194,67 +201,42 @@ public class JsonFieldDefinition
         };
     }
 
-    private bool TryCreateExampleToken(out JToken token)
+    private static List<string> NormalizeEnums(List<string> enums)
     {
-        token = null;
-        if (string.IsNullOrWhiteSpace(example))
+        if (enums == null)
         {
-            return false;
+            return new List<string>();
         }
 
-        switch (fieldType)
+        return enums
+            .Where(e => !string.IsNullOrWhiteSpace(e))
+            .Select(e => e.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static void AppendNumericBounds(JObject schema, JsonFieldDefinition field)
+    {
+        if (schema == null || field == null)
         {
-            case JsonFieldType.Number:
-                if (double.TryParse(example, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberValue))
-                {
-                    token = new JValue(numberValue);
-                    return true;
-                }
-                break;
-            case JsonFieldType.Integer:
-                if (long.TryParse(example, NumberStyles.Any, CultureInfo.InvariantCulture, out long intValue))
-                {
-                    token = new JValue(intValue);
-                    return true;
-                }
-                break;
-            case JsonFieldType.Boolean:
-                if (bool.TryParse(example, out bool boolValue))
-                {
-                    token = new JValue(boolValue);
-                    return true;
-                }
-                break;
-            case JsonFieldType.Object:
-                try
-                {
-                    token = JToken.Parse(example);
-                    return true;
-                }
-                catch
-                {
-                    // Fall through and treat it as a string.
-                }
-                break;
-            case JsonFieldType.Array:
-                try
-                {
-                    var parsed = JToken.Parse(example);
-                    if (parsed is JArray)
-                    {
-                        token = parsed;
-                        return true;
-                    }
-                }
-                catch
-                {
-                    // Fall through and treat it as a string.
-                }
-                break;
+            return;
         }
 
-        token = new JValue(example);
-        return true;
+        bool isNumeric = field.fieldType == JsonFieldType.Number || field.fieldType == JsonFieldType.Integer;
+        if (!isNumeric)
+        {
+            return;
+        }
+
+        if (double.TryParse(field.minValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double min))
+        {
+            schema["minimum"] = min;
+        }
+
+        if (double.TryParse(field.maxValue, NumberStyles.Any, CultureInfo.InvariantCulture, out double max))
+        {
+            schema["maximum"] = max;
+        }
     }
 }
 

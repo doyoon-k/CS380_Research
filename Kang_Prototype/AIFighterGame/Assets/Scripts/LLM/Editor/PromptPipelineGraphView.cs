@@ -1207,6 +1207,10 @@ internal class PromptPipelineStepNode : Node
         _disconnectExecPort = disconnectExecPort;
 
         title = step.stepName;
+        style.minWidth = 320f;
+        style.maxWidth = 380f;
+        mainContainer.style.minWidth = 320f;
+        extensionContainer.style.minWidth = 320f;
         UpdateDisplayIndex(index);
         titleContainer.RegisterCallback<MouseDownEvent>(evt =>
         {
