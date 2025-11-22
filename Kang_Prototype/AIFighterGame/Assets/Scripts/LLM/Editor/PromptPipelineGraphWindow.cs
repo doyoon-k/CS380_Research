@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -12,6 +13,8 @@ public class PromptPipelineGraphWindow : EditorWindow
     private PromptPipelineAsset _activeAsset;
     private PromptPipelineCommandManager _commandManager;
     private ObjectField _assetField;
+    private TextField _displayNameField;
+    private TextField _descriptionField;
     private ScrollView _simulationInputs;
     private Label _simulationStatus;
     private Button _runButton;
@@ -40,6 +43,10 @@ public class PromptPipelineGraphWindow : EditorWindow
         {
             RebuildSimulationInputs(null);
         }
+
+        _assetField?.SetValueWithoutNotify(_activeAsset);
+        RefreshMetadataFieldsFromAsset();
+        UpdateWindowTitle();
     }
 
     private void OnDisable()
@@ -63,7 +70,9 @@ public class PromptPipelineGraphWindow : EditorWindow
         rootVisualElement.style.flexDirection = FlexDirection.Column;
 
         BuildToolbar();
+        BuildAssetMetadataSection();
         BuildMainArea();
+        RefreshMetadataFieldsFromAsset();
         rootVisualElement.RegisterCallback<KeyDownEvent>(OnKeyDown, TrickleDown.TrickleDown);
     }
 
@@ -88,6 +97,11 @@ public class PromptPipelineGraphWindow : EditorWindow
         });
         toolbar.Add(_assetField);
 
+        toolbar.Add(new Button(CreateNewAsset)
+        {
+            text = "New Asset"
+        });
+
         toolbar.Add(new Button(() => _graphView?.CreateStepAtCenter())
         {
             text = "Add Step"
@@ -98,6 +112,85 @@ public class PromptPipelineGraphWindow : EditorWindow
         toolbar.Add(new Button(PingAssetInProject) { text = "Ping Asset" });
 
         rootVisualElement.Add(toolbar);
+    }
+
+    private void BuildAssetMetadataSection()
+    {
+        var container = new VisualElement
+        {
+            style =
+            {
+                flexDirection = FlexDirection.Column,
+                paddingLeft = 8,
+                paddingRight = 8,
+                paddingTop = 4,
+                paddingBottom = 4
+            }
+        };
+
+        var header = new Label("Pipeline Info")
+        {
+            style =
+            {
+                unityFontStyleAndWeight = FontStyle.Bold,
+                marginBottom = 2
+            }
+        };
+        container.Add(header);
+
+        _displayNameField = new TextField("Name")
+        {
+            isDelayed = true
+        };
+        _displayNameField.style.flexGrow = 1f;
+        _displayNameField.RegisterValueChangedCallback(evt =>
+        {
+            if (_activeAsset == null || _commandManager == null)
+            {
+                return;
+            }
+
+            string newName = evt.newValue?.Trim() ?? string.Empty;
+            if (string.Equals(newName, _activeAsset.displayName, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _commandManager.Execute("Rename Pipeline", () =>
+            {
+                _activeAsset.displayName = newName;
+                UpdateWindowTitle();
+            });
+        });
+        container.Add(_displayNameField);
+
+        _descriptionField = new TextField("Description")
+        {
+            multiline = true
+        };
+        _descriptionField.style.flexGrow = 1f;
+        _descriptionField.style.minHeight = 60f;
+        _descriptionField.RegisterValueChangedCallback(evt =>
+        {
+            if (_activeAsset == null || _commandManager == null)
+            {
+                return;
+            }
+
+            string newDescription = evt.newValue ?? string.Empty;
+            if (string.Equals(newDescription, _activeAsset.description, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _commandManager.Execute("Edit Pipeline Description", () =>
+            {
+                _activeAsset.description = newDescription;
+            });
+        });
+        container.Add(_descriptionField);
+
+        rootVisualElement.Add(container);
     }
 
     private void BuildMainArea()
@@ -177,13 +270,73 @@ public class PromptPipelineGraphWindow : EditorWindow
 
     private void OnAssetChanged()
     {
-        titleContent = new GUIContent(_activeAsset != null
-            ? $"Prompt Pipeline - {_activeAsset.displayName}"
-            : "Prompt Pipeline");
-
+        UpdateWindowTitle();
+        _assetField?.SetValueWithoutNotify(_activeAsset);
         _commandManager?.Reset();
         _graphView.SetAsset(_activeAsset);
         RebuildSimulationInputs(_graphView.CurrentStateModel);
+        RefreshMetadataFieldsFromAsset();
+    }
+
+    private void CreateNewAsset()
+    {
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Prompt Pipeline Asset",
+            "PromptPipeline",
+            "asset",
+            "Select where to save the new PromptPipelineAsset.");
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return;
+        }
+
+        path = AssetDatabase.GenerateUniqueAssetPath(path);
+
+        var asset = ScriptableObject.CreateInstance<PromptPipelineAsset>();
+        asset.displayName = Path.GetFileNameWithoutExtension(path);
+        asset.description = string.Empty;
+        asset.steps = new List<PromptPipelineStep>();
+        asset.layoutSettings = new PromptPipelineLayoutSettings();
+
+        AssetDatabase.CreateAsset(asset, path);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        Selection.activeObject = asset;
+        _activeAsset = asset;
+        _assetField?.SetValueWithoutNotify(asset);
+
+        OnAssetChanged();
+    }
+
+    private void RefreshMetadataFieldsFromAsset()
+    {
+        if (_displayNameField == null || _descriptionField == null)
+        {
+            return;
+        }
+
+        bool hasAsset = _activeAsset != null;
+        _displayNameField.SetEnabled(hasAsset);
+        _descriptionField.SetEnabled(hasAsset);
+
+        if (!hasAsset)
+        {
+            _displayNameField.SetValueWithoutNotify(string.Empty);
+            _descriptionField.SetValueWithoutNotify(string.Empty);
+            return;
+        }
+
+        _displayNameField.SetValueWithoutNotify(_activeAsset.displayName);
+        _descriptionField.SetValueWithoutNotify(_activeAsset.description);
+    }
+
+    private void UpdateWindowTitle()
+    {
+        titleContent = new GUIContent(_activeAsset != null
+            ? $"Prompt Pipeline - {_activeAsset.displayName}"
+            : "Prompt Pipeline");
     }
 
     private void OnStateModelChanged(AnalyzedStateModel model)
@@ -362,6 +515,9 @@ public class PromptPipelineGraphWindow : EditorWindow
             return;
         }
 
+        _assetField?.SetValueWithoutNotify(_activeAsset);
+        RefreshMetadataFieldsFromAsset();
+        UpdateWindowTitle();
         _graphView.SetAsset(_activeAsset, skipSnapshotCache: true, skipSnapshotPersistence: true);
         RebuildSimulationInputs(_graphView.CurrentStateModel);
         if (_simulationStatus != null)

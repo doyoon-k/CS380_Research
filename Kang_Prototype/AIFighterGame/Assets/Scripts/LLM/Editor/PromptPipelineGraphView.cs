@@ -1345,6 +1345,13 @@ internal class PromptPipelineStepNode : Node
             customTypeLabels,
             initialCustomLabel);
         _customTypeDropdown.SetEnabled(CustomLinkTypeProvider.Labels.Any());
+        // If no type was assigned yet, default to the first known type so parameters can sync.
+        if (string.IsNullOrWhiteSpace(step.customLinkTypeName) && !string.IsNullOrWhiteSpace(initialCustomLabel) &&
+            CustomLinkTypeProvider.TryResolveTypeName(initialCustomLabel, out string resolvedTypeName))
+        {
+            step.customLinkTypeName = resolvedTypeName;
+            _markDirty?.Invoke();
+        }
         _customTypeDropdown.RegisterValueChangedCallback(evt =>
         {
             string selected = evt.newValue;
@@ -1360,12 +1367,7 @@ internal class PromptPipelineStepNode : Node
         _customOptionsContainer.Add(_customTypeDropdown);
 
         _customParamsContainer = new VisualElement { style = { flexDirection = FlexDirection.Column } };
-        _customParamsContainer.Add(new Label("Custom Parameters (auto-detected from constructor; edit to override)"));
-        var addParamButton = new Button(OnAddCustomParameter)
-        {
-            text = "Add Parameter"
-        };
-        _customParamsContainer.Add(addParamButton);
+        _customParamsContainer.Add(new Label("Custom Parameters (auto-detected from constructor; values only)"));
         _customOptionsContainer.Add(_customParamsContainer);
         extensionContainer.Add(_customOptionsContainer);
 
@@ -1376,7 +1378,8 @@ internal class PromptPipelineStepNode : Node
 
         RefreshSections();
         RebuildCustomParamsUI();
-        SyncParamsWithConstructor(step.customLinkTypeName, force: false);
+        bool forceParamSync = Step.customLinkParameters == null || Step.customLinkParameters.Count == 0;
+        SyncParamsWithConstructor(step.customLinkTypeName, force: forceParamSync);
         UpdateSettingsInspector();
         RefreshExpandedState();
         if (expanded)
@@ -1447,24 +1450,14 @@ internal class PromptPipelineStepNode : Node
 
     private void SyncParamsWithConstructor(string typeName, bool force)
     {
-        if (string.IsNullOrWhiteSpace(typeName))
-        {
-            return;
-        }
-
-        var type = Type.GetType(typeName);
-        if (type == null)
-        {
-            return;
-        }
-
+        var type = CustomLinkTypeProvider.ResolveType(typeName);
         // Do not overwrite if already have params unless forced.
         if (!force && Step.customLinkParameters != null && Step.customLinkParameters.Count > 0)
         {
             return;
         }
 
-        var ctor = CustomLinkTypeProvider.FindConstructorParameters(type);
+        var ctor = type != null ? CustomLinkTypeProvider.FindConstructorParameters(type) : Array.Empty<ParameterInfo>();
         if (ctor == null || ctor.Length == 0)
         {
             return;
@@ -1486,8 +1479,8 @@ internal class PromptPipelineStepNode : Node
             Step.customLinkParameters = new List<CustomLinkParameter>();
         }
 
-        // Clear existing rows except the header and add button (first two elements)
-        while (_customParamsContainer.childCount > 2)
+        // Clear existing rows except the header label (first element)
+        while (_customParamsContainer.childCount > 1)
         {
             _customParamsContainer.RemoveAt(_customParamsContainer.childCount - 1);
         }
@@ -1495,6 +1488,11 @@ internal class PromptPipelineStepNode : Node
         for (int i = 0; i < Step.customLinkParameters.Count; i++)
         {
             AddParamRow(i);
+        }
+
+        if (Step.customLinkParameters.Count == 0)
+        {
+            _customParamsContainer.Add(new Label("No constructor parameters detected."));
         }
     }
 
@@ -1543,27 +1541,7 @@ internal class PromptPipelineStepNode : Node
         // initial validation
         ValidateParamValue(parameterInfo, param.value, warningLabel);
 
-        var removeButton = new Button(() =>
-        {
-            ApplyChange("Remove Custom Param", () =>
-            {
-                Step.customLinkParameters.RemoveAt(index);
-                RebuildCustomParamsUI();
-            }, refreshState: false);
-        })
-        { text = "X", style = { width = 24, height = 20 } };
-        row.Add(removeButton);
-
         _customParamsContainer.Add(row);
-    }
-
-    private void OnAddCustomParameter()
-    {
-        ApplyChange("Add Custom Param", () =>
-        {
-            Step.customLinkParameters.Add(new CustomLinkParameter { key = "key", value = string.Empty });
-            RebuildCustomParamsUI();
-        }, refreshState: false);
     }
 
     private void ValidateParamValue(ParameterInfo parameterInfo, string value, Label warningLabel)
@@ -1874,6 +1852,42 @@ internal static class CustomLinkTypeProvider
 
     public static IReadOnlyList<string> Labels => _labels;
 
+    public static Type ResolveType(string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+        {
+            return null;
+        }
+
+        if (_labelToType.TryGetValue(typeName, out var mappedType))
+        {
+            typeName = mappedType;
+        }
+
+        var direct = Type.GetType(typeName);
+        if (direct != null)
+        {
+            return direct;
+        }
+
+        foreach (Type t in TypeCache.GetTypesDerivedFrom<IStateChainLink>())
+        {
+            if (t == null || t.IsAbstract || t.IsGenericTypeDefinition)
+            {
+                continue;
+            }
+
+            if (string.Equals(t.AssemblyQualifiedName, typeName, StringComparison.Ordinal) ||
+                string.Equals(t.FullName, typeName, StringComparison.Ordinal) ||
+                string.Equals(t.Name, typeName, StringComparison.Ordinal))
+            {
+                return t;
+            }
+        }
+
+        return null;
+    }
+
     public static bool TryResolveTypeName(string label, out string typeName)
     {
         return _labelToType.TryGetValue(label, out typeName);
@@ -1889,7 +1903,8 @@ internal static class CustomLinkTypeProvider
         // Match assembly-qualified first, then full name.
         var match = _types.FirstOrDefault(t =>
             string.Equals(t.AssemblyQualifiedName, typeName, StringComparison.Ordinal) ||
-            string.Equals(t.FullName, typeName, StringComparison.Ordinal));
+            string.Equals(t.FullName, typeName, StringComparison.Ordinal) ||
+            string.Equals(t.FullName?.Split('.').LastOrDefault(), typeName, StringComparison.Ordinal));
         return match.Label;
     }
 
@@ -1900,7 +1915,7 @@ internal static class CustomLinkTypeProvider
             return null;
         }
 
-        var type = Type.GetType(typeName);
+        var type = ResolveType(typeName);
         if (type == null)
         {
             return null;
