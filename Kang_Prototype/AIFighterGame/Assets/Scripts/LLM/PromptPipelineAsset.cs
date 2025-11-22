@@ -120,6 +120,11 @@ public class PromptPipelineAsset : ScriptableObject
             throw new InvalidOperationException($"Type '{step.customLinkTypeName}' does not implement IStateChainLink.");
         }
 
+        if (!typeof(ICustomLinkStateProvider).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException($"Type '{step.customLinkTypeName}' must implement ICustomLinkStateProvider for editor visualization.");
+        }
+
         var args = (step.customLinkParameters ?? new List<CustomLinkParameter>())
             .Where(p => p != null && !string.IsNullOrWhiteSpace(p.key))
             .ToDictionary(p => p.key, p => p.value ?? string.Empty, StringComparer.Ordinal);

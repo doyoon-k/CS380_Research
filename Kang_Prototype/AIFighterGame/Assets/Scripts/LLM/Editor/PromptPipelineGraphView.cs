@@ -1849,6 +1849,9 @@ internal static class CustomLinkTypeProvider
             if (t.GetConstructor(Type.EmptyTypes) == null)
                 continue;
 
+            if (!typeof(ICustomLinkStateProvider).IsAssignableFrom(t))
+                continue;
+
             string label = $"{t.FullName} ({t.Assembly.GetName().Name})";
             string typeName = t.AssemblyQualifiedName;
 

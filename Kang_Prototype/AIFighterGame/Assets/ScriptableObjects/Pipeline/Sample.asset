@@ -17,41 +17,62 @@ MonoBehaviour:
   steps:
   - stepName: Step 1
     stepKind: 0
-    ollamaSettings: {fileID: 0}
-    userPromptTemplate: 
+    ollamaSettings: {fileID: 11400000, guid: 84801d43b9f1d3943ba362bcf9f3309e, type: 2}
+    userPromptTemplate: '{{Name}}'
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
-    customLinkTypeName: 
-    customLinkParameters: []
-    editorPosition: {x: -906, y: 363}
-  - stepName: Step 3
+    customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    customLinkParameters:
+    - key: name
+      value: 
+    - key: title
+      value: 
+    - key: level
+      value: 
+    editorPosition: {x: -1281, y: 343}
+  - stepName: Step 2
     stepKind: 0
-    ollamaSettings: {fileID: 0}
-    userPromptTemplate: 
+    ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
+    userPromptTemplate: '{{response}}'
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
-    customLinkTypeName: 
-    customLinkParameters: []
-    editorPosition: {x: -99, y: 383}
+    customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    customLinkParameters:
+    - key: name
+      value: 
+    - key: title
+      value: 
+    - key: level
+      value: 
+    editorPosition: {x: -719, y: 343}
   - stepName: Step 3
-    stepKind: 0
+    stepKind: 2
     ollamaSettings: {fileID: 0}
     userPromptTemplate: 
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
-    customLinkTypeName: 
-    customLinkParameters: []
-    editorPosition: {x: 671, y: 381}
+    customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+    customLinkParameters:
+    - key: name
+      value: 
+    - key: title
+      value: 
+    - key: level
+      value: 
+    editorPosition: {x: -126, y: 341}
   layoutSettings:
-    inputNodePosition: {x: -1219, y: 383}
-    outputNodePosition: {x: 1226, y: 427}
+    inputNodePosition: {x: -1538, y: 382}
+    outputNodePosition: {x: 736, y: 364}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 537, y: 83, z: 0}
-    viewScale: {x: 0.43232757, y: 0.43232757, z: 1}
+    viewPosition: {x: 803, y: -51, z: 0}
+    viewScale: {x: 0.49717674, y: 0.49717674, z: 1}
     viewInitialized: 1
     snapshotPositions:
-    - {x: -489, y: 527}
-    - {x: 362, y: 481}
-    - {x: 1053, y: 428}
+    - {x: -924, y: 454}
+    - {x: -345, y: 440}
+    - {x: 316, y: 379}
     snapshotPositionsInitialized: 1
