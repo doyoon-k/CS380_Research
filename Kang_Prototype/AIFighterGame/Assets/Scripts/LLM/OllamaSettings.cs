@@ -77,6 +77,8 @@ public class JsonFieldDefinition
     public string fieldName = "field";
     public JsonFieldType fieldType = JsonFieldType.String;
     public JsonArrayElementType arrayElementType = JsonArrayElementType.String;
+    [SerializeField]
+    public List<JsonFieldDefinition> children = new();
     [TextArea(1, 4)]
     public string description;
     [TextArea(1, 4)]
@@ -84,9 +86,20 @@ public class JsonFieldDefinition
 
     public static string BuildSchema(List<JsonFieldDefinition> fields)
     {
-        if (fields == null)
+        if (fields == null || fields.Count == 0)
         {
             return string.Empty;
+        }
+
+        var root = BuildObjectSchema(fields);
+        return root?.ToString(Formatting.None) ?? string.Empty;
+    }
+
+    private static JObject BuildObjectSchema(List<JsonFieldDefinition> fields)
+    {
+        if (fields == null || fields.Count == 0)
+        {
+            return null;
         }
 
         var properties = new JObject();
@@ -99,28 +112,10 @@ public class JsonFieldDefinition
                 continue;
             }
 
-            var schema = new JObject
+            var schema = BuildSchemaForField(field);
+            if (schema == null)
             {
-                ["type"] = field.GetTypeKeyword()
-            };
-
-            if (field.fieldType == JsonFieldType.Array)
-            {
-                var itemSchema = new JObject
-                {
-                    ["type"] = field.GetArrayItemKeyword()
-                };
-                schema["items"] = itemSchema;
-            }
-
-            if (!string.IsNullOrWhiteSpace(field.description))
-            {
-                schema["description"] = field.description;
-            }
-
-            if (field.TryCreateExampleToken(out var exampleToken))
-            {
-                schema["example"] = exampleToken;
+                continue;
             }
 
             properties[field.fieldName] = schema;
@@ -129,17 +124,47 @@ public class JsonFieldDefinition
 
         if (!properties.HasValues)
         {
-            return string.Empty;
+            return null;
         }
 
-        var root = new JObject
+        return new JObject
         {
             ["type"] = "object",
             ["properties"] = properties,
             ["required"] = required
         };
+    }
 
-        return root.ToString(Formatting.None);
+    private static JObject BuildSchemaForField(JsonFieldDefinition field)
+    {
+        JObject schema;
+        switch (field.fieldType)
+        {
+            case JsonFieldType.Object:
+                schema = BuildObjectSchema(field.children) ?? new JObject { ["type"] = "object" };
+                break;
+            case JsonFieldType.Array:
+                schema = new JObject { ["type"] = "array" };
+                schema["items"] = field.arrayElementType == JsonArrayElementType.Object
+                    ? BuildObjectSchema(field.children) ?? new JObject { ["type"] = "object" }
+                    : new JObject { ["type"] = field.GetArrayItemKeyword() };
+                break;
+            default:
+                schema = new JObject { ["type"] = field.GetTypeKeyword() };
+                break;
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.description))
+        {
+            schema["description"] = field.description;
+        }
+
+        if (field.TryCreateExampleToken(out var exampleToken))
+        {
+            schema["example"] = exampleToken;
+        }
+
+        return schema;
     }
 
     private string GetTypeKeyword()
