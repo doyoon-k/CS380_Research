@@ -42,7 +42,9 @@ MonoBehaviour:
     feels like when used\u2014how the character moves, attacks, or influences enemies.\r\n-
     Avoid referencing raw stat names like AttackPower, MovementSpeed, cooldown, or
     DPS.\r\n- Use lighthearted, indirect language suitable for a charming action
-    game.\r\n"
+    game.\nFor abilityDescription:\n- Use 1\u20132 short sentences in plain English.\n-
+    Do NOT use any markup, HTML, XML, or tags.\n- Do NOT include characters like
+    \"<\" or \">\".\n- The description should be plain text only.\n\r\n"
   jsonFields:
   - fieldName: NewSkill
     fieldType: 4

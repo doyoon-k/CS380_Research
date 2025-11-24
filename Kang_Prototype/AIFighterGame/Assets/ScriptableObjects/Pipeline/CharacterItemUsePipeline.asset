@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: CharacterItemUsePipeline
   m_EditorClassIdentifier: Assembly-CSharp::PromptPipelineAsset
   displayName: CharacterItemUsePipeline
-  description: 
+  description: When Item is used, update stats and description of the character.
+    Then create and assign a new skill that suits character's new status.
   steps:
   - stepName: Step 1
     stepKind: 0
@@ -73,10 +74,10 @@ MonoBehaviour:
     outputNodePosition: {x: 861, y: -100}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 938, y: 105.00001, z: 0}
-    viewScale: {x: 1.3225, y: 1.3225, z: 1}
+    viewPosition: {x: 1256, y: 152, z: 0}
+    viewScale: {x: 0.8695652, y: 0.8695652, z: 1}
     viewInitialized: 1
     snapshotPositions:
-    - {x: -142, y: 137}
+    - {x: -140, y: 173}
     - {x: 564, y: 7}
     snapshotPositionsInitialized: 1
