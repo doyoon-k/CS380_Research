@@ -7,10 +7,6 @@ public class ItemManager : MonoBehaviour
     public OllamaClient ollamaClient;
     public PlayerStats playerStats;
 
-    [Header("Test Items")]
-    public ItemData[] testItems;
-    public int currentItemIndex = 0;
-
     [Header("Skill System")]
     public SkillManager skillManager;
     void Start()
@@ -19,46 +15,17 @@ public class ItemManager : MonoBehaviour
         {
             ollamaClient = GetComponent<OllamaClient>();
         }
-
-        Debug.Log("ItemManager initialized!");
-        Debug.Log("Press '4' to use current item");
-        Debug.Log("Press '5' to switch to next item");
-        Debug.Log("Press '6' to clear ALL caches");
-        Debug.Log("Press '7' to clear current item cache");
     }
 
-    void Update()
+    public void UseItem(ItemData item)
     {
-        if (Input.GetKeyDown(KeyCode.Alpha4))
+        if (item == null)
         {
-            if (testItems != null && testItems.Length > 0 && testItems[currentItemIndex] != null)
-            {
-                StartCoroutine(ApplyItem(testItems[currentItemIndex]));
-            }
-            else
-            {
-                Debug.LogError("No test items assigned!");
-            }
+            Debug.LogWarning("UseItem called with null item.");
+            return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha5))
-        {
-            if (testItems != null && testItems.Length > 0)
-            {
-                currentItemIndex = (currentItemIndex + 1) % testItems.Length;
-                Debug.Log($"Switched to item: {testItems[currentItemIndex].itemName}");
-            }
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha6))
-        {
-            ClearAllCaches();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha7))
-        {
-            ClearCurrentItemCache();
-        }
+        StartCoroutine(ApplyItem(item));
     }
 
     IEnumerator ApplyItem(ItemData item)
@@ -148,60 +115,5 @@ public class ItemManager : MonoBehaviour
                 skillManager.AddSkill(skill);
             }
         }
-    }
-
-    void ClearAllCaches()
-    {
-        if (testItems == null || testItems.Length == 0)
-        {
-            Debug.LogWarning("No items to clear cache!");
-            return;
-        }
-
-        int clearedCount = 0;
-
-        foreach (ItemData item in testItems)
-        {
-            if (item != null)
-            {
-                item.isCached = false;
-                item.cachedStatModelJson = "";
-                item.cachedSkillModelJson = "";
-                clearedCount++;
-
-#if UNITY_EDITOR
-                UnityEditor.EditorUtility.SetDirty(item);
-#endif
-            }
-        }
-
-#if UNITY_EDITOR
-        UnityEditor.AssetDatabase.SaveAssets();
-#endif
-
-        Debug.Log($"Cleared cache for ALL {clearedCount} items!");
-        Debug.Log("Press '4' to regenerate skills with AI!");
-    }
-
-    void ClearCurrentItemCache()
-    {
-        if (testItems == null || testItems.Length == 0 || testItems[currentItemIndex] == null)
-        {
-            Debug.LogWarning("No current item to clear cache!");
-            return;
-        }
-
-        ItemData item = testItems[currentItemIndex];
-        item.isCached = false;
-        item.cachedStatModelJson = "";
-        item.cachedSkillModelJson = "";
-
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(item);
-        UnityEditor.AssetDatabase.SaveAssets();
-#endif
-
-        Debug.Log($"Cleared cache for: {item.itemName}!");
-        Debug.Log("Press '4' to regenerate skills with AI!");
     }
 }

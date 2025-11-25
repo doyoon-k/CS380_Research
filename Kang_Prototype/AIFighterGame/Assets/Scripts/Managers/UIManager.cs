@@ -33,12 +33,6 @@ public class UIManager : MonoBehaviour
             display += $"HP: {enemyStats.currentStats.HP:F0}/{enemyStats.currentStats.MaxHP:F0}\n\n";
         }
 
-        if (itemManager != null && itemManager.testItems != null && itemManager.testItems.Length > 0)
-        {
-            display += "<b>=== CURRENT ITEM ===</b>\n";
-            display += $"{itemManager.testItems[itemManager.currentItemIndex].itemName}\n\n";
-        }
-
         if (skillManager != null && skillManager.activeSkills.Count > 0)
         {
             display += "<b>=== ACTIVE SKILLS ===</b>\n";
@@ -54,10 +48,7 @@ public class UIManager : MonoBehaviour
         display += "Move: A/D\n";
         display += "Jump: Space\n";
         display += "Attack: J\n";
-        display += "Use Item: 4\n";
-        display += "Next Item: 5\n";
-        display += "Clear All Cache: 6\n";
-        display += "Clear Current: 7\n";
+        display += "Interact Item: I\n";
         display += "Skill 1: Q | Skill 2: E";
 
         statsText.text = display;

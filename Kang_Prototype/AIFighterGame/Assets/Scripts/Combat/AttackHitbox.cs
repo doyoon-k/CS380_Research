@@ -50,6 +50,14 @@ public class AttackHitbox : MonoBehaviour
             hitTargets.Add(hit);
             Debug.Log($"Hit detected: {hit.gameObject.name}");
 
+            EnemyDamageHandler enemyDamage = hit.GetComponent<EnemyDamageHandler>();
+            if (enemyDamage != null && ownerStats != null)
+            {
+                float totalDamage = ownerStats.currentStats.Attack;
+                enemyDamage.TakeHit(totalDamage, transform.position, knockbackForce);
+                continue;
+            }
+
             PlayerStats enemyStats = hit.GetComponent<PlayerStats>();
             if (enemyStats != null && ownerStats != null)
             {

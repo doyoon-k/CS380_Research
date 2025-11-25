@@ -74,7 +74,7 @@ MonoBehaviour:
     outputNodePosition: {x: 861, y: -100}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 1256, y: 152, z: 0}
+    viewPosition: {x: 1486, y: 84, z: 0}
     viewScale: {x: 0.8695652, y: 0.8695652, z: 1}
     viewInitialized: 1
     snapshotPositions:
