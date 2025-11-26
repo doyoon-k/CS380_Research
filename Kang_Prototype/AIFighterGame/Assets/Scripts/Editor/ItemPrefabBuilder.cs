@@ -1,6 +1,6 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Creates a simple Item prefab with collider + ItemPickup + pickup prompt.
@@ -26,39 +26,22 @@ public static class ItemPrefabBuilder
         // Pickup logic
         ItemPickup pickup = item.AddComponent<ItemPickup>();
 
-        // Prompt UI (world space)
-        GameObject canvasGO = new GameObject("PromptCanvas");
-        canvasGO.transform.SetParent(item.transform);
-        canvasGO.transform.localPosition = new Vector3(0f, 0.8f, 0f);
-
-        Canvas canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.worldCamera = Camera.main;
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(2.5f, 0.6f);
-
-        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
-        scaler.dynamicPixelsPerUnit = 30f;
-        canvasGO.AddComponent<GraphicRaycaster>();
-
+        // World-space TMP text prompt (no Canvas; uses TextMeshPro component)
         GameObject textGO = new GameObject("PromptText");
-        textGO.transform.SetParent(canvasGO.transform);
-        RectTransform textRect = textGO.AddComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = Vector2.zero;
-        textRect.offsetMax = Vector2.zero;
+        textGO.transform.SetParent(item.transform);
+        textGO.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+        textGO.transform.localRotation = Quaternion.identity;
 
-        Text promptText = textGO.AddComponent<Text>();
-        promptText.text = "Press I to pick up";
-        promptText.alignment = TextAnchor.MiddleCenter;
-        promptText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        promptText.color = Color.white;
-        promptText.resizeTextForBestFit = true;
-        promptText.resizeTextMinSize = 10;
-        promptText.resizeTextMaxSize = 24;
+        TextMeshPro tmp = textGO.AddComponent<TextMeshPro>();
+        tmp.text = "Press I to pick up";
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = Color.white;
+        tmp.fontSize = 2f;
+        tmp.enableAutoSizing = true;
+        tmp.fontSizeMin = 1f;
+        tmp.fontSizeMax = 3.5f;
 
-        pickup.promptUI = canvasGO;
+        pickup.promptUI = textGO;
 
         // Save prefab
         EnsureFolderExists("Assets/Prefabs");

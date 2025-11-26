@@ -12,6 +12,7 @@ public class ItemPickup : MonoBehaviour
 
     private bool playerInRange;
     private ItemManager itemManager;
+    private bool consumed;
 
     void Awake()
     {
@@ -23,8 +24,9 @@ public class ItemPickup : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
+        Debug.Log($"ItemPickup enter by {other.name}");
         playerInRange = true;
-        itemManager = other.GetComponent<ItemManager>();
+        itemManager = other.GetComponentInParent<ItemManager>();
         SetPromptVisible(true);
     }
 
@@ -32,6 +34,7 @@ public class ItemPickup : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
+        Debug.Log($"ItemPickup exit by {other.name}");
         playerInRange = false;
         itemManager = null;
         SetPromptVisible(false);
@@ -39,7 +42,7 @@ public class ItemPickup : MonoBehaviour
 
     void Update()
     {
-        if (!playerInRange) return;
+        if (!playerInRange || consumed) return;
         if (itemData == null) return;
 
         if (Input.GetKeyDown(pickupKey))
@@ -50,18 +53,38 @@ public class ItemPickup : MonoBehaviour
 
     void Consume()
     {
-        if (itemManager != null)
-        {
-            itemManager.UseItem(itemData);
-            Debug.Log($"Picked up item: {itemData.itemName}");
-        }
-        else
+        if (consumed) return;
+
+        if (itemManager == null)
         {
             Debug.LogWarning("Player does not have ItemManager; item not applied.");
+            return;
         }
+        if (!playerInRange)
+        {
+            return;
+        }
+        if (itemData == null)
+        {
+            Debug.LogWarning("ItemData is null; cannot consume.");
+            return;
+        }
+
+        Debug.Log("Consume called");
+        consumed = true;
+        itemManager.UseItem(itemData);
+        Debug.Log($"Picked up item: {itemData.itemName}");
 
         SetPromptVisible(false);
         Destroy(gameObject);
+    }
+
+    void OnDisable()
+    {
+        if (!consumed)
+        {
+            Debug.Log($"ItemPickup {name} disabled without consume.");
+        }
     }
 
     void SetPromptVisible(bool visible)
