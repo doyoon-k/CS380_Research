@@ -39,6 +39,7 @@ public class CombatController : MonoBehaviour
         Debug.Log("=== ATTACK! ===");
 
         canAttack = false;
+        lastAttackTime = Time.time; // Track time
         attackHitbox.ActivateHitbox(attackDuration);
 
         Invoke(nameof(ResetAttack), attackCooldown);
@@ -48,5 +49,11 @@ public class CombatController : MonoBehaviour
     {
         canAttack = true;
         Debug.Log("Attack ready!");
+    }
+
+    public float GetRemainingCooldown()
+    {
+        if (canAttack) return 0f;
+        return Mathf.Max(0f, attackCooldown - (Time.time - lastAttackTime));
     }
 }
