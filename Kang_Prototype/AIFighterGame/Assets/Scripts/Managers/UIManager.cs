@@ -22,10 +22,11 @@ public class UIManager : MonoBehaviour
         if (statsText == null || playerStats == null) return;
 
         string display = "<b>=== PLAYER ===</b>\n";
-        display += $"HP: {playerStats.currentStats.HP:F0}/{playerStats.currentStats.MaxHP:F0}\n";
+        display += $"HP: {playerStats.currentStats.HP:F0}/{playerStats.currentStats.MaxHP:F0}, ";
         display += $"Speed: {playerStats.currentStats.Speed:F0}\n";
-        display += $"Attack: {playerStats.currentStats.Attack:F0}\n";
-        display += $"Defense: {playerStats.currentStats.Defense:F0}\n\n";
+        display += $"Attack: {playerStats.currentStats.Attack:F0}, ";
+        display += $"Defense: {playerStats.currentStats.Defense:F0}\n";
+        display += $"Haste: {playerStats.currentStats.CooldownHaste:F1}%\n\n";
 
         if (enemyStats != null)
         {
@@ -53,12 +54,11 @@ public class UIManager : MonoBehaviour
         display += "<b>=== CONTROLS ===</b>\n";
         display += "Move: A/D\n";
         display += "Jump: Space\n";
-        display += "Attack: J\n";
-        display += "Use Item: 4\n";
-        display += "Next Item: 5\n";
-        display += "Clear All Cache: 6\n";
-        display += "Clear Current: 7\n";
-        display += "Skill 1: Q | Skill 2: E";
+        display += "Attack: J, Skill: Q\n";
+        display += "Use Item: 4, Next Item: 5\n";
+        display += "1: Heal Player, 2: Damage Player\n";
+        display += "3: Heal Enemy (50), 9: Damage Enemy (50)\n";
+
 
         statsText.text = display;
     }

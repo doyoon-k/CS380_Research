@@ -11,6 +11,7 @@ public class Stats
     public float Jump = 10f;
     public float Attack_Speed = 5f;
     public float Range = 100f;
+    public float CooldownHaste = 0f;
 
     public Stats Clone()
     {
@@ -23,7 +24,8 @@ public class Stats
             MaxHP = this.MaxHP,
             Jump = this.Jump,
             Attack_Speed = this.Attack_Speed,
-            Range = this.Range
+            Range = this.Range,
+            CooldownHaste = this.CooldownHaste
         };
     }
 }
@@ -73,6 +75,7 @@ public class PlayerStats : MonoBehaviour
         currentStats.Jump += statChanges.Jump;
         currentStats.Attack_Speed += statChanges.Attack_Speed;
         currentStats.Range += statChanges.Range;
+        currentStats.CooldownHaste += statChanges.CooldownHaste;
 
         currentStats.Speed = Mathf.Max(1f, currentStats.Speed);
         currentStats.Attack = Mathf.Max(1f, currentStats.Attack);

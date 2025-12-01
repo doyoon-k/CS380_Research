@@ -3,8 +3,10 @@ using System.Collections;
 
 public class ItemManager : MonoBehaviour
 {
+    [Header("Configuration")]
+    public PromptPipelineAsset pipelineAsset;
+
     [Header("Components")]
-    public OllamaClient ollamaClient;
     public PlayerStats playerStats;
 
     [Header("Test Items")]
@@ -13,26 +15,29 @@ public class ItemManager : MonoBehaviour
 
     [Header("Skill System")]
     public SkillManager skillManager;
+
     void Start()
     {
-        if (ollamaClient == null)
-        {
-            ollamaClient = GetComponent<OllamaClient>();
-        }
-
         Debug.Log("ItemManager initialized!");
-        Debug.Log("Press '4' to use current item");
+        Debug.Log("Press '4' to use current item (Run Pipeline)");
         Debug.Log("Press '5' to switch to next item");
-        Debug.Log("Press '6' to clear ALL caches");
-        Debug.Log("Press '7' to clear current item cache");
     }
 
     void Update()
     {
+        // Key 4: Generate
         if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             if (testItems != null && testItems.Length > 0 && testItems[currentItemIndex] != null)
             {
+                if (pipelineAsset == null)
+                {
+                    Debug.LogError("Pipeline Asset is missing!");
+                    return;
+                }
+
+                // Stop any previous run before starting new one
+                GamePipelineRunner.Instance.StopGeneration();
                 StartCoroutine(ApplyItem(testItems[currentItemIndex]));
             }
             else
@@ -41,66 +46,45 @@ public class ItemManager : MonoBehaviour
             }
         }
 
+        // Key 5: Switch Item
         if (Input.GetKeyDown(KeyCode.Alpha5))
         {
             if (testItems != null && testItems.Length > 0)
             {
+                // Stop generation immediately when switching items!
+                GamePipelineRunner.Instance.StopGeneration();
+                StopAllCoroutines(); // Stop local coroutine as well
+
                 currentItemIndex = (currentItemIndex + 1) % testItems.Length;
                 Debug.Log($"Switched to item: {testItems[currentItemIndex].itemName}");
             }
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha6))
-        {
-            ClearAllCaches();
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha7))
-        {
-            ClearCurrentItemCache();
         }
     }
 
     IEnumerator ApplyItem(ItemData item)
     {
-        Debug.Log($"=== Applying Item: {item.itemName} ===");
+        Debug.Log($"=== Applying Item: {item.itemName} via Pipeline ===");
 
-        bool isComplete = false;
-        AIResponse aiResponse = null;
-        string errorMessage = null;
-
-        yield return ollamaClient.GenerateSkillsAndStats(
-            item,
-            response =>
+        GamePipelineRunner.Instance.GenerateItemStats(pipelineAsset, item, (aiResponse) =>
+        {
+            if (aiResponse == null)
             {
-                aiResponse = response;
-                isComplete = true;
-            },
-            error =>
-            {
-                errorMessage = error;
-                isComplete = true;
+                Debug.LogError("AI Response came back null!");
+                return;
             }
-        );
 
-        yield return new WaitUntil(() => isComplete);
+            Debug.Log("Pipeline finished! Applying results...");
 
-        if (errorMessage != null)
-        {
-            Debug.LogError($"Failed to generate AI content: {errorMessage}");
-            yield break;
-        }
+            if (aiResponse.stat_model != null) ApplyStatModel(aiResponse.stat_model);
+            if (aiResponse.skill_model != null) ApplySkillModel(aiResponse.skill_model);
+        });
 
-        if (aiResponse != null)
-        {
-            ApplyStatModel(aiResponse.stat_model);
-            ApplySkillModel(aiResponse.skill_model);
-        }
+        yield return null;
     }
 
     void ApplyStatModel(StatModel statModel)
     {
-        Debug.Log("=== Applying Stat Model ===");
+        if (statModel == null || statModel.stat_changes == null) return;
 
         Stats statChanges = new Stats
         {
@@ -109,99 +93,28 @@ public class ItemManager : MonoBehaviour
             Defense = statModel.stat_changes.Defense,
             Jump = statModel.stat_changes.Jump,
             Attack_Speed = statModel.stat_changes.Attack_Speed,
-            Range = statModel.stat_changes.Range
+            Range = statModel.stat_changes.Range,
+            CooldownHaste = statModel.stat_changes.CooldownHaste
         };
 
-        playerStats.ModifyStats(statChanges, statModel.duration_seconds);
+        float duration = statModel.duration_seconds > 0 ? statModel.duration_seconds : 0f;
+        playerStats.ModifyStats(statChanges, duration);
     }
 
     void ApplySkillModel(SkillModel skillModel)
     {
-        Debug.Log("=== Applying Skill Model ===");
-
-        if (skillModel == null)
+        if (skillModel == null || skillModel.new_skills == null || skillModel.new_skills.Count == 0)
         {
-            Debug.LogWarning("Skill model is null!");
-            return;
-        }
-
-        if (skillModel.new_skills == null || skillModel.new_skills.Count == 0)
-        {
-            Debug.LogWarning("No skills generated by AI!");
             return;
         }
 
         if (skillManager != null)
         {
             skillManager.ClearSkills();
-        }
-
-        foreach (var skill in skillModel.new_skills)
-        {
-            Debug.Log($"New Skill: {skill.name}");
-            Debug.Log($"  Sequence: {string.Join(" -> ", skill.sequence)}");
-            Debug.Log($"  Description: {skill.description}");
-            Debug.Log($"  Cooldown: {skill.cooldown}s, Duration: {skill.duration}s");
-
-            if (skillManager != null)
+            foreach (var skill in skillModel.new_skills)
             {
                 skillManager.AddSkill(skill);
             }
         }
-    }
-
-    void ClearAllCaches()
-    {
-        if (testItems == null || testItems.Length == 0)
-        {
-            Debug.LogWarning("No items to clear cache!");
-            return;
-        }
-
-        int clearedCount = 0;
-
-        foreach (ItemData item in testItems)
-        {
-            if (item != null)
-            {
-                item.isCached = false;
-                item.cachedStatModelJson = "";
-                item.cachedSkillModelJson = "";
-                clearedCount++;
-
-#if UNITY_EDITOR
-                UnityEditor.EditorUtility.SetDirty(item);
-#endif
-            }
-        }
-
-#if UNITY_EDITOR
-        UnityEditor.AssetDatabase.SaveAssets();
-#endif
-
-        Debug.Log($"Cleared cache for ALL {clearedCount} items!");
-        Debug.Log("Press '4' to regenerate skills with AI!");
-    }
-
-    void ClearCurrentItemCache()
-    {
-        if (testItems == null || testItems.Length == 0 || testItems[currentItemIndex] == null)
-        {
-            Debug.LogWarning("No current item to clear cache!");
-            return;
-        }
-
-        ItemData item = testItems[currentItemIndex];
-        item.isCached = false;
-        item.cachedStatModelJson = "";
-        item.cachedSkillModelJson = "";
-
-#if UNITY_EDITOR
-        UnityEditor.EditorUtility.SetDirty(item);
-        UnityEditor.AssetDatabase.SaveAssets();
-#endif
-
-        Debug.Log($"Cleared cache for: {item.itemName}!");
-        Debug.Log("Press '4' to regenerate skills with AI!");
     }
 }

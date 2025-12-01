@@ -128,9 +128,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 91290365}
-  - component: {fileID: 91290364}
   - component: {fileID: 91290363}
   - component: {fileID: 91290366}
+  - component: {fileID: 91290368}
+  - component: {fileID: 91290367}
+  - component: {fileID: 91290369}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -150,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e82c36082c581d45994dca3310cadd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemManager
-  ollamaClient: {fileID: 91290364}
+  pipelineAsset: {fileID: 11400000, guid: b2c62c6e9d626cb41b84abd491d2fc00, type: 2}
   playerStats: {fileID: 1934769447}
   testItems:
   - {fileID: 11400000, guid: b9e2ca2e906120e419c4da2307680912, type: 2}
@@ -158,38 +160,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 36a95900971abbe49a286100ad95635b, type: 2}
   currentItemIndex: 0
   skillManager: {fileID: 1934769449}
---- !u!114 &91290364
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 91290362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7c9f08c634d23d4aa7c97674a588b24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::OllamaClient
-  ollamaUrl: http://localhost:11434/api/chat
-  modelName: gemma3:4b-it-qat
-  atomicSkillsReference: '
-
-    MOVE: FORWARD, BACK, LEFT, RIGHT, JUMP, LAND
-
-    ATTACK:
-    HIT, HEAVY_HIT, LOW, MID, HIGH
-
-    POSE: CROUCH, STAND, ROLL, DODGE
-
-    STATE:
-    INVINCIBLE, GUARD, SUPERARMOR, STUN_ENEMY
-
-    EFFECT: HEAL, BUFF_SELF, DEBUFF_ENEMY,
-    TAUNT
-
-    TARGET: AIM, MARK, TRACK
-
-'
 --- !u!4 &91290365
 Transform:
   m_ObjectHideFlags: 0
@@ -222,6 +192,49 @@ MonoBehaviour:
   enemyStats: {fileID: 1872909788}
   skillManager: {fileID: 1934769449}
   itemManager: {fileID: 91290363}
+--- !u!114 &91290367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91290362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dd557c73502df64cb17eb21fc934fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GamePipelineRunner
+  _runtimeService: {fileID: 91290368}
+--- !u!114 &91290368
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91290362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82b2648f0caa27644a068d85d3dfca40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RuntimeOllamaService
+  ollamaUrl: http://localhost:11434
+  timeoutSeconds: 60
+--- !u!114 &91290369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91290362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fc966c74d7a9ed44928e318471a6436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameDebugger
+  playerStats: {fileID: 1934769447}
+  enemyStats: {fileID: 1872909788}
+  testDamage: 50
+  testHeal: 50
 --- !u!1 &122737447
 GameObject:
   m_ObjectHideFlags: 0
@@ -255,8 +268,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.25}
   m_AnchorMax: {x: 1, y: 0.75}
-  m_AnchoredPosition: {x: -5, y: 0}
-  m_SizeDelta: {x: -20, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &153955584
 GameObject:
@@ -1004,7 +1017,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -140}
-  m_SizeDelta: {x: 350, y: 750}
+  m_SizeDelta: {x: 500, y: 750}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &778164324
 MonoBehaviour:
@@ -1384,7 +1397,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 10, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1221444867
 MonoBehaviour:
@@ -1457,8 +1470,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.25}
   m_AnchorMax: {x: 1, y: 0.75}
-  m_AnchoredPosition: {x: -5, y: 0}
-  m_SizeDelta: {x: -20, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1335789247
 GameObject:
@@ -1749,7 +1762,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 10, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1682959834
 MonoBehaviour:
@@ -2081,6 +2094,7 @@ MonoBehaviour:
     Jump: 10
     Attack_Speed: 5
     Range: 100
+    CooldownHaste: 0
   currentStats:
     Speed: 10
     Attack: 50
@@ -2090,6 +2104,7 @@ MonoBehaviour:
     Jump: 10
     Attack_Speed: 5
     Range: 100
+    CooldownHaste: 0
   isDead: 0
   hpBar: {fileID: 1954686902}
   damagePopupPrefab: {fileID: 1393589493823678111, guid: 1ff6564d5dfd1d146a45a07c1fb3f753, type: 3}
@@ -2439,6 +2454,7 @@ MonoBehaviour:
     Jump: 10
     Attack_Speed: 5
     Range: 100
+    CooldownHaste: 0
   currentStats:
     Speed: 10
     Attack: 50
@@ -2448,6 +2464,7 @@ MonoBehaviour:
     Jump: 10
     Attack_Speed: 5
     Range: 100
+    CooldownHaste: 0
   isDead: 0
   hpBar: {fileID: 1136976642}
   damagePopupPrefab: {fileID: 1393589493823678111, guid: 1ff6564d5dfd1d146a45a07c1fb3f753, type: 3}
