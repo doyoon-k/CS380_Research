@@ -15,7 +15,7 @@ MonoBehaviour:
   itemName: Ice Crystal
   description: A freezing crystal that slows enemies and grants ice-based abilities.
     Your movements become precise and calculated.
-  icon: {fileID: 0}
+  icon: {fileID: -7560284153744367771, guid: f0336eae2f7825a42ac319534eccbd60, type: 3}
   isCached: 0
   cachedStatModelJson: 
   cachedSkillModelJson: 

@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,6 +6,7 @@ public class UIManager : MonoBehaviour
 {
     [Header("UI Elements")]
     public Text statsText;
+    public Text inventoryText;
 
     [Header("References")]
     public PlayerStats playerStats;
@@ -15,6 +17,38 @@ public class UIManager : MonoBehaviour
     void Update()
     {
         UpdateStatsDisplay();
+        UpdateInventoryList();
+    }
+
+    void UpdateInventoryList()
+    {
+        if (inventoryText == null || itemManager == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("<b>=== INVENTORY (T) ===</b>");
+
+        if (itemManager.inventory.Count == 0)
+        {
+            sb.AppendLine("- Empty -");
+        }
+        else
+        {
+            for (int i = 0; i < itemManager.inventory.Count; i++)
+            {
+                ItemData item = itemManager.inventory[i];
+
+                if (i == itemManager.currentEquipIndex)
+                {
+                    sb.AppendLine($"<size=30><color=yellow><b>{item.itemName}</b></color></size>");
+                }
+                else
+                {
+                    sb.AppendLine($"<color=#808080>{item.itemName}</color>");
+                }
+            }
+        }
+
+        inventoryText.text = sb.ToString();
     }
 
     void UpdateStatsDisplay()
@@ -34,10 +68,13 @@ public class UIManager : MonoBehaviour
             display += $"HP: {enemyStats.currentStats.HP:F0}/{enemyStats.currentStats.MaxHP:F0}\n\n";
         }
 
-        if (itemManager != null && itemManager.testItems != null && itemManager.testItems.Length > 0)
+        if (itemManager.currentItem != null)
         {
-            display += "<b>=== CURRENT ITEM ===</b>\n";
-            display += $"{itemManager.testItems[itemManager.currentItemIndex].itemName}\n\n";
+            display += $"<b>ITEM: {itemManager.currentItem.itemName}</b>\n\n";
+        }
+        else
+        {
+            display += "<b>ITEM: None</b>\n\n";
         }
 
         if (skillManager != null && skillManager.activeSkills.Count > 0)
@@ -55,7 +92,7 @@ public class UIManager : MonoBehaviour
         display += "Move: A/D\n";
         display += "Jump: Space\n";
         display += "Attack: J, Skill: Q\n";
-        display += "Use Item: 4, Next Item: 5\n";
+        display += "Use Item: 4, Next Item: T\n";
         display += "1: Heal Player, 2: Damage Player\n";
         display += "3: Heal Enemy (50), 9: Damage Enemy (50)\n";
 
