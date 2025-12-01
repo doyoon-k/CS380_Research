@@ -94,7 +94,7 @@ public class UIManager : MonoBehaviour
         display += "Attack: J, Skill: Q\n";
         display += "Use Item: 4, Next Item: T\n";
         display += "1: Heal Player, 2: Damage Player\n";
-        display += "3: Heal Enemy (50), 9: Damage Enemy (50)\n";
+        display += "3: Heal Enemy\n";
 
 
         statsText.text = display;

@@ -10,6 +10,10 @@ public class SkillExecutor : MonoBehaviour
     public AttackHitbox attackHitbox;
     public SpriteRenderer spriteRenderer;
 
+    [Header("Prefabs")]
+    public GameObject projectilePrefab;
+    public Transform firePoint;
+
     [Header("Movement Settings")]
     public float dashSpeed = 20f;
     public float dashDuration = 0.25f;
@@ -24,6 +28,7 @@ public class SkillExecutor : MonoBehaviour
     private bool hasSuperArmor = false;
     private List<GameObject> markedEnemies = new List<GameObject>();
     private GameObject aimedTarget = null;
+    private bool isFacingRight = true;
 
     void Start()
     {
@@ -42,47 +47,66 @@ public class SkillExecutor : MonoBehaviour
         Debug.Log($"SkillExecutor initialized - rb: {rb != null}, stats: {playerStats != null}, hitbox: {attackHitbox != null}");
     }
 
+    void Update()
+    {
+        float moveInput = Input.GetAxisRaw("Horizontal");
+        if (moveInput > 0) isFacingRight = true;
+        else if (moveInput < 0) isFacingRight = false;
+
+        if (spriteRenderer != null && Mathf.Abs(moveInput) > 0.1f)
+        {
+            spriteRenderer.flipX = !isFacingRight;
+        }
+
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            FireProjectile("Physical", Color.white);
+        }
+    }
+
     public IEnumerator ExecuteSkill(SkillData skill)
     {
         Debug.Log($"=== Executing Skill: {skill.name} ===");
 
+        string element = DetectElement(skill.name, skill.description);
+        Color elementColor = GetColorForElement(element);
+
+        StartCoroutine(FlashSprite(elementColor, 0.5f));
+
         foreach (string atomicSkill in skill.sequence)
         {
             Debug.Log($"Executing atomic skill: {atomicSkill}");
-            yield return ExecuteAtomicSkill(atomicSkill);
+            yield return ExecuteAtomicSkill(atomicSkill, element, elementColor);
             yield return new WaitForSeconds(0.05f);
         }
 
         Debug.Log($"Skill {skill.name} complete!");
     }
 
-    IEnumerator ExecuteAtomicSkill(string atomicSkill)
+    IEnumerator ExecuteAtomicSkill(string atomicSkill, string element = "Physical", Color color = default)
     {
-        switch (atomicSkill.ToUpper())
+        if (color == default) color = Color.white;
+        string action = atomicSkill.ToUpper();
+
+        if (action.Contains("PROJECTILE") || action.Contains("SHOOT") || action.Contains("FIRE"))
+        {
+            FireProjectile(element, color);
+            yield return new WaitForSeconds(0.1f);
+            yield break;
+        }
+
+        switch (action)
         {
             // ===== MOVE =====
-            case "FORWARD":
+            case "FORWARD": yield return MoveForward(); break;
+            case "BACK": yield return MoveBackward(); break;
+            case "LEFT": yield return MoveLeft(); break;
+            case "RIGHT": yield return MoveRight(); break;
+            case "JUMP": yield return Jump(); break;
+            case "LAND": yield return Land(); break;
+            case "DASH":
+            case "RUSH":
                 yield return MoveForward();
-                break;
-
-            case "BACK":
-                yield return MoveBackward();
-                break;
-
-            case "LEFT":
-                yield return MoveLeft();
-                break;
-
-            case "RIGHT":
-                yield return MoveRight();
-                break;
-
-            case "JUMP":
-                yield return Jump();
-                break;
-
-            case "LAND":
-                yield return Land();
                 break;
 
             // ===== ATTACK =====
@@ -90,6 +114,7 @@ public class SkillExecutor : MonoBehaviour
             case "LOW":
             case "MID":
             case "HIGH":
+            case "ATTACK":
                 yield return Attack(1.0f);
                 break;
 
@@ -98,74 +123,38 @@ public class SkillExecutor : MonoBehaviour
                 break;
 
             // ===== POSE =====
-            case "CROUCH":
-                yield return Crouch();
-                break;
-
-            case "STAND":
-                yield return Stand();
-                break;
-
-            case "ROLL":
-                yield return Roll();
-                break;
-
-            case "DODGE":
-                yield return Dodge();
-                break;
+            case "CROUCH": yield return Crouch(); break;
+            case "STAND": yield return Stand(); break;
+            case "ROLL": yield return Roll(); break;
+            case "DODGE": yield return Dodge(); break;
 
             // ===== STATE =====
-            case "INVINCIBLE":
-                yield return SetInvincible();
-                break;
-
-            case "GUARD":
-                yield return SetGuard();
-                break;
-
-            case "SUPERARMOR":
-                yield return SetSuperArmor();
-                break;
-
+            case "INVINCIBLE": yield return SetInvincible(); break;
+            case "GUARD": yield return SetGuard(); break;
+            case "SUPERARMOR": yield return SetSuperArmor(); break;
             case "STUN_ENEMY":
-                yield return StunEnemy();
-                break;
+            case "STUN": 
+                yield return StunEnemy(); break;
 
             // ===== EFFECT =====
-            case "HEAL":
-                yield return Heal();
-                break;
-
+            case "HEAL": yield return Heal(); break;
             case "BUFF_SELF":
-                yield return BuffSelf();
-                break;
-
-            case "DEBUFF_ENEMY":
-                yield return DebuffEnemy();
-                break;
-
-            case "TAUNT":
-                yield return Taunt();
-                break;
+            case "BUFF": 
+                yield return BuffSelf(); break;
+            case "DEBUFF_ENEMY": yield return DebuffEnemy(); break;
+            case "TAUNT": yield return Taunt(); break;
 
             // ===== TARGET =====
-            case "AIM":
-                yield return Aim();
-                break;
-
-            case "MARK":
-                yield return Mark();
-                break;
-
-            case "TRACK":
-                yield return Track();
-                break;
+            case "AIM": yield return Aim(); break;
+            case "MARK": yield return Mark(); break;
+            case "TRACK": yield return Track(); break;
 
             default:
-                Debug.LogWarning($"Unknown atomic skill: {atomicSkill}");
+                Debug.LogWarning($"Unknown atomic skill: {atomicSkill} (Trying generic action)");
+                if (atomicSkill.ToUpper().Contains("ATTACK")) yield return Attack(1.0f);
                 break;
         }
-    }
+    }    
 
     // ========================================
     // MOVE SKILLS
@@ -175,36 +164,32 @@ public class SkillExecutor : MonoBehaviour
     {
         if (rb == null) yield break;
 
-        Debug.Log($"Dashing forward at speed {dashSpeed}!");
-        float elapsed = 0f;
+        float speed = isFacingRight ? dashSpeed : -dashSpeed;
 
+        Debug.Log($"Dashing {(isFacingRight ? "Right" : "Left")}!");
+        float elapsed = 0f;
         while (elapsed < dashDuration)
         {
-            rb.linearVelocity = new Vector2(dashSpeed, rb.linearVelocity.y);
+            rb.linearVelocity = new Vector2(speed, rb.linearVelocity.y);
             elapsed += Time.deltaTime;
             yield return null;
         }
-
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        Debug.Log("Forward dash complete!");
     }
 
     IEnumerator MoveBackward()
     {
         if (rb == null) yield break;
+        float speed = isFacingRight ? -dashSpeed : dashSpeed;
 
-        Debug.Log($"Dashing backward at speed {dashSpeed}!");
         float elapsed = 0f;
-
         while (elapsed < dashDuration)
         {
-            rb.linearVelocity = new Vector2(-dashSpeed, rb.linearVelocity.y);
+            rb.linearVelocity = new Vector2(speed, rb.linearVelocity.y);
             elapsed += Time.deltaTime;
             yield return null;
         }
-
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        Debug.Log("Backward dash complete!");
     }
 
     IEnumerator MoveLeft()
@@ -248,23 +233,15 @@ public class SkillExecutor : MonoBehaviour
     IEnumerator Jump()
     {
         if (rb == null || playerStats == null) yield break;
-
         float jumpForce = playerStats.currentStats.Jump;
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-        Debug.Log($"Jumping with force {jumpForce}!");
-
         yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator Land()
     {
         if (rb == null) yield break;
-
-        Debug.Log("Waiting to land...");
-
         yield return new WaitUntil(() => Mathf.Abs(rb.linearVelocity.y) < 0.5f);
-
-        Debug.Log("Landed!");
         yield return new WaitForSeconds(0.05f);
     }
 
@@ -275,16 +252,11 @@ public class SkillExecutor : MonoBehaviour
     IEnumerator Attack(float damageMultiplier)
     {
         if (attackHitbox == null) yield break;
-
-        Debug.Log($"Executing attack with {damageMultiplier}x damage!");
-
+        Debug.Log($"Attack ({damageMultiplier}x)!");
         float originalDamage = attackHitbox.damage;
         attackHitbox.damage = originalDamage * damageMultiplier;
-
         attackHitbox.ActivateHitbox(0.2f);
-
         yield return new WaitForSeconds(attackDelay);
-
         attackHitbox.damage = originalDamage;
     }
 
@@ -294,27 +266,13 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator Crouch()
     {
-        Debug.Log("Crouching!");
-
-        if (spriteRenderer != null)
-        {
-            Vector3 scale = transform.localScale;
-            transform.localScale = new Vector3(scale.x, scale.y * 0.5f, scale.z);
-        }
-
+        if (spriteRenderer != null) transform.localScale = new Vector3(transform.localScale.x, 0.5f, 1f);
         yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator Stand()
     {
-        Debug.Log("Standing up!");
-
-        if (spriteRenderer != null)
-        {
-            Vector3 scale = transform.localScale;
-            transform.localScale = new Vector3(scale.x, Mathf.Abs(scale.y) * 2f, scale.z);
-        }
-
+        if (spriteRenderer != null) transform.localScale = new Vector3(transform.localScale.x, 1f, 1f);
         yield return new WaitForSeconds(0.05f);
     }
 
@@ -575,24 +533,71 @@ public class SkillExecutor : MonoBehaviour
         }
     }
 
+    void FireProjectile(string element, Color color)
+    {
+        if (projectilePrefab == null || firePoint == null)
+        {
+            Debug.LogWarning("Projectile Prefab or FirePoint missing!");
+            return;
+        }
+
+        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        ProjectileController pc = proj.GetComponent<ProjectileController>();
+
+        Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
+        float dmg = playerStats.currentStats.Attack;
+
+        pc.Initialize(dir, dmg, element, color);
+        Debug.Log($"Fired {element} projectile!");
+    }
+
     // ========================================
     // HELPER FUNCTIONS
     // ========================================
+    string DetectElement(string name, string desc)
+    {
+        string text = (name + desc).ToLower();
+
+        // 1. Lightning
+        if (text.Contains("lightning") || text.Contains("thunder") || text.Contains("volt") ||
+            text.Contains("electric") || text.Contains("shock") || text.Contains("storm"))
+            return "Lightning";
+
+        // 2. Ice
+        if (text.Contains("ice") || text.Contains("frost") || text.Contains("freez") ||
+            text.Contains("cold") || text.Contains("chill") || text.Contains("snow") || text.Contains("crystal"))
+            return "Ice";
+
+        // 3. Fire
+        if (text.Contains("fire") || text.Contains("burn") || text.Contains("flame") ||
+            text.Contains("heat") || text.Contains("blaze") || text.Contains("ember") || text.Contains("inferno"))
+            return "Fire";
+
+        return "Physical";
+    }
+
+    Color GetColorForElement(string element)
+    {
+        switch (element)
+        {
+            case "Fire": return new Color(1f, 0.4f, 0.4f); // Red
+            case "Ice": return new Color(0.4f, 0.9f, 1f);  // Cyan
+            case "Lightning": return new Color(1f, 1f, 0.4f); // Yellow
+            default: return Color.white;
+        }
+    }
 
     IEnumerator FlashSprite(Color flashColor, float duration)
     {
         if (spriteRenderer == null) yield break;
-
-        Color original = spriteRenderer.color;
+        Color original = Color.blue;
         float elapsed = 0f;
-
         while (elapsed < duration)
         {
             spriteRenderer.color = Color.Lerp(original, flashColor, Mathf.PingPong(elapsed * 10f, 1f));
             elapsed += Time.deltaTime;
             yield return null;
         }
-
         spriteRenderer.color = original;
     }
 

@@ -313,6 +313,14 @@ PrefabInstance:
       propertyPath: itemData
       value: 
       objectReference: {fileID: 11400000, guid: 36a95900971abbe49a286100ad95635b, type: 2}
+    - target: {fileID: 695329102965478139, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 2.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 695329102965478139, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 2.25
+      objectReference: {fileID: 0}
     - target: {fileID: 1531667027429218133, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -535,7 +543,7 @@ GameObject:
   - component: {fileID: 526424801}
   m_Layer: 6
   m_Name: Ground
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1034,6 +1042,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 624778738}
   m_CullTransparentMesh: 1
+--- !u!1 &707272463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 707272464}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &707272464
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 707272463}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.5, y: 0.1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1934769444}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &765850784
 GameObject:
   m_ObjectHideFlags: 0
@@ -2153,7 +2192,7 @@ GameObject:
   - component: {fileID: 1872909789}
   m_Layer: 7
   m_Name: Enemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2298,7 +2337,7 @@ Transform:
   m_GameObject: {fileID: 1872909783}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2, y: -2, z: 0}
+  m_LocalPosition: {x: 10, y: -2, z: 0}
   m_LocalScale: {x: 1, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2354,7 +2393,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28277d98f2fa2544c9bfddc7970ea8a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  homePosition: {x: -2, y: 0, z: 0}
+  homePosition: {x: 10, y: 0, z: 0}
   returnSpeed: 3
   returnThreshold: 0.05
   idleTime: 0.8
@@ -2474,7 +2513,6 @@ GameObject:
   - component: {fileID: 1934769441}
   - component: {fileID: 1934769445}
   - component: {fileID: 1934769447}
-  - component: {fileID: 1934769446}
   - component: {fileID: 1934769448}
   - component: {fileID: 1934769450}
   - component: {fileID: 1934769449}
@@ -2633,6 +2671,7 @@ Transform:
   - {fileID: 1335789249}
   - {fileID: 1695011765}
   - {fileID: 153955585}
+  - {fileID: 707272464}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1934769445
@@ -2653,18 +2692,6 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
---- !u!114 &1934769446
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1934769440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2857d9637cbcdcb43aa5976611a8b49c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TestItemEffect
 --- !u!114 &1934769447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2749,6 +2776,8 @@ MonoBehaviour:
   rb: {fileID: 1934769442}
   attackHitbox: {fileID: 1335789248}
   spriteRenderer: {fileID: 0}
+  projectilePrefab: {fileID: 7843604172891786416, guid: d1e94d1a53c94f34db406444b6e272f3, type: 3}
+  firePoint: {fileID: 707272464}
   dashSpeed: 20
   dashDuration: 0.4
   attackDelay: 0.2

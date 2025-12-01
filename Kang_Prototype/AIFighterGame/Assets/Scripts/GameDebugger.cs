@@ -50,17 +50,5 @@ public class GameDebugger : MonoBehaviour
                 Debug.LogWarning("Enemy stats not assigned in GameDebugger!");
             }
         }
-
-        // Key 8: Kill Player (Optional)
-        if (Input.GetKeyDown(KeyCode.Alpha8))
-        {
-            if (playerStats != null) playerStats.TakeDamage(9999f);
-        }
-
-        // Key 9: Full Heal Player (Optional)
-        if (Input.GetKeyDown(KeyCode.Alpha9))
-        {
-            if (playerStats != null) playerStats.Heal(9999f);
-        }
     }
 }
