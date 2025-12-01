@@ -14,6 +14,18 @@ public class UIManager : MonoBehaviour
     public SkillManager skillManager;
     public ItemManager itemManager;
     public CombatController combatController;
+    public SkillExecutor skillExecutor;
+
+    void Start()
+    {
+        if (playerStats == null) playerStats = FindObjectOfType<PlayerStats>();
+        if (skillManager == null) skillManager = FindObjectOfType<SkillManager>();
+        if (itemManager == null) itemManager = FindObjectOfType<ItemManager>();
+        if (combatController == null) combatController = FindObjectOfType<CombatController>();
+        if (skillExecutor == null) skillExecutor = FindObjectOfType<SkillExecutor>();
+
+        if (skillExecutor == null) Debug.LogError("UIManager: SkillExecutor not found!");
+    }
 
     void Update()
     {
@@ -114,7 +126,20 @@ public class UIManager : MonoBehaviour
                 attackStatus = $"<color=red>({atkCd:F1}s)</color>";
             }
         }
-        display += $"<color=white>Attack: J</color> {attackStatus} | <color=white>Skill: Q/E</color>\n";
+
+        // Projectile Cooldown Display
+        string shootStatus = "<color=green>[READY]</color>";
+        if (skillExecutor != null)
+        {
+            float projCd = skillExecutor.GetProjectileCooldown();
+            if (projCd > 0)
+            {
+                shootStatus = $"<color=red>({projCd:F1}s)</color>";
+            }
+        }
+
+        display += $"<color=white>Attack: J</color> {attackStatus} | <color=white>Shoot: K</color> {shootStatus}\n";
+        display += $"<color=white>Skill: Q/E</color>\n";
         display += "<color=#DDDDDD>Item: 4 | Swap: T</color>\n";
         display += "<color=#DDDDDD>Debug: 1/2/3</color>\n";
 

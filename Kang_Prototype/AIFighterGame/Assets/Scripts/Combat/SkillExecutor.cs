@@ -21,6 +21,8 @@ public class SkillExecutor : MonoBehaviour
     [Header("Attack Settings")]
     public float attackDelay = 0.2f;
     public float heavyAttackMultiplier = 1.5f;
+    public float projectileCooldown = 1.0f; // New Cooldown
+    private float lastProjectileTime = -999f;
 
     [Header("State Tracking")]
     private bool isInvincible = false;
@@ -60,8 +62,21 @@ public class SkillExecutor : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.K))
         {
-            FireProjectile("Physical", Color.white);
+            if (Time.time - lastProjectileTime >= projectileCooldown)
+            {
+                lastProjectileTime = Time.time;
+                FireProjectile("Physical", Color.white);
+            }
+            else
+            {
+                Debug.Log("Projectile on cooldown!");
+            }
         }
+    }
+
+    public float GetProjectileCooldown()
+    {
+        return Mathf.Max(0f, projectileCooldown - (Time.time - lastProjectileTime));
     }
 
     public IEnumerator ExecuteSkill(SkillData skill)

@@ -86,15 +86,31 @@ public class ItemManager : MonoBehaviour
         state["item_name"] = item.itemName;
         state["item_description"] = item.description;
 
-        // Dummy Stats
-        state["AttackPower"] = "50";
-        state["AttackSpeed"] = "1.0";
-        state["ProjectileRange"] = "10";
-        state["MovementSpeed"] = "5";
-        state["MaxHealth"] = "100";
-        state["Defense"] = "10";
-        state["JumpPower"] = "10";
-        state["CooldownHaste"] = "0";
+        // Real Stats
+        if (playerStats != null)
+        {
+            state["AttackPower"] = playerStats.currentStats.Attack.ToString();
+            state["AttackSpeed"] = playerStats.currentStats.Attack_Speed.ToString();
+            state["ProjectileRange"] = playerStats.currentStats.Range.ToString();
+            state["MovementSpeed"] = playerStats.currentStats.Speed.ToString();
+            state["MaxHealth"] = playerStats.currentStats.MaxHP.ToString();
+            state["Defense"] = playerStats.currentStats.Defense.ToString();
+            state["JumpPower"] = playerStats.currentStats.Jump.ToString();
+            state["CooldownHaste"] = playerStats.currentStats.CooldownHaste.ToString();
+        }
+        else
+        {
+            // Fallback if playerStats is missing
+            state["AttackPower"] = "50";
+            state["AttackSpeed"] = "1.0";
+            state["ProjectileRange"] = "10";
+            state["MovementSpeed"] = "5";
+            state["MaxHealth"] = "100";
+            state["Defense"] = "10";
+            state["JumpPower"] = "10";
+            state["CooldownHaste"] = "0";
+        }
+        
         state["current_character_description"] = "A brave warrior.";
 
         bool pipelineFinished = false;
