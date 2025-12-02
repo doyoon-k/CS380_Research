@@ -12,6 +12,7 @@ public class StatChanges
     public float Attack_Speed;
     public float Range;
     public float CooldownHaste;
+    public float MaxHP;
 }
 
 [Serializable]

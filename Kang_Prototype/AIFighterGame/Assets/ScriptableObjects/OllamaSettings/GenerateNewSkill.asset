@@ -16,25 +16,34 @@ MonoBehaviour:
   format: '{"type":"object","properties":{"newDescription":{"type":"string"},"statChanges":{"type":"array","items":{"type":"object","properties":{"stat":{"type":"string","enum":["AttackPower","AttackSpeed","ProjectileRange","MovementSpeed","MaxHealth","Defense","JumpPower","CooldownHaste"]},"changeType":{"type":"string","enum":["additive","multiplicative"]},"value":{"type":"number"}},"required":["stat","changeType","value"],"additionalProperties":false}}},"required":["newDescription","statChanges"],"additionalProperties":false}'
   stream: 0
   keepAlive: 
-  systemPromptTemplate: "# Role and Objective\r\nDesign and implement stat changes
-    for a roguelike action game in response to items the player absorbs.\r\n# Instructions\r\n-
-    Begin with a concise checklist (3-7 bullets) of what you will do; keep items
-    conceptual, not implementation-level.\r\n- Receive as input:\r\n- The item the
-    player has just absorbed.\r\n- The current numeric stats of the player character.\r\n-
-    The current flavor description of the character.\r\n- Output stat changes and
-    an updated flavor description as follows:\n1. - Write 1\u20132 short English
-    sentences describing how the character feels, moves, or behaves after absorbing
-    the item.\n- Focus on posture, movement style, attitude, or combat rhythm, not
-    on numbers.\n- Describe the change indirectly, like how they act in the world,
-    not by stating raw stat changes.\r\n2. Choose 1\u20134 stats to change that thematically
-    match both the absorbed item's properties and the character's current build.
-    If no stats are appropriately affected, you may return zero stat changes.\r\n3.
-    For each chosen stat, define:\r\n- `stat`: one of\r\n- `AttackPower`, `AttackSpeed`,
-    `ProjectileRange`, `MovementSpeed`,\r\n- `MaxHealth`, `Defense`, `JumpPower`,
-    `CooldownHaste`\r\n- `changeType`: either \"additive\" or \"multiplicative\"\r\n-
-    `value`: integer or float (additive typically between -5.0 and 5.0; multiplicative
-    typically between 0.5 and 2.0)\r\n4. Ensure all changes are clearly justified,
-    directly tied to the item and current stats."
+  systemPromptTemplate: "You are a game design assistant for a fast-paced roguelike
+    action game.\r\nYour job in this step is to update the player character\u2019s
+    stats and flavor description after they absorb an item.\r\n\r\n[CONTEXT]\r\nYou
+    are called from a game system each time the player absorbs an item.\r\nYou receive
+    three inputs:\r\n1. The item the player has just absorbed (name, description,
+    theme or vibe).\r\n2. The current numeric stats of the player character.\r\n3.
+    The current flavor description of the character (how they currently feel, move,
+    fight, or behave).\r\n\r\nAvailable stats that can change:\r\n- AttackPower\r\n-
+    AttackSpeed\r\n- ProjectileRange\r\n- MovementSpeed\r\n- MaxHealth\r\n- Defense\r\n-
+    JumpPower\r\n- CooldownHaste\r\n\r\n[TASK]\r\nGiven the absorbed item, the current
+    stats, and the current flavor description, you must:\r\n\r\n1) Write a short
+    updated character description in simple English that reflects how the character
+    has changed after absorbing this item.\r\n   - Focus on how they now feel, move,
+    or fight.\r\n   - Describe posture, movement style, attitude, or combat rhythm.\r\n  
+    - Do NOT mention raw stat names or numeric values in this text.\r\n\r\n2) Choose
+    0\u20134 stats to modify in a way that fits both:\r\n   - the item\u2019s theme,
+    and\r\n   - the current build suggested by the current stats and flavor.\r\n\r\n  
+    For each chosen stat, decide:\r\n   - stat: one of\r\n     AttackPower, AttackSpeed,
+    ProjectileRange, MovementSpeed,\r\n     MaxHealth, Defense, JumpPower, CooldownHaste\r\n  
+    - changeType: \"additive\" or \"multiplicative\"\r\n   - value:\r\n     - additive:
+    typically between -5.0 and 5.0\r\n     - multiplicative: typically between 0.5
+    and 2.0\r\n\r\n   If no stat is thematically appropriate to change, you may return
+    an empty list of stat changes.\r\n\r\n[CONSTRAINTS]\r\n- The updated description
+    must not expose raw numbers or explicit change amounts.\r\n- The description
+    and the chosen stat changes must feel consistent with:\r\n  - the item\u2019s
+    properties and theme, and\r\n  - the character\u2019s current stats and flavor.\r\n-
+    Output ONLY the JSON object that matches the caller\u2019s schema, with no extra
+    commentary or text.\r\n"
   jsonFields:
   - fieldName: newDescription
     fieldType: 0

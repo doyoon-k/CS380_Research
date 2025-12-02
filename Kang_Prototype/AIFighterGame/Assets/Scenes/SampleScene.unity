@@ -191,6 +191,8 @@ MonoBehaviour:
   enemyStats: {fileID: 1872909788}
   skillManager: {fileID: 1934769449}
   itemManager: {fileID: 91290363}
+  combatController: {fileID: 1934769448}
+  skillExecutor: {fileID: 1934769450}
 --- !u!114 &91290367
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -218,6 +220,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RuntimeOllamaService
   ollamaUrl: http://localhost:11434
   timeoutSeconds: 60
+  logTraffic: 0
 --- !u!114 &91290369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -335,7 +338,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7631210605879559592, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.59
+      value: -3.2299998
       objectReference: {fileID: 0}
     - target: {fileID: 7631210605879559592, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_LocalPosition.z
@@ -526,7 +529,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   player: {fileID: 1934769444}
   smoothSpeed: 0.125
-  offset: {x: 0, y: 1, z: -10}
+  offset: {x: 0, y: 4, z: -10}
   enableLimits: 0
   minPosition: {x: 0, y: 0}
   maxPosition: {x: 0, y: 0}
@@ -661,7 +664,7 @@ Transform:
   m_GameObject: {fileID: 526424800}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -4, z: 0}
+  m_LocalPosition: {x: 0, y: -4.98, z: 0}
   m_LocalScale: {x: 30, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1138,8 +1141,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 20, y: -140}
-  m_SizeDelta: {x: 500, y: 750}
+  m_AnchoredPosition: {x: 15, y: -118.66}
+  m_SizeDelta: {x: 573.4974, y: 747.6292}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &778164324
 MonoBehaviour:
@@ -1449,7 +1452,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7631210605879559592, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.59
+      value: -3.2299998
       objectReference: {fileID: 0}
     - target: {fileID: 7631210605879559592, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1670,7 +1673,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7631210605879559592, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.63
+      value: -3.27
       objectReference: {fileID: 0}
     - target: {fileID: 7631210605879559592, guid: 8514a324c5fdce64daaa7a2d3d92b244, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2337,7 +2340,7 @@ Transform:
   m_GameObject: {fileID: 1872909783}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10, y: -2, z: 0}
+  m_LocalPosition: {x: 10, y: -2.6399999, z: 0}
   m_LocalScale: {x: 1, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2377,6 +2380,7 @@ MonoBehaviour:
     Attack_Speed: 5
     Range: 100
     CooldownHaste: 0
+  characterDescription: A brave warrior.
   isDead: 0
   hpBar: {fileID: 1954686902}
   damagePopupPrefab: {fileID: 1393589493823678111, guid: 1ff6564d5dfd1d146a45a07c1fb3f753, type: 3}
@@ -2663,7 +2667,7 @@ Transform:
   m_GameObject: {fileID: 1934769440}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1, y: -2, z: 0}
+  m_LocalPosition: {x: -1, y: -2.6399999, z: 0}
   m_LocalScale: {x: 1, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2724,6 +2728,7 @@ MonoBehaviour:
     Attack_Speed: 5
     Range: 100
     CooldownHaste: 0
+  characterDescription: A brave warrior.
   isDead: 0
   hpBar: {fileID: 1136976642}
   damagePopupPrefab: {fileID: 1393589493823678111, guid: 1ff6564d5dfd1d146a45a07c1fb3f753, type: 3}
@@ -2782,6 +2787,7 @@ MonoBehaviour:
   dashDuration: 0.4
   attackDelay: 0.2
   heavyAttackMultiplier: 1.5
+  projectileCooldown: 1
 --- !u!1 &1954686900
 GameObject:
   m_ObjectHideFlags: 0
@@ -3120,8 +3126,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
-  m_SizeDelta: {x: 1670, y: 120}
+  m_AnchoredPosition: {x: 30.8215, y: -20}
+  m_SizeDelta: {x: 1385.4944, y: 98.662}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &2100199701
 MonoBehaviour:
@@ -3145,7 +3151,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 100
+    m_FontSize: 66
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 1
@@ -3156,7 +3162,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: AI Fighter - Dynamic Skill Generation
+  m_Text: Adaptive Ability & Stat Evolution Engine
 --- !u!222 &2100199702
 CanvasRenderer:
   m_ObjectHideFlags: 0

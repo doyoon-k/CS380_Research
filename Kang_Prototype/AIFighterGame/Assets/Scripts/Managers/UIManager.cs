@@ -69,6 +69,7 @@ public class UIManager : MonoBehaviour
         if (statsText == null || playerStats == null) return;
 
         string display = "<color=white><b>=== PLAYER ===</b></color>\n";
+        display += $"<color=#CCCCCC><i>{playerStats.characterDescription}</i></color>\n";
         display += $"<color=white>HP:</color> <color=green>{playerStats.currentStats.HP:F0}/{playerStats.currentStats.MaxHP:F0}</color>\n";
         display += $"<color=white>Atk:</color> <color=yellow>{playerStats.currentStats.Attack:F0}</color> | <color=white>Def:</color> <color=cyan>{playerStats.currentStats.Defense:F0}</color>\n";
         display += $"<color=white>Spd:</color> <color=cyan>{playerStats.currentStats.Speed:F0}</color> | <color=white>Jump:</color> <color=cyan>{playerStats.currentStats.Jump:F0}</color>\n";
@@ -98,6 +99,8 @@ public class UIManager : MonoBehaviour
                 string key = i == 0 ? "Q" : "E";
                 var skill = skillManager.activeSkills[i];
                 string skillName = skill.skillData.name;
+                string skillDesc = skill.skillData.description;
+                string primitives = string.Join(", ", skill.skillData.sequence);
                 
                 if (!skill.CanUse())
                 {
@@ -109,6 +112,10 @@ public class UIManager : MonoBehaviour
                 {
                     display += $"<color=white>{key}:</color> <color=white>{skillName}</color> <color=green>[READY]</color>\n";
                 }
+                
+                // Detailed Info
+                display += $"   <color=#AAAAAA><i>{skillDesc}</i></color>\n";
+                display += $"   <color=#888888>Actions: {primitives}</color>\n";
             }
             display += "\n";
         }

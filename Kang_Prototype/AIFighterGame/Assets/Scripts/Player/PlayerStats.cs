@@ -37,6 +37,7 @@ public class PlayerStats : MonoBehaviour
 
     [Header("Current Stats (Runtime)")]
     public Stats currentStats = new Stats();
+    [TextArea] public string characterDescription = "A brave warrior.";
 
     [Header("Death Settings")]
     public bool isDead = false;
