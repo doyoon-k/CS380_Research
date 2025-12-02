@@ -101,7 +101,7 @@ public class UIManager : MonoBehaviour
                 string skillName = skill.skillData.name;
                 string skillDesc = skill.skillData.description;
                 string primitives = string.Join(", ", skill.skillData.sequence);
-                
+
                 if (!skill.CanUse())
                 {
                     float remaining = skill.skillData.cooldown - (Time.time - skill.lastUsedTime);
@@ -112,7 +112,7 @@ public class UIManager : MonoBehaviour
                 {
                     display += $"<color=white>{key}:</color> <color=white>{skillName}</color> <color=green>[READY]</color>\n";
                 }
-                
+
                 // Detailed Info
                 display += $"   <color=#AAAAAA><i>{skillDesc}</i></color>\n";
                 display += $"   <color=#888888>Actions: {primitives}</color>\n";
@@ -148,6 +148,7 @@ public class UIManager : MonoBehaviour
         display += $"<color=white>Attack: J</color> {attackStatus} | <color=white>Shoot: K</color> {shootStatus}\n";
         display += $"<color=white>Skill: Q/E</color>\n";
         display += "<color=#DDDDDD>Item: 4 | Swap: T</color>\n";
+        display += "<color=#DDDDDD>Reset Stats: R | Respawn Enemy: E</color>\n";
         display += "<color=#DDDDDD>Debug: 1/2/3</color>\n";
 
         statsText.text = display;

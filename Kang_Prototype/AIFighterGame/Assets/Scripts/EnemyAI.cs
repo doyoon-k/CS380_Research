@@ -75,6 +75,21 @@ public class EnemyAI : MonoBehaviour
         isReturning = false;
     }
 
+    public void Respawn()
+    {
+        if (stats != null)
+        {
+            stats.Revive();
+        }
+        transform.position = homePosition;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+        isReturning = false;
+        Debug.Log($"[RESPAWN] {gameObject.name} respawned at {homePosition}");
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.blue;

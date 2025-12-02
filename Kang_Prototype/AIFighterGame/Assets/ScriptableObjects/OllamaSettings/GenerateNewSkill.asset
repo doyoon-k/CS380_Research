@@ -31,13 +31,13 @@ MonoBehaviour:
     has changed after absorbing this item.\r\n   - Focus on how they now feel, move,
     or fight.\r\n   - Describe posture, movement style, attitude, or combat rhythm.\r\n  
     - Do NOT mention raw stat names or numeric values in this text.\r\n\r\n2) Choose
-    0\u20134 stats to modify in a way that fits both:\r\n   - the item\u2019s theme,
+    1\u20133 stats to modify in a way that fits both:\r\n   - the item\u2019s theme,
     and\r\n   - the current build suggested by the current stats and flavor.\r\n\r\n  
     For each chosen stat, decide:\r\n   - stat: one of\r\n     AttackPower, AttackSpeed,
     ProjectileRange, MovementSpeed,\r\n     MaxHealth, Defense, JumpPower, CooldownHaste\r\n  
     - changeType: \"additive\" or \"multiplicative\"\r\n   - value:\r\n     - additive:
     typically between -5.0 and 5.0\r\n     - multiplicative: typically between 0.5
-    and 2.0\r\n\r\n   If no stat is thematically appropriate to change, you may return
+    and 1.1\r\n\r\n   If no stat is thematically appropriate to change, you may return
     an empty list of stat changes.\r\n\r\n[CONSTRAINTS]\r\n- The updated description
     must not expose raw numbers or explicit change amounts.\r\n- The description
     and the chosen stat changes must feel consistent with:\r\n  - the item\u2019s

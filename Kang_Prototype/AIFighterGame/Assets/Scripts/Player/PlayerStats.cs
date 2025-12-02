@@ -87,10 +87,11 @@ public class PlayerStats : MonoBehaviour
 
         LogCurrentStats();
 
-        if (duration > 0)
-        {
-            Invoke(nameof(ResetToBaseStats), duration);
-        }
+        // Removed automatic reversion
+        // if (duration > 0)
+        // {
+        //     Invoke(nameof(ResetToBaseStats), duration);
+        // }
     }
 
     public void ResetToBaseStats()
@@ -169,6 +170,32 @@ public class PlayerStats : MonoBehaviour
             {
                 script.enabled = false;
             }
+        }
+    }
+
+    public void Revive()
+    {
+        isDead = false;
+        currentStats.HP = currentStats.MaxHP;
+        Debug.Log($"[REVIVE] {gameObject.name} has revived!");
+
+        GetComponent<SpriteRenderer>().color = Color.white;
+
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.bodyType = RigidbodyType2D.Dynamic;
+        }
+
+        MonoBehaviour[] scripts = GetComponents<MonoBehaviour>();
+        foreach (MonoBehaviour script in scripts)
+        {
+            script.enabled = true;
+        }
+
+        if (hpBar != null)
+        {
+            hpBar.value = currentStats.HP;
         }
     }
 

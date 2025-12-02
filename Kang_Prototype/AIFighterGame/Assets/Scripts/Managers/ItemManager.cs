@@ -1,8 +1,8 @@
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using UnityEngine;
 
 public class ItemManager : MonoBehaviour
 {
@@ -33,6 +33,22 @@ public class ItemManager : MonoBehaviour
 
     void Update()
     {
+        // Debug Keys
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            if (playerStats != null) playerStats.ResetToBaseStats();
+            if (skillManager != null) skillManager.ClearSkills();
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            EnemyAI[] enemies = FindObjectsOfType<EnemyAI>();
+            foreach (var enemy in enemies)
+            {
+                enemy.Respawn();
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.T))
         {
             SwapToNextItem();
@@ -110,7 +126,7 @@ public class ItemManager : MonoBehaviour
             state["JumpPower"] = "10";
             state["CooldownHaste"] = "0";
         }
-        
+
         if (playerStats != null)
         {
             state["current_character_description"] = playerStats.characterDescription;
@@ -125,12 +141,12 @@ public class ItemManager : MonoBehaviour
         GamePipelineRunner.Instance.RunPipeline(pipelineAsset, state, (finalState) =>
         {
             if (finalState == null) return;
-            
+
             AIResponse response = MapStateToResponse(finalState);
 
             if (response.stat_model != null) ApplyStatModel(response.stat_model);
             if (response.skill_model != null) ApplySkillModel(response.skill_model);
-            
+
             pipelineFinished = true;
         });
 
@@ -176,7 +192,9 @@ public class ItemManager : MonoBehaviour
         try
         {
             // --- Stat Mapping ---
-            MapDirectStats(state, response.stat_model.stat_changes);
+            // Removed MapDirectStats to prevent applying current state as changes
+            // MapDirectStats(state, response.stat_model.stat_changes);
+
             if (state.ContainsKey("stat") && state.ContainsKey("value"))
                 ApplySingleStat(response.stat_model.stat_changes, state["stat"], state["value"]);
 
@@ -204,7 +222,7 @@ public class ItemManager : MonoBehaviour
                 try
                 {
                     JObject skillObj = JObject.Parse(newSkillJson);
-                    
+
                     // Extract Name
                     if (skillObj["abilityName"] != null) skillData.name = skillObj["abilityName"].ToString();
                     else if (skillObj["skillName"] != null) skillData.name = skillObj["skillName"].ToString();
@@ -314,43 +332,49 @@ public class ItemManager : MonoBehaviour
         return response;
     }
 
-    private void MapDirectStats(Dictionary<string, string> state, StatChanges stats)
-    {
-        if (state.ContainsKey("Attack") || state.ContainsKey("AttackPower"))
-            stats.Attack = ParseFloat(GetValue(state, "Attack", "AttackPower"));
-        
-        if (state.ContainsKey("Speed") || state.ContainsKey("MovementSpeed"))
-            stats.Speed = ParseFloat(GetValue(state, "Speed", "MovementSpeed"));
-        
-        if (state.ContainsKey("Defense"))
-            stats.Defense = ParseFloat(state["Defense"]);
-        
-        if (state.ContainsKey("Jump") || state.ContainsKey("JumpPower"))
-            stats.Jump = ParseFloat(GetValue(state, "Jump", "JumpPower"));
-        
-        if (state.ContainsKey("Range") || state.ContainsKey("ProjectileRange"))
-            stats.Range = ParseFloat(GetValue(state, "Range", "ProjectileRange"));
-        
-        if (state.ContainsKey("CooldownHaste") || state.ContainsKey("Haste"))
-            stats.CooldownHaste = ParseFloat(GetValue(state, "CooldownHaste", "Haste"));
-
-        if (state.ContainsKey("MaxHealth") || state.ContainsKey("MaxHP"))
-            stats.MaxHP = ParseFloat(GetValue(state, "MaxHealth", "MaxHP"));
-
-        if (state.ContainsKey("AttackSpeed") || state.ContainsKey("Attack_Speed"))
-            stats.Attack_Speed = ParseFloat(GetValue(state, "AttackSpeed", "Attack_Speed"));
-    }
-
-    private void ApplySingleStat(StatChanges stats, string statName, string valueStr)
+    private void ApplySingleStat(StatChanges stats, string statName, string valueStr, string changeType = "additive")
     {
         float value = ParseFloat(valueStr);
+        float delta = value;
+
         string key = statName.ToLower().Replace(" ", "");
-        if (key.Contains("attack") && !key.Contains("speed")) stats.Attack = value;
-        else if (key.Contains("speed") && !key.Contains("attack")) stats.Speed = value;
-        else if (key.Contains("defense")) stats.Defense = value;
-        else if (key.Contains("jump")) stats.Jump = value;
-        else if (key.Contains("range")) stats.Range = value;
-        else if (key.Contains("cooldown") || key.Contains("haste")) stats.CooldownHaste = value;
+
+        // Identify which stat we are targeting
+        bool isAttackSpeed = key.Contains("attackspeed") || (key.Contains("attack") && key.Contains("speed"));
+        bool isAttackPower = !isAttackSpeed && (key.Contains("attack") || key.Contains("power")); // AttackPower or Attack
+        bool isMovementSpeed = !isAttackSpeed && (key.Contains("speed") || key.Contains("move")); // MovementSpeed or Speed
+        bool isRange = key.Contains("range") || key.Contains("projectile");
+        bool isDefense = key.Contains("defense");
+        bool isJump = key.Contains("jump");
+        bool isHaste = key.Contains("cooldown") || key.Contains("haste");
+        bool isHealth = key.Contains("health") || key.Contains("hp");
+
+        // Handle Multiplicative
+        if (changeType.ToLower() == "multiplicative" && playerStats != null)
+        {
+            float currentVal = 0f;
+
+            if (isAttackSpeed) currentVal = playerStats.currentStats.Attack_Speed;
+            else if (isAttackPower) currentVal = playerStats.currentStats.Attack;
+            else if (isMovementSpeed) currentVal = playerStats.currentStats.Speed;
+            else if (isRange) currentVal = playerStats.currentStats.Range;
+            else if (isDefense) currentVal = playerStats.currentStats.Defense;
+            else if (isJump) currentVal = playerStats.currentStats.Jump;
+            else if (isHaste) currentVal = playerStats.currentStats.CooldownHaste;
+            else if (isHealth) currentVal = playerStats.currentStats.MaxHP;
+
+            delta = currentVal * (value - 1f);
+        }
+
+        // Apply Delta
+        if (isAttackSpeed) stats.Attack_Speed = delta;
+        else if (isAttackPower) stats.Attack = delta;
+        else if (isMovementSpeed) stats.Speed = delta;
+        else if (isRange) stats.Range = delta;
+        else if (isDefense) stats.Defense = delta;
+        else if (isJump) stats.Jump = delta;
+        else if (isHaste) stats.CooldownHaste = delta;
+        else if (isHealth) stats.MaxHP = delta;
     }
 
     private void ParseNestedStats(string json, StatChanges stats)
@@ -364,7 +388,8 @@ public class ItemManager : MonoBehaviour
                 {
                     string s = (string)item["stat"];
                     string v = (string)item["value"];
-                    ApplySingleStat(stats, s, v);
+                    string t = item["changeType"] != null ? (string)item["changeType"] : "additive";
+                    ApplySingleStat(stats, s, v, t);
                 }
             }
             else if (token is JObject obj)
