@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
+using UnityEngine;
 
 /// <summary>
 /// ScriptableObject that stores a linear prompt pipeline definition used by the GraphView editor.
@@ -35,6 +35,14 @@ public class PromptPipelineAsset : ScriptableObject
 
         layoutSettings ??= new PromptPipelineLayoutSettings();
         layoutSettings.snapshotPositions ??= new List<Vector2>();
+
+        foreach (var step in steps)
+        {
+            if (string.IsNullOrEmpty(step.guid))
+            {
+                step.guid = System.Guid.NewGuid().ToString();
+            }
+        }
     }
 
     /// <summary>
@@ -49,19 +57,40 @@ public class PromptPipelineAsset : ScriptableObject
 
         var executor = new StateSequentialChainExecutor();
 
-        if (steps == null)
+        if (steps == null || steps.Count == 0)
         {
             return executor;
         }
 
-        foreach (var step in steps)
+        // Find the start step (node with no incoming connection)
+        var referencedGuids = new HashSet<string>(steps.Select(s => s.nextStepGuid).Where(g => !string.IsNullOrEmpty(g)));
+        var startStep = steps.FirstOrDefault(s => !referencedGuids.Contains(s.guid));
+
+        // Fallback: if circular or all referenced, just take the first one
+        if (startStep == null && steps.Count > 0)
         {
-            if (step == null)
+            startStep = steps[0];
+        }
+
+        var currentStep = startStep;
+        var visited = new HashSet<string>();
+
+        while (currentStep != null)
+        {
+            if (!visited.Add(currentStep.guid))
             {
-                continue;
+                Debug.LogWarning($"Detected cycle in pipeline at step {currentStep.stepName}");
+                break;
             }
 
-            executor.AddLink(CreateLink(step, service));
+            executor.AddLink(CreateLink(currentStep, service));
+
+            if (string.IsNullOrEmpty(currentStep.nextStepGuid))
+            {
+                break;
+            }
+
+            currentStep = steps.FirstOrDefault(s => s.guid == currentStep.nextStepGuid);
         }
 
         return executor;
@@ -248,6 +277,12 @@ public class PromptPipelineStep
 
     [HideInInspector]
     public Vector2 editorPosition;
+
+    [HideInInspector]
+    public string guid;
+
+    [HideInInspector]
+    public string nextStepGuid;
 }
 
 /// <summary>

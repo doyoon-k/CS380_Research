@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Reflection;
-using System.Globalization;
 
 public class PromptPipelineGraphView : GraphView
 {
@@ -215,15 +215,24 @@ public class PromptPipelineGraphView : GraphView
     private void BuildExecutionEdgesFromAsset()
     {
         RemoveExecutionEdges();
-        if (_stepNodes.Count <= 1)
+        if (_stepNodes.Count == 0)
         {
             return;
         }
 
-        for (int i = 0; i < _stepNodes.Count - 1; i++)
+        foreach (var node in _stepNodes)
         {
-            var edge = _stepNodes[i].ExecOutPort.ConnectTo(_stepNodes[i + 1].ExecInPort);
-            ConfigureExecutionEdge(edge);
+            if (string.IsNullOrEmpty(node.Step.nextStepGuid))
+            {
+                continue;
+            }
+
+            var targetNode = _stepNodes.FirstOrDefault(n => n.Step.guid == node.Step.nextStepGuid);
+            if (targetNode != null)
+            {
+                var edge = node.ExecOutPort.ConnectTo(targetNode.ExecInPort);
+                ConfigureExecutionEdge(edge);
+            }
         }
     }
 
@@ -521,7 +530,12 @@ public class PromptPipelineGraphView : GraphView
 
             node.UpdateAvailableStateKeys(availableKeys);
 
-            ConnectExternalInputs(node, reads);
+            // Only connect external inputs if this is a start node (no incoming execution)
+            if (!HasExecInConnection(node))
+            {
+                ConnectExternalInputs(node, reads);
+            }
+
             ConnectSnapshots(i);
         }
 
@@ -559,31 +573,58 @@ public class PromptPipelineGraphView : GraphView
         var snapshot = _snapshotNodes[stepIndex];
         TryConnectStateEdge(stepNode?.StateOutPort, snapshot.StateInPort);
 
-        if (stepIndex + 1 < _stepNodes.Count)
+        var nextStep = GetNextExecutionNode(stepNode);
+        if (nextStep != null)
         {
-            var nextStep = GetStepNode(stepIndex + 1);
-            TryConnectStateEdge(snapshot.StateOutPort, nextStep?.StateInPort);
+            TryConnectStateEdge(snapshot.StateOutPort, nextStep.StateInPort);
         }
     }
 
     private void ConnectOutputToFinalSnapshot()
     {
-        if (_outputNode == null)
+        if (_outputNode == null || _stepNodes.Count == 0)
         {
             return;
         }
 
-        var finalSnapshot = _snapshotNodes.LastOrDefault();
-        if (finalSnapshot == null)
+        // Find the last node in the execution chain
+        // We start from the first node (or any node) and traverse nextStepGuid until we hit null
+        // But we need to find the START of the chain first.
+        // Assuming single chain for now, or we just take the one that has no next step but IS connected?
+        // Actually, if we have [A]->[B] and [C], A->B is a chain, C is disconnected.
+        // We probably want B's snapshot.
+
+        // Let's find all nodes that are NOT targets.
+        var targetGuids = new HashSet<string>(_stepNodes
+            .Select(n => n.Step.nextStepGuid)
+            .Where(g => !string.IsNullOrEmpty(g)));
+
+        var startNode = _stepNodes.FirstOrDefault(n => !targetGuids.Contains(n.Step.guid));
+
+        PromptPipelineStepNode lastNode = null;
+        var current = startNode;
+        var visited = new HashSet<PromptPipelineStepNode>();
+
+        while (current != null)
         {
-            return;
+            if (!visited.Add(current)) break;
+            lastNode = current;
+            current = GetNextExecutionNode(current);
         }
 
-        var finalKeys = _stateModel?.finalStateKeys ?? new List<string>();
-        foreach (string key in finalKeys)
+        if (lastNode != null)
         {
-            var port = _outputNode.GetPort(key);
-            TryConnectStateEdge(finalSnapshot.StateOutPort, port);
+            int lastIndex = _stepNodes.IndexOf(lastNode);
+            if (lastIndex >= 0 && lastIndex < _snapshotNodes.Count)
+            {
+                var finalSnapshot = _snapshotNodes[lastIndex];
+                var finalKeys = _stateModel?.finalStateKeys ?? new List<string>();
+                foreach (string key in finalKeys)
+                {
+                    var port = _outputNode.GetPort(key);
+                    TryConnectStateEdge(finalSnapshot.StateOutPort, port);
+                }
+            }
         }
     }
 
@@ -711,6 +752,11 @@ public class PromptPipelineGraphView : GraphView
 
         if (change.edgesToCreate != null && change.edgesToCreate.Count > 0)
         {
+            foreach (var edge in change.edgesToCreate)
+            {
+                Debug.Log($"[GraphView] Edge created. Output: {edge.output?.userData}, Input: {edge.input?.userData}");
+            }
+
             change.edgesToCreate = change.edgesToCreate
                 .Where(IsExecutionEdge)
                 .ToList();
@@ -718,6 +764,20 @@ public class PromptPipelineGraphView : GraphView
             foreach (var edge in change.edgesToCreate)
             {
                 RegisterExecutionEdge(edge);
+                if (edge.output.node is PromptPipelineStepNode source &&
+                    edge.input.node is PromptPipelineStepNode target)
+                {
+                    Debug.Log($"[GraphView] Connecting {source.Step.stepName} -> {target.Step.stepName}");
+                    ExecuteCommand("Connect Steps", () =>
+                    {
+                        source.Step.nextStepGuid = target.Step.guid;
+                        MarkAssetDirty();
+                    }, refreshState: false);
+                }
+                else
+                {
+                    Debug.LogWarning($"[GraphView] Failed to cast nodes for edge: {edge.output?.node} -> {edge.input?.node}");
+                }
             }
 
             requiresReorder |= change.edgesToCreate.Count > 0;
@@ -732,6 +792,14 @@ public class PromptPipelineGraphView : GraphView
                     edgeCategory == EdgeCategory.Execution)
                 {
                     _executionEdges.Remove(edge);
+                    if (edge.output.node is PromptPipelineStepNode source)
+                    {
+                        ExecuteCommand("Disconnect Steps", () =>
+                        {
+                            source.Step.nextStepGuid = null;
+                            MarkAssetDirty();
+                        }, refreshState: false);
+                    }
                     requiresReorder = true;
                 }
             }
@@ -739,10 +807,18 @@ public class PromptPipelineGraphView : GraphView
 
         if (requiresReorder)
         {
-            ExecuteCommand("Connect/Disconnect Steps", () =>
+            // Since we are reloading the graph, we don't want the GraphView to add the edges 
+            // to the current (soon to be destroyed) nodes. This prevents "ghost" edges.
+            change.edgesToCreate?.Clear();
+
+            // Delay the reload to ensure GraphView finishes its internal updates first
+            EditorApplication.delayCall += () =>
             {
-                ApplyExecutionOrderFromGraph(logWarning: false);
-            }, refreshState: true, reloadAfter: true);
+                ExecuteCommand("Reorder Steps", () =>
+                {
+                    ApplyExecutionOrderFromGraph(logWarning: false);
+                }, refreshState: true, reloadAfter: true);
+            };
         }
 
         return change;
@@ -764,17 +840,74 @@ public class PromptPipelineGraphView : GraphView
         }
 
         var orderedNodes = BuildExecutionChain();
-        if (orderedNodes == null || orderedNodes.Count != _asset.steps.Count)
+        if (orderedNodes != null && orderedNodes.Count == _asset.steps.Count)
         {
-            if (logWarning)
+            _asset.steps = orderedNodes.Select(n => n.Step).ToList();
+            MarkAssetDirty();
+        }
+    }
+
+    private List<PromptPipelineStepNode> BuildExecutionChain()
+    {
+        // Find all nodes that are not targets of any other node
+        var targetGuids = new HashSet<string>(_stepNodes
+            .Select(n => n.Step.nextStepGuid)
+            .Where(g => !string.IsNullOrEmpty(g)));
+
+        var startNodes = _stepNodes.Where(n => !targetGuids.Contains(n.Step.guid)).ToList();
+
+        var ordered = new List<PromptPipelineStepNode>();
+        var visited = new HashSet<PromptPipelineStepNode>();
+
+        // Process each chain
+        foreach (var startNode in startNodes)
+        {
+            var current = startNode;
+            while (current != null)
             {
-                Debug.LogWarning("Prompt Pipeline graph must form a single linear chain before order can be updated.");
+                if (!visited.Add(current))
+                {
+                    break; // Cycle detected or already visited (shouldn't happen in tree/list)
+                }
+
+                ordered.Add(current);
+
+                // Find next node
+                if (string.IsNullOrEmpty(current.Step.nextStepGuid))
+                {
+                    current = null;
+                }
+                else
+                {
+                    current = _stepNodes.FirstOrDefault(n => n.Step.guid == current.Step.nextStepGuid);
+                }
             }
-            return;
         }
 
-        _asset.steps = orderedNodes.Select(n => n.Step).ToList();
-        MarkAssetDirty();
+        // Add any remaining nodes (cycles or disconnected parts not reachable from start nodes)
+        foreach (var node in _stepNodes)
+        {
+            if (!visited.Contains(node))
+            {
+                ordered.Add(node);
+            }
+        }
+
+        return ordered;
+    }
+
+    private static bool HasExecInConnection(PromptPipelineStepNode node)
+    {
+        return node.ExecInPort != null &&
+               node.ExecInPort.connections != null &&
+               node.ExecInPort.connections.Any();
+    }
+
+    private PromptPipelineStepNode GetNextExecutionNode(PromptPipelineStepNode node)
+    {
+        if (string.IsNullOrEmpty(node.Step.nextStepGuid))
+            return null;
+        return _stepNodes.FirstOrDefault(n => n.Step.guid == node.Step.nextStepGuid);
     }
 
     private void OnOllamaSettingsChanged(OllamaSettings settings)
@@ -931,50 +1064,6 @@ public class PromptPipelineGraphView : GraphView
         MarkAssetDirty();
     }
 
-    private List<PromptPipelineStepNode> BuildExecutionChain()
-    {
-        var startNodes = _stepNodes.Where(n => !HasExecInConnection(n)).ToList();
-        if (startNodes.Count != 1)
-        {
-            return null;
-        }
-
-        var ordered = new List<PromptPipelineStepNode>();
-        var visited = new HashSet<PromptPipelineStepNode>();
-        var current = startNodes[0];
-
-        while (current != null)
-        {
-            if (!visited.Add(current))
-            {
-                return null;
-            }
-
-            ordered.Add(current);
-            current = GetNextExecutionNode(current);
-        }
-
-        return ordered.Count == _stepNodes.Count ? ordered : null;
-    }
-
-    private static bool HasExecInConnection(PromptPipelineStepNode node)
-    {
-        return node.ExecInPort != null &&
-               node.ExecInPort.connections != null &&
-               node.ExecInPort.connections.Any();
-    }
-
-    private PromptPipelineStepNode GetNextExecutionNode(PromptPipelineStepNode node)
-    {
-        var connection = node.ExecOutPort?.connections?.FirstOrDefault();
-        if (connection?.input?.node is PromptPipelineStepNode stepNode)
-        {
-            return stepNode;
-        }
-
-        return null;
-    }
-
     private void RequestStateRefresh()
     {
         if (_pendingStateRefresh)
@@ -1036,7 +1125,9 @@ public class PromptPipelineGraphView : GraphView
             {
                 stepName = $"Step {_asset.steps.Count + 1}",
                 stepKind = PromptPipelineStepKind.JsonLlm,
-                editorPosition = graphPosition
+                editorPosition = graphPosition,
+                guid = Guid.NewGuid().ToString(),
+                nextStepGuid = null
             };
 
             _asset.steps.Add(step);
