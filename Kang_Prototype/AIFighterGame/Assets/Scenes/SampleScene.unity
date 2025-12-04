@@ -1168,7 +1168,7 @@ MonoBehaviour:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 25
     m_FontStyle: 0
-    m_BestFit: 0
+    m_BestFit: 1
     m_MinSize: 1
     m_MaxSize: 40
     m_Alignment: 0
@@ -2360,26 +2360,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1f0d26949dfa8e439a29023e221044d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  baseStats:
-    Speed: 10
-    Attack: 50
-    Defense: 30
-    HP: 200
-    MaxHP: 200
-    Jump: 10
-    Attack_Speed: 5
-    Range: 100
-    CooldownHaste: 0
-  currentStats:
-    Speed: 10
-    Attack: 50
-    Defense: 30
-    HP: 200
-    MaxHP: 200
-    Jump: 10
-    Attack_Speed: 5
-    Range: 100
-    CooldownHaste: 0
+  statConfig: {fileID: 11400000, guid: dff9558e766da9444967e3d2707c6c15, type: 2}
   characterDescription: A brave warrior.
   isDead: 0
   hpBar: {fileID: 1954686902}
@@ -2690,7 +2671,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4609be49eb546ce47a9d9e707e56111f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  playerStats: {fileID: 0}
+  playerStats: {fileID: 1934769447}
   groundCheck: {fileID: 765850785}
   groundCheckRadius: 0.2
   groundLayer:
@@ -2708,27 +2689,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1f0d26949dfa8e439a29023e221044d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  baseStats:
-    Speed: 10
-    Attack: 50
-    Defense: 30
-    HP: 200
-    MaxHP: 200
-    Jump: 10
-    Attack_Speed: 5
-    Range: 100
-    CooldownHaste: 0
-  currentStats:
-    Speed: 10
-    Attack: 50
-    Defense: 30
-    HP: 200
-    MaxHP: 200
-    Jump: 10
-    Attack_Speed: 5
-    Range: 100
-    CooldownHaste: 0
-  characterDescription: A brave warrior.
+  statConfig: {fileID: 11400000, guid: dff9558e766da9444967e3d2707c6c15, type: 2}
+  characterDescription: Basic plane boring character.
   isDead: 0
   hpBar: {fileID: 1136976642}
   damagePopupPrefab: {fileID: 1393589493823678111, guid: 1ff6564d5dfd1d146a45a07c1fb3f753, type: 3}

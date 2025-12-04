@@ -1,42 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
-
-[System.Serializable]
-public class Stats
-{
-    public float Speed = 10f;
-    public float Attack = 50f;
-    public float Defense = 30f;
-    public float HP = 200f;
-    public float MaxHP = 200f;
-    public float Jump = 10f;
-    public float Attack_Speed = 5f;
-    public float Range = 100f;
-    public float CooldownHaste = 0f;
-
-    public Stats Clone()
-    {
-        return new Stats
-        {
-            Speed = this.Speed,
-            Attack = this.Attack,
-            Defense = this.Defense,
-            HP = this.HP,
-            MaxHP = this.MaxHP,
-            Jump = this.Jump,
-            Attack_Speed = this.Attack_Speed,
-            Range = this.Range,
-            CooldownHaste = this.CooldownHaste
-        };
-    }
-}
 
 public class PlayerStats : MonoBehaviour
 {
-    [Header("Base Stats")]
-    public Stats baseStats = new Stats();
+    [Header("Configuration")]
+    public StatConfigSO statConfig;
 
     [Header("Current Stats (Runtime)")]
-    public Stats currentStats = new Stats();
+    private Dictionary<string, float> _currentStats = new Dictionary<string, float>();
+    public float CurrentHealth { get; set; }
+
     [TextArea] public string characterDescription = "A brave warrior.";
 
     [Header("Death Settings")]
@@ -53,52 +26,75 @@ public class PlayerStats : MonoBehaviour
 
         if (hpBar != null)
         {
-            hpBar.maxValue = baseStats.MaxHP;
-            hpBar.value = currentStats.HP;
+            hpBar.maxValue = GetStat("MaxHealth");
+            hpBar.value = CurrentHealth;
         }
 
-        Debug.Log($"PlayerStats initialized - HP: {currentStats.HP}, Attack: {currentStats.Attack}");
+        Debug.Log($"PlayerStats initialized - HP: {CurrentHealth}, Attack: {GetStat("AttackPower")}");
     }
 
     public void InitializeStats()
     {
-        currentStats = baseStats.Clone();
+        _currentStats.Clear();
+
+        if (statConfig != null)
+        {
+            foreach (var kvp in statConfig.GetStats())
+            {
+                _currentStats[kvp.Key] = kvp.Value.BaseValue;
+            }
+
+            if (!string.IsNullOrEmpty(statConfig.CharacterDescription))
+            {
+                characterDescription = statConfig.CharacterDescription;
+            }
+        }
+
+        CurrentHealth = GetStat("MaxHealth");
         isDead = false;
     }
 
-    public void ModifyStats(Stats statChanges, float duration)
+    public float GetStat(string statName)
     {
-        Debug.Log($"Modifying stats for {duration} seconds");
+        if (_currentStats.TryGetValue(statName, out float value))
+        {
+            return value;
+        }
+        // Debug.LogWarning($"Stat {statName} not found!"); // Optional: suppress warning if frequent
+        return 0f;
+    }
 
-        currentStats.Speed += statChanges.Speed;
-        currentStats.Attack += statChanges.Attack;
-        currentStats.Defense += statChanges.Defense;
-        currentStats.Jump += statChanges.Jump;
-        currentStats.Attack_Speed += statChanges.Attack_Speed;
-        currentStats.Range += statChanges.Range;
-        currentStats.CooldownHaste += statChanges.CooldownHaste;
+    public void SetStat(string statName, float value)
+    {
+        if (_currentStats.ContainsKey(statName))
+        {
+            _currentStats[statName] = value;
+        }
+        else
+        {
+            _currentStats.Add(statName, value);
+        }
+    }
 
-        currentStats.Speed = Mathf.Max(1f, currentStats.Speed);
-        currentStats.Attack = Mathf.Max(1f, currentStats.Attack);
-        currentStats.Defense = Mathf.Max(0f, currentStats.Defense);
-        currentStats.Jump = Mathf.Max(1f, currentStats.Jump);
-        currentStats.Attack_Speed = Mathf.Max(0.1f, currentStats.Attack_Speed);
-        currentStats.Range = Mathf.Max(1f, currentStats.Range);
+    public void ModifyStat(string statName, float amount)
+    {
+        if (_currentStats.ContainsKey(statName))
+        {
+            _currentStats[statName] += amount;
+        }
+        else
+        {
+            _currentStats.Add(statName, amount);
+        }
 
-        LogCurrentStats();
-
-        // Removed automatic reversion
-        // if (duration > 0)
-        // {
-        //     Invoke(nameof(ResetToBaseStats), duration);
-        // }
+        // Clamp values if needed (e.g. non-negative)
+        // For now, simple addition
     }
 
     public void ResetToBaseStats()
     {
         Debug.Log("Resetting stats to base values");
-        currentStats = baseStats.Clone();
-        currentStats.HP = Mathf.Min(currentStats.HP, currentStats.MaxHP);
+        InitializeStats();
         LogCurrentStats();
     }
 
@@ -106,13 +102,14 @@ public class PlayerStats : MonoBehaviour
     {
         if (isDead) return;
 
-        float actualDamage = Mathf.Max(0, damage - currentStats.Defense);
-        currentStats.HP -= actualDamage;
-        currentStats.HP = Mathf.Max(0, currentStats.HP);
+        float defense = GetStat("Defense");
+        float actualDamage = Mathf.Max(0, damage - defense);
+        CurrentHealth -= actualDamage;
+        CurrentHealth = Mathf.Max(0, CurrentHealth);
 
         if (hpBar != null)
         {
-            hpBar.value = currentStats.HP;
+            hpBar.value = CurrentHealth;
         }
 
         if (damagePopupPrefab != null && popupSpawnPoint != null)
@@ -126,9 +123,9 @@ public class PlayerStats : MonoBehaviour
             }
         }
 
-        Debug.Log($"Took {actualDamage} damage! HP: {currentStats.HP}/{currentStats.MaxHP}");
+        Debug.Log($"Took {actualDamage} damage! HP: {CurrentHealth}/{GetStat("MaxHealth")}");
 
-        if (currentStats.HP <= 0)
+        if (CurrentHealth <= 0)
         {
             Die();
         }
@@ -138,15 +135,15 @@ public class PlayerStats : MonoBehaviour
     {
         if (isDead) return;
 
-        currentStats.HP += amount;
-        currentStats.HP = Mathf.Min(currentStats.HP, currentStats.MaxHP);
+        CurrentHealth += amount;
+        CurrentHealth = Mathf.Min(CurrentHealth, GetStat("MaxHealth"));
 
         if (hpBar != null)
         {
-            hpBar.value = currentStats.HP;
+            hpBar.value = CurrentHealth;
         }
 
-        Debug.Log($"Healed {amount}! HP: {currentStats.HP}/{currentStats.MaxHP}");
+        Debug.Log($"Healed {amount}! HP: {CurrentHealth}/{GetStat("MaxHealth")}");
     }
 
     void Die()
@@ -176,7 +173,7 @@ public class PlayerStats : MonoBehaviour
     public void Revive()
     {
         isDead = false;
-        currentStats.HP = currentStats.MaxHP;
+        CurrentHealth = GetStat("MaxHealth");
         Debug.Log($"[REVIVE] {gameObject.name} has revived!");
 
         GetComponent<SpriteRenderer>().color = Color.white;
@@ -195,14 +192,18 @@ public class PlayerStats : MonoBehaviour
 
         if (hpBar != null)
         {
-            hpBar.value = currentStats.HP;
+            hpBar.value = CurrentHealth;
         }
     }
 
     void LogCurrentStats()
     {
-        Debug.Log($"Current Stats - Speed: {currentStats.Speed}, Attack: {currentStats.Attack}, " +
-                  $"Defense: {currentStats.Defense}, HP: {currentStats.HP}/{currentStats.MaxHP}, " +
-                  $"Jump: {currentStats.Jump}, AttackSpeed: {currentStats.Attack_Speed}, Range: {currentStats.Range}");
+        string log = "Current Stats: ";
+        foreach (var kvp in _currentStats)
+        {
+            log += $"{kvp.Key}: {kvp.Value}, ";
+        }
+        log += $"HP: {CurrentHealth}/{GetStat("MaxHealth")}";
+        Debug.Log(log);
     }
 }

@@ -70,16 +70,16 @@ public class UIManager : MonoBehaviour
 
         string display = "<color=white><b>=== PLAYER ===</b></color>\n";
         display += $"<color=#CCCCCC><i>{playerStats.characterDescription}</i></color>\n";
-        display += $"<color=white>HP:</color> <color=green>{playerStats.currentStats.HP:F0}/{playerStats.currentStats.MaxHP:F0}</color>\n";
-        display += $"<color=white>Atk:</color> <color=yellow>{playerStats.currentStats.Attack:F0}</color> | <color=white>Def:</color> <color=cyan>{playerStats.currentStats.Defense:F0}</color>\n";
-        display += $"<color=white>Spd:</color> <color=cyan>{playerStats.currentStats.Speed:F0}</color> | <color=white>Jump:</color> <color=cyan>{playerStats.currentStats.Jump:F0}</color>\n";
-        display += $"<color=white>AtkSpd:</color> <color=cyan>{playerStats.currentStats.Attack_Speed:F1}</color> | <color=white>Rng:</color> <color=cyan>{playerStats.currentStats.Range:F0}</color>\n";
-        display += $"<color=white>Haste:</color> <color=cyan>{playerStats.currentStats.CooldownHaste:F1}%</color>\n\n";
+        display += $"<color=white>HP:</color> <color=green>{playerStats.CurrentHealth:F0}/{playerStats.GetStat("MaxHealth"):F0}</color>\n";
+        display += $"<color=white>Atk:</color> <color=yellow>{playerStats.GetStat("AttackPower"):F0}</color> | <color=white>Def:</color> <color=cyan>{playerStats.GetStat("Defense"):F0}</color>\n";
+        display += $"<color=white>Spd:</color> <color=cyan>{playerStats.GetStat("MovementSpeed"):F0}</color> | <color=white>Jump:</color> <color=cyan>{playerStats.GetStat("JumpPower"):F0}</color>\n";
+        display += $"<color=white>AtkSpd:</color> <color=cyan>{playerStats.GetStat("AttackSpeed"):F1}</color> | <color=white>Rng:</color> <color=cyan>{playerStats.GetStat("ProjectileRange"):F0}</color>\n";
+        display += $"<color=white>Haste:</color> <color=cyan>{playerStats.GetStat("CooldownHaste"):F1}%</color>\n\n";
 
         if (enemyStats != null)
         {
             display += "<color=white><b>=== ENEMY ===</b></color>\n";
-            display += $"<color=white>HP:</color> <color=red>{enemyStats.currentStats.HP:F0}/{enemyStats.currentStats.MaxHP:F0}</color>\n\n";
+            display += $"<color=white>HP:</color> <color=red>{enemyStats.CurrentHealth:F0}/{enemyStats.GetStat("MaxHealth"):F0}</color>\n\n";
         }
 
         if (itemManager.currentItem != null)

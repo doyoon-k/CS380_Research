@@ -131,7 +131,7 @@ public class PromptPipelineAsset : ScriptableObject
         }
     }
 
-    private static IStateChainLink InstantiateCustomLink(PromptPipelineStep step)
+    public static IStateChainLink InstantiateCustomLink(PromptPipelineStep step)
     {
         if (string.IsNullOrEmpty(step.customLinkTypeName))
         {
@@ -158,7 +158,33 @@ public class PromptPipelineAsset : ScriptableObject
             .Where(p => p != null && !string.IsNullOrWhiteSpace(p.key))
             .ToDictionary(p => p.key, p => p.value ?? string.Empty, StringComparer.Ordinal);
 
-        // Prefer a constructor that accepts Dictionary<string, string> for custom parameters.
+        // 1. Try constructor (Dictionary<string, string>, ScriptableObject)
+        var dictAssetCtor = type.GetConstructor(new[] { typeof(Dictionary<string, string>), typeof(ScriptableObject) });
+        if (dictAssetCtor != null)
+        {
+            if (dictAssetCtor.Invoke(new object[] { args, step.customAsset }) is IStateChainLink instance)
+            {
+                return instance;
+            }
+        }
+
+        // 2. Try constructor (ScriptableObject or derived)
+        var assetCtor = type.GetConstructors()
+            .FirstOrDefault(c =>
+            {
+                var p = c.GetParameters();
+                return p.Length == 1 && typeof(ScriptableObject).IsAssignableFrom(p[0].ParameterType);
+            });
+
+        if (assetCtor != null)
+        {
+            if (assetCtor.Invoke(new object[] { step.customAsset }) is IStateChainLink instance)
+            {
+                return instance;
+            }
+        }
+
+        // 3. Try constructor (Dictionary<string, string>)
         var dictCtor = type.GetConstructor(new[] { typeof(Dictionary<string, string>) });
         if (dictCtor != null)
         {
@@ -168,7 +194,7 @@ public class PromptPipelineAsset : ScriptableObject
             }
         }
 
-        // Try to bind simple constructors (string/int/float/double/bool/long) by parameter name.
+        // 4. Try to bind simple constructors (string/int/float/double/bool/long) by parameter name.
         var bindableCtor = FindBindableConstructor(type);
         if (bindableCtor != null)
         {
@@ -179,13 +205,13 @@ public class PromptPipelineAsset : ScriptableObject
             }
         }
 
-        // Fallback to parameterless ctor.
-        if (Activator.CreateInstance(type) is not IStateChainLink instance)
+        // 5. Fallback to parameterless ctor.
+        if (Activator.CreateInstance(type) is not IStateChainLink fallbackInstance)
         {
             throw new InvalidOperationException($"Failed to instantiate custom link '{step.customLinkTypeName}'.");
         }
 
-        return instance;
+        return fallbackInstance;
     }
 
     private static ConstructorInfo FindBindableConstructor(Type type)
@@ -271,6 +297,9 @@ public class PromptPipelineStep
     [Header("Custom Link Options")]
     [Tooltip("Full type name implementing IStateChainLink (Type.GetType resolvable).")]
     public string customLinkTypeName;
+
+    [Tooltip("Optional ScriptableObject asset to pass to the custom link constructor.")]
+    public ScriptableObject customAsset;
 
     [SerializeField]
     public List<CustomLinkParameter> customLinkParameters = new();

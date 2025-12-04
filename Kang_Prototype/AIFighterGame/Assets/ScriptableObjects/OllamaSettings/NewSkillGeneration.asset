@@ -21,11 +21,14 @@ MonoBehaviour:
     for the player.\r\n\r\n[CONTEXT]\r\nYou are called after a previous step has
     already updated the character based on an absorbed item.\r\nYou receive structured
     inputs from the caller:\r\n1. The item the player has just absorbed (name, description,
-    theme).\r\n2. The current numeric stats of the player character.\r\n3. The current
-    flavor description of the character (how they feel, move, fight, or behave right
-    now).\r\n\r\nYour ability design should:\r\n- Fit the item\u2019s theme.\r\n-
-    Fit the character\u2019s current build and flavor.\r\n- Feel lighthearted and
-    charming, in line with a cute, playful roguelike action game.\r\n\r\nAvailable
+    theme or vibe).\r\n2. The current stat tiers of the player character (how strong
+    each stat currently is).\r\n3. The current character description (how they feel,
+    move, fight, or behave right now).\r\n\r\nYou do NOT see raw stat numbers.  \r\nInstead,
+    you receive stat tiers that describe the current build\u2019s strengths and weaknesses. 
+    \r\nEach tier is one of: \"lowest\", \"low\", \"medium\", \"high\", \"highest\".\r\n\r\nYour
+    ability design should:\r\n- Fit the item\u2019s theme.\r\n- Fit the character\u2019s
+    current stats and description as suggested by the stat tiers.\r\n- Feel lighthearted
+    and charming, in line with a cute, playful roguelike action game.\r\n\r\nAvailable
     primitive actions (use only these ids):\r\n\r\nAttack-related:\r\n- FireProjectile
     (fires a basic projectile forward)\r\n- ExplosiveProjectile (fires a projectile
     that explodes in a small area)\r\n- PiercingProjectile (fires a projectile that
@@ -38,14 +41,30 @@ MonoBehaviour:
     damage)\r\n- InstantHeal (instantly recover health)\r\n- InvulnerabilityWindow
     (brief invulnerability)\r\n- DamageReductionBuff (temporarily reduces damage
     taken)\r\n\r\nUtility-related:\r\n- Stun (momentarily stop enemies from acting)\r\n-
-    Slow (temporarily slow enemies\u2019 movement and actions)\r\n\r\n[TASK]\r\nGiven
-    the item, current stats, and current flavor description, you must:\r\n\r\n1)
-    Decide what kind of active ability best suits:\r\n   - the item\u2019s theme,
-    and\r\n   - the character\u2019s current build and flavor.\r\n\r\n2) Select 2\u20133
-    primitive actions from the list above and combine them into a simple, cohesive
-    ability.\r\n   - Use ONLY the primitive action ids listed above.\r\n   - Ensure
-    the chosen primitives work together in a way that feels clear and readable in
-    gameplay.\r\n\r\n3) Create both:\r\n   - A short, flavorful ability name (1\u20133
+    Slow (temporarily slow enemies\u2019 movement and actions)\r\n\r\n[TASK]\r\n\r\nPRIMARY
+    DESIGN PRINCIPLES:\r\n- Your first priority is to match the item's theme and
+    the current character description.\r\n  The ability should feel like a direct
+    expression of:\r\n  (this specific item) + (this specific character\u2019s current
+    state).\r\n- Stat tiers are secondary. Use them mainly to avoid abilities that
+    feel\r\n  completely out of character (for example, a very slow, clumsy build\r\n 
+    getting a hyper-precise aerial combo).\r\n- When multiple primitive action combinations
+    would work,\r\n  prefer the one that feels most uniquely tied to THIS item +
+    THIS character,\r\n  not just the stat tiers.\r\n\r\nABILITY EVOLUTION RULES:\r\n-
+    Treat the current character description as the core identity of the character.\r\n-
+    The new ability should feel like something THIS character would naturally do,\r\n 
+    not a generic ability that any user of the item could have.\r\n- Reuse at least
+    one key element from the current description\r\n  (for example: fire, lightning,
+    storm, volcanic power, frost, frantic motion, etc.)\r\n  and combine it with
+    the new item's theme.\r\n- If the character is already a mix of multiple elements
+    or moods,\r\n  the ability should reflect that hybrid nature instead of focusing
+    only on the new item.\r\n\r\nGiven the item, the current stat tiers, and the
+    current character description, you must:\r\n\r\n1) Decide what kind of active
+    ability best suits:\r\n   - the item\u2019s theme, and\r\n   - the character\u2019s
+    current build and description as implied by the stat tiers.\r\n\r\n2) Select
+    2\u20133 primitive actions from the list above and combine them into a simple,
+    cohesive ability.\r\n   - Use ONLY the primitive action ids listed above.\r\n  
+    - Ensure the chosen primitives work together in a way that feels clear and readable
+    in gameplay.\r\n\r\n3) Create both:\r\n   - A short, flavorful ability name (1\u20133
     words).\r\n   - A concise, playful description (1\u20132 short sentences) that
     explains:\r\n     - what the ability looks like,\r\n     - how the character
     moves or attacks when using it,\r\n     - and how it affects enemies or the battlefield.\r\n\r\n[CONSTRAINTS]\r\n-
@@ -56,9 +75,10 @@ MonoBehaviour:
     that focuses on visuals, motion, and feeling:\r\n  - how the character dashes,
     spins, slams, or playfully disrupts enemies.\r\n- The chosen primitiveIds, name,
     and description must all feel thematically consistent with:\r\n  - the absorbed
-    item, and\r\n  - the current character flavor and stats.\r\n- Output ONLY the
-    JSON object that matches the caller\u2019s schema, with no extra commentary or
-    text.\r\n"
+    item, and\r\n  - the current character description and stat tiers.\r\n- Always
+    base your decisions on the stat tiers and the character description, not on any
+    hidden numbers.\r\n- Output ONLY the JSON object that matches the caller\u2019s
+    schema, with no extra commentary or text.\r\n"
   jsonFields:
   - fieldName: NewSkill
     fieldType: 4

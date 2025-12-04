@@ -533,7 +533,7 @@ public class PromptPipelineGraphView : GraphView
             // Only connect external inputs if this is a start node (no incoming execution)
             if (!HasExecInConnection(node))
             {
-                ConnectExternalInputs(node, reads);
+                ConnectExternalInputs(node, allKeyNames);
             }
 
             ConnectSnapshots(i);
@@ -1577,6 +1577,7 @@ internal class PromptPipelineStepNode : Node
         ApplyChange("Sync Custom Params", () =>
         {
             Step.customLinkParameters = ctor
+                .Where(p => !typeof(ScriptableObject).IsAssignableFrom(p.ParameterType))
                 .Select(p => new CustomLinkParameter { key = p.Name, value = string.Empty })
                 .ToList();
             RebuildCustomParamsUI();
@@ -1596,8 +1597,38 @@ internal class PromptPipelineStepNode : Node
             _customParamsContainer.RemoveAt(_customParamsContainer.childCount - 1);
         }
 
+        var type = CustomLinkTypeProvider.ResolveType(Step.customLinkTypeName);
+        string scriptableObjectParamName = null;
+
+        if (type != null)
+        {
+            var ctorParams = CustomLinkTypeProvider.FindConstructorParameters(type);
+            var soParam = ctorParams.FirstOrDefault(p => typeof(ScriptableObject).IsAssignableFrom(p.ParameterType));
+
+            if (soParam != null)
+            {
+                scriptableObjectParamName = soParam.Name;
+                var objectField = new ObjectField("Custom Asset")
+                {
+                    objectType = soParam.ParameterType, // Use specific type (e.g., StatConfigSO)
+                    value = Step.customAsset,
+                    allowSceneObjects = false
+                };
+                objectField.RegisterValueChangedCallback(evt =>
+                {
+                    ApplyChange("Set Custom Asset", () => Step.customAsset = evt.newValue as ScriptableObject, refreshState: false);
+                });
+                _customParamsContainer.Add(objectField);
+            }
+        }
+
         for (int i = 0; i < Step.customLinkParameters.Count; i++)
         {
+            // Skip if this parameter corresponds to the ScriptableObject we already showed an ObjectField for.
+            if (!string.IsNullOrEmpty(scriptableObjectParamName) && Step.customLinkParameters[i].key == scriptableObjectParamName)
+            {
+                continue;
+            }
             AddParamRow(i);
         }
 
@@ -1938,11 +1969,20 @@ internal static class CustomLinkTypeProvider
 
         foreach (Type t in TypeCache.GetTypesDerivedFrom<IStateChainLink>())
         {
+            // We support multiple constructor signatures now, so we shouldn't strictly require a parameterless one.
+            // Supported signatures:
+            // 1. (Dictionary<string, string>, ScriptableObject)
+            // 2. (ScriptableObject)
+            // 3. (Dictionary<string, string>)
+            // 4. Bindable parameters
+            // 5. Parameterless
+
+            // If it's abstract or generic, we still skip.
             if (t == null || t.IsAbstract || t.IsGenericTypeDefinition)
                 continue;
 
-            if (t.GetConstructor(Type.EmptyTypes) == null)
-                continue;
+            // We'll assume if it implements IStateChainLink and ICustomLinkStateProvider, it's intended to be used.
+            // The instantiation logic in PromptPipelineAsset handles the fallback.
 
             if (!typeof(ICustomLinkStateProvider).IsAssignableFrom(t))
                 continue;

@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class AttackHitbox : MonoBehaviour
 {
@@ -53,7 +53,7 @@ public class AttackHitbox : MonoBehaviour
             PlayerStats enemyStats = hit.GetComponent<PlayerStats>();
             if (enemyStats != null && ownerStats != null)
             {
-                float totalDamage = ownerStats.currentStats.Attack;
+                float totalDamage = ownerStats.GetStat("AttackPower");
                 enemyStats.TakeDamage(totalDamage);
 
                 Rigidbody2D enemyRb = hit.GetComponent<Rigidbody2D>();

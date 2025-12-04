@@ -1,6 +1,6 @@
-using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class SkillExecutor : MonoBehaviour
 {
@@ -148,13 +148,13 @@ public class SkillExecutor : MonoBehaviour
             case "GUARD": yield return SetGuard(); break;
             case "SUPERARMOR": yield return SetSuperArmor(); break;
             case "STUN_ENEMY":
-            case "STUN": 
+            case "STUN":
                 yield return StunEnemy(); break;
 
             // ===== EFFECT =====
             case "HEAL": yield return Heal(); break;
             case "BUFF_SELF":
-            case "BUFF": 
+            case "BUFF":
                 yield return BuffSelf(); break;
             case "DEBUFF_ENEMY": yield return DebuffEnemy(); break;
             case "TAUNT": yield return Taunt(); break;
@@ -169,7 +169,7 @@ public class SkillExecutor : MonoBehaviour
                 if (atomicSkill.ToUpper().Contains("ATTACK")) yield return Attack(1.0f);
                 break;
         }
-    }    
+    }
 
     // ========================================
     // MOVE SKILLS
@@ -248,7 +248,7 @@ public class SkillExecutor : MonoBehaviour
     IEnumerator Jump()
     {
         if (rb == null || playerStats == null) yield break;
-        float jumpForce = playerStats.currentStats.Jump;
+        float jumpForce = playerStats.GetStat("JumpPower");
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
         yield return new WaitForSeconds(0.1f);
     }
@@ -423,7 +423,7 @@ public class SkillExecutor : MonoBehaviour
     {
         if (playerStats == null) yield break;
 
-        float healAmount = playerStats.currentStats.MaxHP * 0.2f;
+        float healAmount = playerStats.GetStat("MaxHealth") * 0.2f;
         playerStats.Heal(healAmount);
 
         Debug.Log($"Healed {healAmount} HP!");
@@ -560,7 +560,7 @@ public class SkillExecutor : MonoBehaviour
         ProjectileController pc = proj.GetComponent<ProjectileController>();
 
         Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
-        float dmg = playerStats.currentStats.Attack;
+        float dmg = playerStats.GetStat("AttackPower");
 
         pc.Initialize(dir, dmg, element, color);
         Debug.Log($"Fired {element} projectile!");

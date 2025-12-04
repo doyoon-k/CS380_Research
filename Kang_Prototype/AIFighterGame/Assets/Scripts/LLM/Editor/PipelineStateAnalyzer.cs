@@ -131,7 +131,7 @@ public static class PipelineStateAnalyzer
             return;
         }
 
-        if (!CustomLinkStateResolver.TryResolve(step.customLinkTypeName, out var writes))
+        if (!CustomLinkStateResolver.TryResolve(step, out var writes))
         {
             return;
         }

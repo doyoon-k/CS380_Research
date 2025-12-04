@@ -43,7 +43,7 @@ public class PlayerController : MonoBehaviour
     {
         if (playerStats != null)
         {
-            float speed = playerStats.currentStats.Speed;
+            float speed = playerStats.GetStat("MovementSpeed");
             rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
         }
     }
@@ -52,7 +52,7 @@ public class PlayerController : MonoBehaviour
     {
         if (playerStats != null)
         {
-            float jumpForce = playerStats.currentStats.Jump;
+            float jumpForce = playerStats.GetStat("JumpPower");
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             Debug.Log("Jump!");
         }

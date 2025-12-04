@@ -8,20 +8,19 @@ using UnityEngine;
 /// </summary>
 internal static class CustomLinkStateResolver
 {
-    public static bool TryResolve(string typeName, out List<string> writes)
+    public static bool TryResolve(PromptPipelineStep step, out List<string> writes)
     {
         writes = new List<string>();
 
-        var type = CustomLinkTypeProvider.ResolveType(typeName);
-        if (type == null)
+        if (step == null || string.IsNullOrWhiteSpace(step.customLinkTypeName))
         {
             return false;
         }
 
-        // Avoid expensive activations; rely on parameterless constructor (required for graph selection).
         try
         {
-            if (Activator.CreateInstance(type) is not ICustomLinkStateProvider provider)
+            // Use the asset's instantiation logic so we handle parameters/assets correctly.
+            if (PromptPipelineAsset.InstantiateCustomLink(step) is not ICustomLinkStateProvider provider)
             {
                 return false;
             }
@@ -31,7 +30,9 @@ internal static class CustomLinkStateResolver
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"CustomLinkStateResolver: Failed to resolve state for '{typeName}': {ex.Message}");
+            // It's common for instantiation to fail if params aren't fully set up yet in editor.
+            // Just log a warning or ignore.
+            // Debug.LogWarning($"CustomLinkStateResolver: Failed to resolve state for '{step.customLinkTypeName}': {ex.Message}");
             return false;
         }
     }

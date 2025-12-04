@@ -106,10 +106,6 @@ public class GamePipelineRunner : MonoBehaviour
 
     private IStateChainLink InstantiateCustomLink(PromptPipelineStep step)
     {
-        if (string.IsNullOrEmpty(step.customLinkTypeName)) return null;
-        Type type = Type.GetType(step.customLinkTypeName);
-        if (type == null) return null;
-        if (!typeof(IStateChainLink).IsAssignableFrom(type)) return null;
-        return Activator.CreateInstance(type) as IStateChainLink;
+        return PromptPipelineAsset.InstantiateCustomLink(step);
     }
 }

@@ -105,14 +105,25 @@ public class ItemManager : MonoBehaviour
         // Real Stats
         if (playerStats != null)
         {
-            state["AttackPower"] = playerStats.currentStats.Attack.ToString();
-            state["AttackSpeed"] = playerStats.currentStats.Attack_Speed.ToString();
-            state["ProjectileRange"] = playerStats.currentStats.Range.ToString();
-            state["MovementSpeed"] = playerStats.currentStats.Speed.ToString();
-            state["MaxHealth"] = playerStats.currentStats.MaxHP.ToString();
-            state["Defense"] = playerStats.currentStats.Defense.ToString();
-            state["JumpPower"] = playerStats.currentStats.Jump.ToString();
-            state["CooldownHaste"] = playerStats.currentStats.CooldownHaste.ToString();
+            if (playerStats.statConfig != null)
+            {
+                foreach (var kvp in playerStats.statConfig.GetStats())
+                {
+                    state[kvp.Key] = playerStats.GetStat(kvp.Key).ToString();
+                }
+            }
+            else
+            {
+                // Fallback
+                state["AttackPower"] = playerStats.GetStat("AttackPower").ToString();
+                state["AttackSpeed"] = playerStats.GetStat("AttackSpeed").ToString();
+                state["ProjectileRange"] = playerStats.GetStat("ProjectileRange").ToString();
+                state["MovementSpeed"] = playerStats.GetStat("MovementSpeed").ToString();
+                state["MaxHealth"] = playerStats.GetStat("MaxHealth").ToString();
+                state["Defense"] = playerStats.GetStat("Defense").ToString();
+                state["JumpPower"] = playerStats.GetStat("JumpPower").ToString();
+                state["CooldownHaste"] = playerStats.GetStat("CooldownHaste").ToString();
+            }
         }
         else
         {
@@ -129,11 +140,11 @@ public class ItemManager : MonoBehaviour
 
         if (playerStats != null)
         {
-            state["current_character_description"] = playerStats.characterDescription;
+            state["character_description"] = playerStats.characterDescription;
         }
         else
         {
-            state["current_character_description"] = "A brave warrior.";
+            state["character_description"] = "A brave warrior.";
         }
 
         bool pipelineFinished = false;
@@ -156,19 +167,18 @@ public class ItemManager : MonoBehaviour
     void ApplyStatModel(StatModel statModel)
     {
         if (statModel == null || statModel.stat_changes == null) return;
-        Stats statChanges = new Stats
-        {
-            Speed = statModel.stat_changes.Speed,
-            Attack = statModel.stat_changes.Attack,
-            Defense = statModel.stat_changes.Defense,
-            Jump = statModel.stat_changes.Jump,
-            Attack_Speed = statModel.stat_changes.Attack_Speed,
-            Range = statModel.stat_changes.Range,
-            CooldownHaste = statModel.stat_changes.CooldownHaste,
-            MaxHP = statModel.stat_changes.MaxHP
-        };
-        float duration = statModel.duration_seconds > 0 ? statModel.duration_seconds : 0f;
-        playerStats.ModifyStats(statChanges, duration);
+
+        if (playerStats == null) return;
+
+        // Map StatChanges to ModifyStat calls
+        if (statModel.stat_changes.Speed != 0) playerStats.ModifyStat("MovementSpeed", statModel.stat_changes.Speed);
+        if (statModel.stat_changes.Attack != 0) playerStats.ModifyStat("AttackPower", statModel.stat_changes.Attack);
+        if (statModel.stat_changes.Defense != 0) playerStats.ModifyStat("Defense", statModel.stat_changes.Defense);
+        if (statModel.stat_changes.Jump != 0) playerStats.ModifyStat("JumpPower", statModel.stat_changes.Jump);
+        if (statModel.stat_changes.Attack_Speed != 0) playerStats.ModifyStat("AttackSpeed", statModel.stat_changes.Attack_Speed);
+        if (statModel.stat_changes.Range != 0) playerStats.ModifyStat("ProjectileRange", statModel.stat_changes.Range);
+        if (statModel.stat_changes.CooldownHaste != 0) playerStats.ModifyStat("CooldownHaste", statModel.stat_changes.CooldownHaste);
+        if (statModel.stat_changes.MaxHP != 0) playerStats.ModifyStat("MaxHealth", statModel.stat_changes.MaxHP);
     }
 
     void ApplySkillModel(SkillModel skillModel)
@@ -192,9 +202,6 @@ public class ItemManager : MonoBehaviour
         try
         {
             // --- Stat Mapping ---
-            // Removed MapDirectStats to prevent applying current state as changes
-            // MapDirectStats(state, response.stat_model.stat_changes);
-
             if (state.ContainsKey("stat") && state.ContainsKey("value"))
                 ApplySingleStat(response.stat_model.stat_changes, state["stat"], state["value"]);
 
@@ -205,7 +212,7 @@ public class ItemManager : MonoBehaviour
             response.stat_model.duration_seconds = 5.0f;
 
             // --- Description Mapping ---
-            string newDesc = GetValue(state, "newDescription", "new_description");
+            string newDesc = GetValue(state, "newDescription", "new_description", "description", "characterDescription", "character_description");
             if (!string.IsNullOrEmpty(newDesc) && playerStats != null)
             {
                 playerStats.characterDescription = newDesc;
@@ -354,14 +361,14 @@ public class ItemManager : MonoBehaviour
         {
             float currentVal = 0f;
 
-            if (isAttackSpeed) currentVal = playerStats.currentStats.Attack_Speed;
-            else if (isAttackPower) currentVal = playerStats.currentStats.Attack;
-            else if (isMovementSpeed) currentVal = playerStats.currentStats.Speed;
-            else if (isRange) currentVal = playerStats.currentStats.Range;
-            else if (isDefense) currentVal = playerStats.currentStats.Defense;
-            else if (isJump) currentVal = playerStats.currentStats.Jump;
-            else if (isHaste) currentVal = playerStats.currentStats.CooldownHaste;
-            else if (isHealth) currentVal = playerStats.currentStats.MaxHP;
+            if (isAttackSpeed) currentVal = playerStats.GetStat("AttackSpeed");
+            else if (isAttackPower) currentVal = playerStats.GetStat("AttackPower");
+            else if (isMovementSpeed) currentVal = playerStats.GetStat("MovementSpeed");
+            else if (isRange) currentVal = playerStats.GetStat("ProjectileRange");
+            else if (isDefense) currentVal = playerStats.GetStat("Defense");
+            else if (isJump) currentVal = playerStats.GetStat("JumpPower");
+            else if (isHaste) currentVal = playerStats.GetStat("CooldownHaste");
+            else if (isHealth) currentVal = playerStats.GetStat("MaxHealth");
 
             delta = currentVal * (value - 1f);
         }
