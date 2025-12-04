@@ -1,6 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+<<<<<<< Updated upstream
 using UnityEngine;
+=======
+using Unity.VisualScripting;
+using UnityEngine.InputSystem.Interactions;
+>>>>>>> Stashed changes
 
 public class SkillExecutor : MonoBehaviour
 {
@@ -15,45 +20,38 @@ public class SkillExecutor : MonoBehaviour
     public Transform firePoint;
 
     [Header("Movement Settings")]
-    public float dashSpeed = 20f;
-    public float dashDuration = 0.25f;
+    public float dashSpeed = 15f;
+    public float dashDuration = 0.2f;
+    public float jumpForce = 12f;
+    public float blinkDistance = 4f;
 
     [Header("Attack Settings")]
     public float attackDelay = 0.2f;
-    public float heavyAttackMultiplier = 1.5f;
-    public float projectileCooldown = 1.0f; // New Cooldown
+    public float projectileCooldown = 1.0f;
     private float lastProjectileTime = -999f;
 
     [Header("State Tracking")]
     private bool isInvincible = false;
-    private bool hasGuard = false;
-    private bool hasSuperArmor = false;
-    private List<GameObject> markedEnemies = new List<GameObject>();
-    private GameObject aimedTarget = null;
     private bool isFacingRight = true;
+    private bool isDashing = false;
 
     void Start()
     {
-        if (rb == null)
-            rb = GetComponent<Rigidbody2D>();
-
-        if (playerStats == null)
-            playerStats = GetComponent<PlayerStats>();
-
-        if (attackHitbox == null)
-            attackHitbox = GetComponentInChildren<AttackHitbox>();
-
-        if (spriteRenderer == null)
-            spriteRenderer = GetComponent<SpriteRenderer>();
-
-        Debug.Log($"SkillExecutor initialized - rb: {rb != null}, stats: {playerStats != null}, hitbox: {attackHitbox != null}");
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (playerStats == null) playerStats = GetComponent<PlayerStats>();
+        if (attackHitbox == null) attackHitbox = GetComponentInChildren<AttackHitbox>();
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (attackHitbox != null) attackHitbox.gameObject.SetActive(false);
     }
 
     void Update()
     {
         float moveInput = Input.GetAxisRaw("Horizontal");
-        if (moveInput > 0) isFacingRight = true;
-        else if (moveInput < 0) isFacingRight = false;
+        if(!isDashing)
+        {
+            if (moveInput > 0) isFacingRight = true;
+            else if (moveInput < 0) isFacingRight = false;
+        }
 
         if (spriteRenderer != null && Mathf.Abs(moveInput) > 0.1f)
         {
@@ -67,10 +65,6 @@ public class SkillExecutor : MonoBehaviour
                 lastProjectileTime = Time.time;
                 FireProjectile("Physical", Color.white);
             }
-            else
-            {
-                Debug.Log("Projectile on cooldown!");
-            }
         }
     }
 
@@ -83,66 +77,38 @@ public class SkillExecutor : MonoBehaviour
     {
         Debug.Log($"=== Executing Skill: {skill.name} ===");
 
-        string element = DetectElement(skill.name, skill.description);
-        Color elementColor = GetColorForElement(element);
-
-        StartCoroutine(FlashSprite(elementColor, 0.5f));
-
         foreach (string atomicSkill in skill.sequence)
         {
-            Debug.Log($"Executing atomic skill: {atomicSkill}");
-            yield return ExecuteAtomicSkill(atomicSkill, element, elementColor);
+            yield return ExecuteAtomicSkill(atomicSkill);
             yield return new WaitForSeconds(0.05f);
         }
-
-        Debug.Log($"Skill {skill.name} complete!");
     }
 
-    IEnumerator ExecuteAtomicSkill(string atomicSkill, string element = "Physical", Color color = default)
+    IEnumerator ExecuteAtomicSkill(string atomicSkill)
     {
-        if (color == default) color = Color.white;
         string action = atomicSkill.ToUpper();
-
-        if (action.Contains("PROJECTILE") || action.Contains("SHOOT") || action.Contains("FIRE"))
-        {
-            FireProjectile(element, color);
-            yield return new WaitForSeconds(0.1f);
-            yield break;
-        }
 
         switch (action)
         {
-            // ===== MOVE =====
-            case "FORWARD": yield return MoveForward(); break;
-            case "BACK": yield return MoveBackward(); break;
-            case "LEFT": yield return MoveLeft(); break;
-            case "RIGHT": yield return MoveRight(); break;
-            case "JUMP": yield return Jump(); break;
-            case "LAND": yield return Land(); break;
-            case "DASH":
-            case "RUSH":
-                yield return MoveForward();
-                break;
-
             // ===== ATTACK =====
-            case "HIT":
-            case "LOW":
-            case "MID":
-            case "HIGH":
-            case "ATTACK":
-                yield return Attack(1.0f);
-                break;
+            case "FIREPROJECTILE": yield return FireProjectileCoroutine(); break;
+            case "EXPLOSIVEPROJECTILE": yield return ExplosiveProjectile(); break;
+            case "PIERCINGPROJECTILE": yield return PiercingProjectile(); break;
+            case "MELEESTRIKE": yield return MeleeStrike(); break;
+            case "GROUNDSLAM": yield return GroundSlam(); break;
 
-            case "HEAVY_HIT":
-                yield return Attack(heavyAttackMultiplier);
-                break;
+            // ===== MOVE =====
+            case "DASH": yield return Dash(); break;
+            case "MULTIJUMP": yield return MultiJump(); break;
+            case "BLINK": yield return Blink(); break;
 
-            // ===== POSE =====
-            case "CROUCH": yield return Crouch(); break;
-            case "STAND": yield return Stand(); break;
-            case "ROLL": yield return Roll(); break;
-            case "DODGE": yield return Dodge(); break;
+            // ===== DEFENCE =====
+            case "SHIELDBUFF": yield return ShieldBuff(); break;
+            case "INSTANTHEAL": yield return InstantHeal(); break;
+            case "INVULNERABILITYWINDOW": yield return InvulnerabilityWindow(); break;
+            case "DAMAGEREDUCTIONBUFF": yield return DamageReductionBuff(); break;
 
+<<<<<<< Updated upstream
             // ===== STATE =====
             case "INVINCIBLE": yield return SetInvincible(); break;
             case "GUARD": yield return SetGuard(); break;
@@ -168,66 +134,42 @@ public class SkillExecutor : MonoBehaviour
                 Debug.LogWarning($"Unknown atomic skill: {atomicSkill} (Trying generic action)");
                 if (atomicSkill.ToUpper().Contains("ATTACK")) yield return Attack(1.0f);
                 break;
+=======
+            // ===== Utility =====
+            case "STUN": yield return Stun(); break;
+            case "SLOW": yield return Slow(); break;
+            case "AIRBORNE": yield return Airborne(); break;
+>>>>>>> Stashed changes
         }
     }
 
     // ========================================
-    // MOVE SKILLS
+    // Movement-related primitive Skills
     // ========================================
 
-    IEnumerator MoveForward()
+    IEnumerator Dash()
     {
-        if (rb == null) yield break;
+        isDashing = true;
+        float startTime = Time.time;
+        float originalGravity = rb.gravityScale;
 
-        float speed = isFacingRight ? dashSpeed : -dashSpeed;
+        rb.gravityScale = 0;
+        Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
 
-        Debug.Log($"Dashing {(isFacingRight ? "Right" : "Left")}!");
-        float elapsed = 0f;
-        while (elapsed < dashDuration)
+        while (Time.time < startTime + dashDuration)
         {
-            rb.linearVelocity = new Vector2(speed, rb.linearVelocity.y);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-    }
-
-    IEnumerator MoveBackward()
-    {
-        if (rb == null) yield break;
-        float speed = isFacingRight ? -dashSpeed : dashSpeed;
-
-        float elapsed = 0f;
-        while (elapsed < dashDuration)
-        {
-            rb.linearVelocity = new Vector2(speed, rb.linearVelocity.y);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-    }
-
-    IEnumerator MoveLeft()
-    {
-        if (rb == null) yield break;
-
-        Debug.Log("Moving left!");
-        float elapsed = 0f;
-        float duration = 0.2f;
-
-        while (elapsed < duration)
-        {
-            rb.linearVelocity = new Vector2(-dashSpeed * 0.7f, rb.linearVelocity.y);
-            elapsed += Time.deltaTime;
+            rb.linearVelocity = dir * dashSpeed;
             yield return null;
         }
 
-        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        Debug.Log("Left movement complete!");
+        rb.linearVelocity = Vector2.zero;
+        rb.gravityScale = originalGravity;
+        isDashing = false;
     }
 
-    IEnumerator MoveRight()
+    IEnumerator MultiJump()
     {
+<<<<<<< Updated upstream
         if (rb == null) yield break;
 
         Debug.Log("Moving right!");
@@ -250,155 +192,106 @@ public class SkillExecutor : MonoBehaviour
         if (rb == null || playerStats == null) yield break;
         float jumpForce = playerStats.GetStat("JumpPower");
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+=======
+        Debug.Log($"MultiJump!");
+>>>>>>> Stashed changes
         yield return new WaitForSeconds(0.1f);
     }
 
-    IEnumerator Land()
+    IEnumerator Blink()
     {
-        if (rb == null) yield break;
-        yield return new WaitUntil(() => Mathf.Abs(rb.linearVelocity.y) < 0.5f);
-        yield return new WaitForSeconds(0.05f);
-    }
-
-    // ========================================
-    // ATTACK SKILLS
-    // ========================================
-
-    IEnumerator Attack(float damageMultiplier)
-    {
-        if (attackHitbox == null) yield break;
-        Debug.Log($"Attack ({damageMultiplier}x)!");
-        float originalDamage = attackHitbox.damage;
-        attackHitbox.damage = originalDamage * damageMultiplier;
-        attackHitbox.ActivateHitbox(0.2f);
-        yield return new WaitForSeconds(attackDelay);
-        attackHitbox.damage = originalDamage;
-    }
-
-    // ========================================
-    // POSE SKILLS
-    // ========================================
-
-    IEnumerator Crouch()
-    {
-        if (spriteRenderer != null) transform.localScale = new Vector3(transform.localScale.x, 0.5f, 1f);
+        Debug.Log($"Blink!");
         yield return new WaitForSeconds(0.1f);
     }
 
-    IEnumerator Stand()
+    // ========================================
+    // Attack-related primitive Skills
+    // ========================================
+
+    // NEED TO FIX
+    void FireProjectile(string element, Color color)
     {
-        if (spriteRenderer != null) transform.localScale = new Vector3(transform.localScale.x, 1f, 1f);
-        yield return new WaitForSeconds(0.05f);
+        if (projectilePrefab == null || firePoint == null) return;
+
+        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        ProjectileController pc = proj.GetComponent<ProjectileController>();
+
+        if (pc != null)
+        {
+            Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
+            float dmg = (playerStats != null) ? playerStats.currentStats.Attack : 10f;
+            pc.Initialize(dir, dmg, element, color);
+        }
     }
 
-    IEnumerator Roll()
+    IEnumerator FireProjectileCoroutine()
     {
-        if (rb == null) yield break;
-
-        Debug.Log("Rolling!");
-
-        isInvincible = true;
-        float rollSpeed = dashSpeed * 1.5f;
-        float rollDuration = 0.2f;
-        float elapsed = 0f;
-
-        while (elapsed < rollDuration)
-        {
-            rb.linearVelocity = new Vector2(rollSpeed, rb.linearVelocity.y);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        isInvincible = false;
-        Debug.Log("Roll complete!");
+        FireProjectile("Normal", Color.white);
+        yield return new WaitForSeconds(0.1f);
     }
 
-    IEnumerator Dodge()
+    IEnumerator ExplosiveProjectile()
     {
-        Debug.Log("Dodging - Brief invincibility!");
+        Debug.Log($"ExplosiveProjectile!");
+        yield return new WaitForSeconds(0.1f);
+    }
 
-        isInvincible = true;
+    IEnumerator PiercingProjectile()
+    {
+        Debug.Log($"PiercingProjectile!");
+        yield return new WaitForSeconds(0.1f);
+    }
 
-        if (spriteRenderer != null)
-        {
-            Color original = spriteRenderer.color;
-            spriteRenderer.color = new Color(1f, 1f, 1f, 0.5f);
+    IEnumerator MeleeStrike()
+    {
+        Debug.Log($"MeleeStrike!");
+        yield return new WaitForSeconds(0.1f);
+    }
 
-            yield return new WaitForSeconds(0.2f);
-
-            spriteRenderer.color = original;
-        }
-        else
-        {
-            yield return new WaitForSeconds(0.2f);
-        }
-
-        isInvincible = false;
-        Debug.Log("Dodge complete!");
+    IEnumerator GroundSlam()
+    {
+        Debug.Log($"GroundSlam!");
+        yield return new WaitForSeconds(0.1f);
     }
 
     // ========================================
-    // STATE SKILLS
+    // Defense-related primitive Skills
+    // ========================================
+    IEnumerator ShieldBuff()
+    {
+        Debug.Log($"ShieldBuff!");
+        yield return new WaitForSeconds(0.1f);
+    }
+
+    IEnumerator InstantHeal()
+    {
+        if (playerStats == null) yield break;
+
+        float healAmount = playerStats.currentStats.MaxHP * 0.2f;
+        playerStats.Heal(healAmount);
+
+        Debug.Log($"Healed {healAmount} HP!");
+
+        yield return new WaitForSeconds(0.2f);
+    }
+
+    IEnumerator InvulnerabilityWindow()
+    {
+        Debug.Log($"InvulnerabilityWindow!");
+        yield return new WaitForSeconds(0.1f);
+    }
+
+    IEnumerator DamageReductionBuff()
+    {
+        Debug.Log($"DamageReductionBuff!");
+        yield return new WaitForSeconds(0.1f);
+    }
+
+    // ========================================
+    // Utility-related primitive Skills
     // ========================================
 
-    IEnumerator SetInvincible()
-    {
-        Debug.Log("Invincibility activated!");
-        isInvincible = true;
-
-        if (spriteRenderer != null)
-        {
-            StartCoroutine(FlashSprite(Color.cyan, 0.5f));
-        }
-
-        yield return new WaitForSeconds(0.5f);
-
-        isInvincible = false;
-        Debug.Log("Invincibility ended!");
-    }
-
-    IEnumerator SetGuard()
-    {
-        Debug.Log("Guard stance activated!");
-        hasGuard = true;
-
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = Color.blue;
-        }
-
-        yield return new WaitForSeconds(0.5f);
-
-        hasGuard = false;
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = Color.white;
-        }
-        Debug.Log("Guard ended!");
-    }
-
-    IEnumerator SetSuperArmor()
-    {
-        Debug.Log("Super Armor activated!");
-        hasSuperArmor = true;
-
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = Color.yellow;
-        }
-
-        yield return new WaitForSeconds(1f);
-
-        hasSuperArmor = false;
-        if (spriteRenderer != null)
-        {
-            spriteRenderer.color = Color.white;
-        }
-        Debug.Log("Super Armor ended!");
-    }
-
-    IEnumerator StunEnemy()
+    IEnumerator Stun()
     {
         Debug.Log("Attempting to stun nearby enemies!");
 
@@ -415,12 +308,9 @@ public class SkillExecutor : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
     }
 
-    // ========================================
-    // EFFECT SKILLS
-    // ========================================
-
-    IEnumerator Heal()
+    IEnumerator Slow()
     {
+<<<<<<< Updated upstream
         if (playerStats == null) yield break;
 
         float healAmount = playerStats.GetStat("MaxHealth") * 0.2f;
@@ -445,70 +335,19 @@ public class SkillExecutor : MonoBehaviour
             StartCoroutine(FlashSprite(Color.yellow, 0.3f));
         }
 
+=======
+        Debug.Log($"Slow!");
+>>>>>>> Stashed changes
         yield return new WaitForSeconds(0.1f);
     }
 
-    IEnumerator DebuffEnemy()
+    IEnumerator Airborne()
     {
-        Debug.Log("Attempting to debuff nearby enemies!");
-
-        Collider2D[] nearbyEnemies = Physics2D.OverlapCircleAll(transform.position, 3f);
-
-        foreach (Collider2D col in nearbyEnemies)
-        {
-            if (col.gameObject != gameObject && col.GetComponent<PlayerStats>() != null)
-            {
-                Debug.Log($"Debuffed: {col.gameObject.name}");
-            }
-        }
-
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    IEnumerator Taunt()
-    {
-        Debug.Log("Taunting enemies!");
-
-        if (spriteRenderer != null)
-        {
-            StartCoroutine(FlashSprite(Color.red, 0.3f));
-        }
-
-        yield return new WaitForSeconds(0.3f);
-    }
-
-    // ========================================
-    // TARGET SKILLS
-    // ========================================
-
-    IEnumerator Aim()
-    {
-        Debug.Log("Aiming at nearest enemy!");
-
-        Collider2D[] nearbyEnemies = Physics2D.OverlapCircleAll(transform.position, 10f);
-        float closestDistance = Mathf.Infinity;
-
-        foreach (Collider2D col in nearbyEnemies)
-        {
-            if (col.gameObject != gameObject && col.GetComponent<PlayerStats>() != null)
-            {
-                float distance = Vector2.Distance(transform.position, col.transform.position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    aimedTarget = col.gameObject;
-                }
-            }
-        }
-
-        if (aimedTarget != null)
-        {
-            Debug.Log($"Aimed at: {aimedTarget.name}");
-        }
-
+        Debug.Log($"Airborne!");
         yield return new WaitForSeconds(0.1f);
     }
 
+<<<<<<< Updated upstream
     IEnumerator Mark()
     {
         Debug.Log("Marking nearby enemies!");
@@ -566,68 +405,9 @@ public class SkillExecutor : MonoBehaviour
         Debug.Log($"Fired {element} projectile!");
     }
 
+=======
+>>>>>>> Stashed changes
     // ========================================
     // HELPER FUNCTIONS
     // ========================================
-    string DetectElement(string name, string desc)
-    {
-        string text = (name + desc).ToLower();
-
-        // 1. Lightning
-        if (text.Contains("lightning") || text.Contains("thunder") || text.Contains("volt") ||
-            text.Contains("electric") || text.Contains("shock") || text.Contains("storm"))
-            return "Lightning";
-
-        // 2. Ice
-        if (text.Contains("ice") || text.Contains("frost") || text.Contains("freez") ||
-            text.Contains("cold") || text.Contains("chill") || text.Contains("snow") || text.Contains("crystal"))
-            return "Ice";
-
-        // 3. Fire
-        if (text.Contains("fire") || text.Contains("burn") || text.Contains("flame") ||
-            text.Contains("heat") || text.Contains("blaze") || text.Contains("ember") || text.Contains("inferno"))
-            return "Fire";
-
-        return "Physical";
-    }
-
-    Color GetColorForElement(string element)
-    {
-        switch (element)
-        {
-            case "Fire": return new Color(1f, 0.4f, 0.4f); // Red
-            case "Ice": return new Color(0.4f, 0.9f, 1f);  // Cyan
-            case "Lightning": return new Color(1f, 1f, 0.4f); // Yellow
-            default: return Color.white;
-        }
-    }
-
-    IEnumerator FlashSprite(Color flashColor, float duration)
-    {
-        if (spriteRenderer == null) yield break;
-        Color original = Color.blue;
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            spriteRenderer.color = Color.Lerp(original, flashColor, Mathf.PingPong(elapsed * 10f, 1f));
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        spriteRenderer.color = original;
-    }
-
-    public bool IsInvincible()
-    {
-        return isInvincible;
-    }
-
-    public bool HasGuard()
-    {
-        return hasGuard;
-    }
-
-    public bool HasSuperArmor()
-    {
-        return hasSuperArmor;
-    }
 }

@@ -47,10 +47,6 @@ public class ProjectileController : MonoBehaviour
             {
                 enemyStats.TakeDamage(damage);
                 Debug.Log($"[Projectile] Hit Enemy! Dealt {damage} {element} damage.");
-
-                // Add elemental effects here (Slow, Stun, Dot)
-                if (element == "Ice") Debug.Log("Enemy Slowed!");
-                if (element == "Lightning") Debug.Log("Enemy Stunned!");
             }
 
             Destroy(gameObject); // Destroy bullet on hit
