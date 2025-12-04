@@ -1,11 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
-<<<<<<< Updated upstream
 using UnityEngine;
-=======
 using Unity.VisualScripting;
 using UnityEngine.InputSystem.Interactions;
->>>>>>> Stashed changes
+
 
 public class SkillExecutor : MonoBehaviour
 {
@@ -108,38 +106,10 @@ public class SkillExecutor : MonoBehaviour
             case "INVULNERABILITYWINDOW": yield return InvulnerabilityWindow(); break;
             case "DAMAGEREDUCTIONBUFF": yield return DamageReductionBuff(); break;
 
-<<<<<<< Updated upstream
-            // ===== STATE =====
-            case "INVINCIBLE": yield return SetInvincible(); break;
-            case "GUARD": yield return SetGuard(); break;
-            case "SUPERARMOR": yield return SetSuperArmor(); break;
-            case "STUN_ENEMY":
-            case "STUN":
-                yield return StunEnemy(); break;
-
-            // ===== EFFECT =====
-            case "HEAL": yield return Heal(); break;
-            case "BUFF_SELF":
-            case "BUFF":
-                yield return BuffSelf(); break;
-            case "DEBUFF_ENEMY": yield return DebuffEnemy(); break;
-            case "TAUNT": yield return Taunt(); break;
-
-            // ===== TARGET =====
-            case "AIM": yield return Aim(); break;
-            case "MARK": yield return Mark(); break;
-            case "TRACK": yield return Track(); break;
-
-            default:
-                Debug.LogWarning($"Unknown atomic skill: {atomicSkill} (Trying generic action)");
-                if (atomicSkill.ToUpper().Contains("ATTACK")) yield return Attack(1.0f);
-                break;
-=======
             // ===== Utility =====
             case "STUN": yield return Stun(); break;
             case "SLOW": yield return Slow(); break;
             case "AIRBORNE": yield return Airborne(); break;
->>>>>>> Stashed changes
         }
     }
 
@@ -169,32 +139,7 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator MultiJump()
     {
-<<<<<<< Updated upstream
-        if (rb == null) yield break;
-
-        Debug.Log("Moving right!");
-        float elapsed = 0f;
-        float duration = 0.2f;
-
-        while (elapsed < duration)
-        {
-            rb.linearVelocity = new Vector2(dashSpeed * 0.7f, rb.linearVelocity.y);
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        Debug.Log("Right movement complete!");
-    }
-
-    IEnumerator Jump()
-    {
-        if (rb == null || playerStats == null) yield break;
-        float jumpForce = playerStats.GetStat("JumpPower");
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-=======
         Debug.Log($"MultiJump!");
->>>>>>> Stashed changes
         yield return new WaitForSeconds(0.1f);
     }
 
@@ -219,7 +164,7 @@ public class SkillExecutor : MonoBehaviour
         if (pc != null)
         {
             Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
-            float dmg = (playerStats != null) ? playerStats.currentStats.Attack : 10f;
+            float dmg = (playerStats != null) ? playerStats.GetStat("AttackPower") : 10f;
             pc.Initialize(dir, dmg, element, color);
         }
     }
@@ -267,7 +212,7 @@ public class SkillExecutor : MonoBehaviour
     {
         if (playerStats == null) yield break;
 
-        float healAmount = playerStats.currentStats.MaxHP * 0.2f;
+        float healAmount = playerStats.GetStat("MaxHealth") * 0.2f;
         playerStats.Heal(healAmount);
 
         Debug.Log($"Healed {healAmount} HP!");
@@ -310,34 +255,7 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator Slow()
     {
-<<<<<<< Updated upstream
-        if (playerStats == null) yield break;
-
-        float healAmount = playerStats.GetStat("MaxHealth") * 0.2f;
-        playerStats.Heal(healAmount);
-
-        Debug.Log($"Healed {healAmount} HP!");
-
-        if (spriteRenderer != null)
-        {
-            StartCoroutine(FlashSprite(Color.green, 0.2f));
-        }
-
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    IEnumerator BuffSelf()
-    {
-        Debug.Log("Buff Self - Visual effect!");
-
-        if (spriteRenderer != null)
-        {
-            StartCoroutine(FlashSprite(Color.yellow, 0.3f));
-        }
-
-=======
         Debug.Log($"Slow!");
->>>>>>> Stashed changes
         yield return new WaitForSeconds(0.1f);
     }
 
@@ -347,66 +265,6 @@ public class SkillExecutor : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
     }
 
-<<<<<<< Updated upstream
-    IEnumerator Mark()
-    {
-        Debug.Log("Marking nearby enemies!");
-
-        Collider2D[] nearbyEnemies = Physics2D.OverlapCircleAll(transform.position, 5f);
-        markedEnemies.Clear();
-
-        foreach (Collider2D col in nearbyEnemies)
-        {
-            if (col.gameObject != gameObject && col.GetComponent<PlayerStats>() != null)
-            {
-                markedEnemies.Add(col.gameObject);
-                Debug.Log($"Marked: {col.gameObject.name}");
-            }
-        }
-
-        yield return new WaitForSeconds(0.1f);
-    }
-
-    IEnumerator Track()
-    {
-        Debug.Log("Tracking target!");
-
-        if (aimedTarget != null && rb != null)
-        {
-            Vector2 direction = (aimedTarget.transform.position - transform.position).normalized;
-            rb.linearVelocity = new Vector2(direction.x * dashSpeed * 0.5f, rb.linearVelocity.y);
-
-            yield return new WaitForSeconds(0.3f);
-
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
-        }
-        else
-        {
-            Debug.Log("No target to track!");
-            yield return new WaitForSeconds(0.05f);
-        }
-    }
-
-    void FireProjectile(string element, Color color)
-    {
-        if (projectilePrefab == null || firePoint == null)
-        {
-            Debug.LogWarning("Projectile Prefab or FirePoint missing!");
-            return;
-        }
-
-        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        ProjectileController pc = proj.GetComponent<ProjectileController>();
-
-        Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
-        float dmg = playerStats.GetStat("AttackPower");
-
-        pc.Initialize(dir, dmg, element, color);
-        Debug.Log($"Fired {element} projectile!");
-    }
-
-=======
->>>>>>> Stashed changes
     // ========================================
     // HELPER FUNCTIONS
     // ========================================
