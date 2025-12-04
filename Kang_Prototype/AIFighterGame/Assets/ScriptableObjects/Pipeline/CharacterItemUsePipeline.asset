@@ -38,11 +38,11 @@ MonoBehaviour:
       {{MaxHealthTier}}\r\nDefenseTier: {{DefenseTier}}\r\nJumpPowerTier: {{JumpPowerTier}}\r\nCooldownHasteTier:
       {{CooldownHasteTier}}\r\n\r\n[CURRENT_DESCRIPTION]\r\n\"{{character_description}}\"\r\n\r\n[TASK]\r\nUsing
       the system instructions, update the character after absorbing this item:\r\n-
-      Use the stat tiers (not raw numbers) plus the current flavor to understand
+      Use the stat tiers (not raw numbers) plus the current description to understand
       the current build\u2019s strengths and weaknesses.\r\n- Select 0\u20134 stats
       to modify in a way that fits both the item\u2019s theme and the current build.\r\n-
-      Produce an updated character description in simple English that reflects how
-      the character has changed.\r\n"
+      Produce a SHORT updated character description (1\u20132 sentences, ~40 words
+      or fewer) in simple English that reflects how the character has changed."
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
@@ -55,7 +55,7 @@ MonoBehaviour:
       value: 
     - key: level
       value: 
-    editorPosition: {x: -604, y: -128}
+    editorPosition: {x: -588, y: -128}
     guid: 8950e9c5-5547-4e15-b5a8-f76ac47ae410
     nextStepGuid: d62a622c-3398-47df-a9c7-2e5812fb4ad9
   - stepName: SkillGeneration
@@ -97,8 +97,8 @@ MonoBehaviour:
     outputNodePosition: {x: 905, y: -168}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 310, y: 34, z: 0}
-    viewScale: {x: 1.15, y: 1.15, z: 1}
+    viewPosition: {x: 342, y: -1132, z: 0}
+    viewScale: {x: 1, y: 1, z: 1}
     viewInitialized: 1
     snapshotPositions:
     - {x: -820, y: -57}

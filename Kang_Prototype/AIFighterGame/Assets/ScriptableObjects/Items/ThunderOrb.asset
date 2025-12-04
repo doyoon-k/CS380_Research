@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: ThunderOrb
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Thunder Orb
-  description: A crackling sphere of pure lightning energy. Grants incredible speed
-    and devastating electric attacks that can stun enemies.
+  description: "A crackling sphere of bottled thunder that hums impatiently in your
+    hands.  \r\nIt makes your steps snap into short, reckless bursts and your swings
+    fire off in sudden electric flurries, as if your whole body were a jittery lightning
+    rod."
   icon: {fileID: 0}
   isCached: 0
   cachedStatModelJson: 

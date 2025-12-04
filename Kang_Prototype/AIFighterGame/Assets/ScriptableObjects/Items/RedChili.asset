@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: RedChili
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Red Chili
-  description: The moment you bite into it, a fiery heat spreads through your mouth
-    and rushes through your body.
+  description: "A tiny red pepper that explodes with heat the moment you bite down. 
+    \r\nThe burning rush goads you into reckless lunges and overheated combos, trading
+    caution for wild, spicy aggression that scorches everything too close."
   icon: {fileID: 0}
   isCached: 0
   cachedStatModelJson: 

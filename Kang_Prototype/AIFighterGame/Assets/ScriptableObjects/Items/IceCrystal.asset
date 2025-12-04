@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: IceCrystal
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   itemName: Ice Crystal
-  description: A freezing crystal that slows enemies and grants ice-based abilities.
-    Your movements become precise and calculated.
+  description: "A shard of frozen stillness that chills the air around your fingertips. 
+    \r\nIt reins in your wild motions, turning them into sharp, deliberate strikes
+    and cool, measured steps that leave a thin frost where you pass."
   icon: {fileID: -7560284153744367771, guid: f0336eae2f7825a42ac319534eccbd60, type: 3}
   isCached: 0
   cachedStatModelJson: 

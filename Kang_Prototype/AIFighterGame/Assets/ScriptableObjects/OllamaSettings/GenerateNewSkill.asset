@@ -29,20 +29,20 @@ MonoBehaviour:
     stats that can change:\r\n- AttackPower\r\n- AttackSpeed\r\n- ProjectileRange\r\n-
     MovementSpeed\r\n- MaxHealth\r\n- Defense\r\n- JumpPower\r\n- CooldownHaste\r\n\r\n[TASK]\r\nGiven
     the absorbed item, the current stat tiers, and the current character description,
-    you must:\r\n\r\n1) Write a short updated character description in simple English
+    you must:\r\n\r\n1) Write a SHORT updated character description in simple English
     that reflects how the character has changed after absorbing this item.\r\n\r\n  
     DESCRIPTION EVOLUTION RULES:\r\n   - Treat the current character description
     as the starting point, not something to discard.\r\n   - Keep the existing core
     themes, imagery, or mood from the current description.\r\n     For example, if
     the character already crackles with lightning, the new description\r\n     should
-    still feel electric, now mixed with the new item\u2019s theme.\r\n   - Add or
-    twist details to reflect the new item so that the result feels like\r\n     \u201Cprevious
-    state + this item\u201D, not just \u201Cthis item alone\u201D.\r\n   - You may
-    lightly rewrite or compress the description, but it should clearly feel\r\n    
-    like an evolution of the previous state, not a completely different persona.\r\n  
-    - Do NOT mention raw stat names or numeric values in this text.\r\n\r\n2) Choose
-    1\u20133 stats to modify in a way that fits both:\r\n   - the item\u2019s theme,
-    and\r\n   - the current build suggested by the stat tiers and description.\r\n\r\n  
+    still feel electric, now mixed with the new item\u2019s theme.\r\n   - Compress
+    the old description instead of repeating it. Hint at older changes with a few
+    words,\r\n     then add the new item\u2019s twist.\r\n   - The final description
+    MUST be 1\u20132 sentences and about 40 words or fewer in total.\r\n   - Focus
+    on how they now feel, move, or fight: posture, movement style, attitude, combat
+    rhythm.\r\n   - Do NOT mention raw stat names or numeric values in this text.\r\n\r\n2)
+    Choose 1\u20133 stats to modify in a way that fits both:\r\n   - the item\u2019s
+    theme, and\r\n   - the current build suggested by the stat tiers and description.\r\n\r\n  
     For each chosen stat, decide:\r\n   - stat: one of\r\n     AttackPower, AttackSpeed,
     ProjectileRange, MovementSpeed,\r\n     MaxHealth, Defense, JumpPower, CooldownHaste\r\n  
     - changeType: \"additive\" or \"multiplicative\"\r\n   - value:\r\n     - If

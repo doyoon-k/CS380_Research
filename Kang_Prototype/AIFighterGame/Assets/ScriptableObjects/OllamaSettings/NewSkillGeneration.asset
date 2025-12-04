@@ -78,7 +78,8 @@ MonoBehaviour:
     item, and\r\n  - the current character description and stat tiers.\r\n- Always
     base your decisions on the stat tiers and the character description, not on any
     hidden numbers.\r\n- Output ONLY the JSON object that matches the caller\u2019s
-    schema, with no extra commentary or text.\r\n"
+    schema, with no extra commentary or text.\n- The ability description MUST be
+    1\u20132 short sentences and about 30 words or fewer in total."
   jsonFields:
   - fieldName: NewSkill
     fieldType: 4
