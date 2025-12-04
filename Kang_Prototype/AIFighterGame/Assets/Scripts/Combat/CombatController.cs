@@ -39,10 +39,21 @@ public class CombatController : MonoBehaviour
         Debug.Log("=== ATTACK! ===");
 
         canAttack = false;
-        lastAttackTime = Time.time; // Track time
+        lastAttackTime = Time.time;
+
+        attackHitbox.gameObject.SetActive(true);
         attackHitbox.ActivateHitbox(attackDuration);
 
         Invoke(nameof(ResetAttack), attackCooldown);
+        Invoke(nameof(DeactivateHitboxObject), attackDuration);
+    }
+
+    void DeactivateHitboxObject()
+    {
+        if (attackHitbox != null)
+        {
+            attackHitbox.gameObject.SetActive(false);
+        }
     }
 
     void ResetAttack()

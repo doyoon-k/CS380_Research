@@ -172,3 +172,4 @@ MonoBehaviour:
   lifeTime: 3
   damage: 10
   element: Physical
+  explosionEffectPrefab: {fileID: 9111670621610819038, guid: 362ed4585b299974ba8b6a0b5c858a50, type: 3}

@@ -13,11 +13,15 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private bool isGrounded;
     private float moveInput;
+    public bool IsGrounded() => isGrounded;
+
+    private SkillExecutor skillExecutor;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         playerStats = GetComponent<PlayerStats>();
+        skillExecutor = GetComponent<SkillExecutor>();
 
         if (playerStats == null)
         {
@@ -41,6 +45,11 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (skillExecutor != null && skillExecutor.IsDashing())
+        {
+            return;
+        }
+
         if (playerStats != null)
         {
             float speed = playerStats.GetStat("MovementSpeed");

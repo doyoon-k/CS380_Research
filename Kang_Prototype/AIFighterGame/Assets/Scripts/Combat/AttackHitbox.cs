@@ -5,12 +5,13 @@ public class AttackHitbox : MonoBehaviour
 {
     [Header("Attack Properties")]
     public float damage = 10f;
+    public float damageMultiplier = 1f;
     public float knockbackForce = 0.3f;
     public LayerMask enemyLayer;
 
     [Header("Hitbox Settings")]
-    public Vector2 hitboxSize = new Vector2(1f, 1f);
-    public Vector2 hitboxOffset = new Vector2(0.5f, 0f);
+    public Vector2 hitboxSize = new Vector2(50f, 50f);
+    public Vector2 hitboxOffset = new Vector2(30f, 0f);
 
     private PlayerStats ownerStats;
     private bool isActive = false;
@@ -43,6 +44,8 @@ public class AttackHitbox : MonoBehaviour
         Vector2 hitboxPosition = (Vector2)transform.position + hitboxOffset;
         Collider2D[] hits = Physics2D.OverlapBoxAll(hitboxPosition, hitboxSize, 0f, enemyLayer);
 
+        Debug.Log($"Hitbox checking at {hitboxPosition}, size: {hitboxSize}, enemyLayer: {enemyLayer.value}, found: {hits.Length}");
+
         foreach (Collider2D hit in hits)
         {
             if (hitTargets.Contains(hit)) continue;
@@ -53,7 +56,7 @@ public class AttackHitbox : MonoBehaviour
             PlayerStats enemyStats = hit.GetComponent<PlayerStats>();
             if (enemyStats != null && ownerStats != null)
             {
-                float totalDamage = ownerStats.GetStat("AttackPower");
+                float totalDamage = ownerStats.GetStat("AttackPower") * damageMultiplier;
                 enemyStats.TakeDamage(totalDamage);
 
                 Rigidbody2D enemyRb = hit.GetComponent<Rigidbody2D>();
@@ -71,6 +74,15 @@ public class AttackHitbox : MonoBehaviour
                 }
             }
         }
+    }
+    public void SetDamageMultiplier(float multiplier)
+    {
+        damageMultiplier = multiplier;
+    }
+
+    public void ResetDamageMultiplier()
+    {
+        damageMultiplier = 1f;
     }
 
     void OnDrawGizmosSelected()

@@ -18,10 +18,11 @@ public class SkillExecutor : MonoBehaviour
     public Transform firePoint;
 
     [Header("Movement Settings")]
-    public float dashSpeed = 15f;
-    public float dashDuration = 0.2f;
+    public float dashSpeed = 0.5f;
+    public float dashDuration = 0.01f;
     public float jumpForce = 12f;
-    public float blinkDistance = 4f;
+    public float blinkDistance = 120f;
+    public bool IsDashing() => isDashing;
 
     [Header("Attack Settings")]
     public float attackDelay = 0.2f;
@@ -33,6 +34,57 @@ public class SkillExecutor : MonoBehaviour
     private bool isFacingRight = true;
     private bool isDashing = false;
 
+    [Header("MultiJump Settings")]
+    public int maxExtraJumps = 1;
+    private int remainingJumps;
+    private bool isGrounded;
+
+    [Header("Ground Check")]
+    public PlayerController playerController;
+
+    [Header("Blink Settings")]
+    public LayerMask blinkObstacleLayer;
+    public GameObject blinkEffectPrefab;
+
+    [Header("MeleeStrike Settings")]
+    public float meleeHitboxDuration = 0.2f;
+    public float meleeDamageMultiplier = 1.5f;
+    public GameObject slashEffectPrefab;
+    public Vector2 slashOffset = new Vector2(15f, 0f);
+
+    [Header("Defense State")]
+    public float currentShield = 0f;
+    public float damageReductionMultiplier = 1f;
+
+    [Header("Defense Settings")]
+    public float shieldAmount = 500f;         
+    public float shieldDuration = 10f;        
+    public float invincibilityDuration = 2f;  
+    public float damageReduction = 0.5f;      
+    public float damageReductionDuration = 5f;
+
+    [Header("Utility Settings")]
+    public float stunRadius = 50f;
+    public float stunDuration = 2f;
+    public float slowRadius = 50f;
+    public float slowMultiplier = 0.3f;
+    public float slowDuration = 3f;
+    public float airborneRadius = 50f;
+    public float airborneForce = 300f;
+
+    [Header("GroundSlam Settings")]
+    public float groundSlamForce = 500f;
+    public float groundSlamRadius = 80f;
+    public float groundSlamDamageMultiplier = 2f;
+
+    [Header("Projectile Settings")]
+    public float explosiveRadius = 80f;
+    public float explosiveDamageMultiplier = 1.5f;
+    public int pierceMaxCount = 3;
+    public float piercingDamageMultiplier = 0.8f;
+
+
+
     void Start()
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
@@ -40,6 +92,8 @@ public class SkillExecutor : MonoBehaviour
         if (attackHitbox == null) attackHitbox = GetComponentInChildren<AttackHitbox>();
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
         if (attackHitbox != null) attackHitbox.gameObject.SetActive(false);
+        if (playerController == null) playerController = GetComponent<PlayerController>();
+        remainingJumps = maxExtraJumps;
     }
 
     void Update()
@@ -63,6 +117,26 @@ public class SkillExecutor : MonoBehaviour
                 lastProjectileTime = Time.time;
                 FireProjectile("Physical", Color.white);
             }
+        }
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            StartCoroutine(MeleeStrike());
+        }
+
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            StartCoroutine(FireProjectileCoroutine());
+        }
+
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            StartCoroutine(PiercingProjectile());
+        }
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            StartCoroutine(ExplosiveProjectile());
         }
     }
 
@@ -139,13 +213,52 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator MultiJump()
     {
-        Debug.Log($"MultiJump!");
+        bool grounded = playerController != null && playerController.IsGrounded();
+
+        if (grounded)
+        {
+            remainingJumps = maxExtraJumps;
+        }
+
+        if (remainingJumps > 0 || grounded)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+
+            float jumpPower = playerStats != null ? playerStats.GetStat("JumpPower") : jumpForce;
+            rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+
+            if (!grounded)
+            {
+                remainingJumps--;
+            }
+
+            Debug.Log($"MultiJump! Remain: {remainingJumps}");
+        }
+        else
+        {
+            Debug.Log("Used all jump chance!");
+        }
+
         yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator Blink()
     {
-        Debug.Log($"Blink!");
+        Vector2 blinkDir = isFacingRight ? Vector2.right : Vector2.left;
+        Vector2 startPos = transform.position;
+        Vector2 targetPos = startPos + blinkDir * blinkDistance;
+
+        int layerMask = ~LayerMask.GetMask("Player", "Enemy");
+        RaycastHit2D hit = Physics2D.Raycast(startPos, blinkDir, blinkDistance, layerMask);
+
+        if (hit.collider != null)
+        {
+            targetPos = hit.point - blinkDir * 5f;
+            Debug.Log($"WALL! {hit.collider.name}");
+        }
+
+        transform.position = targetPos;
+        Debug.Log($"Blink! {startPos} -> {targetPos}");
         yield return new WaitForSeconds(0.1f);
     }
 
@@ -177,26 +290,130 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator ExplosiveProjectile()
     {
-        Debug.Log($"ExplosiveProjectile!");
-        yield return new WaitForSeconds(0.1f);
+        if (projectilePrefab == null || firePoint == null) yield break;
+
+        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        ProjectileController pc = proj.GetComponent<ProjectileController>();
+
+        if (pc != null)
+        {
+            Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
+            float dmg = (playerStats != null) ? playerStats.GetStat("AttackPower") * explosiveDamageMultiplier : 15f;
+            pc.Initialize(dir, dmg, "Explosive", Color.red);
+            pc.SetExplosive(explosiveRadius);
+        }
+
+        Debug.Log("ExplosiveProjectile fired!");
+        yield return new WaitForSeconds(0.2f);
     }
 
     IEnumerator PiercingProjectile()
     {
-        Debug.Log($"PiercingProjectile!");
+        if (projectilePrefab == null || firePoint == null) yield break;
+
+        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        ProjectileController pc = proj.GetComponent<ProjectileController>();
+
+        if (pc != null)
+        {
+            Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
+            float dmg = (playerStats != null) ? playerStats.GetStat("AttackPower") * piercingDamageMultiplier : 8f;
+            pc.Initialize(dir, dmg, "Piercing", Color.cyan);
+            pc.SetPiercing(pierceMaxCount);
+        }
+
+        Debug.Log("PiercingProjectile fired!");
         yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator MeleeStrike()
     {
-        Debug.Log($"MeleeStrike!");
-        yield return new WaitForSeconds(0.1f);
+        Debug.Log($"MeleeStrike! isFacingRight: {isFacingRight}");
+
+        if (attackHitbox == null)
+        {
+            Debug.LogWarning("No AttackHitbox!");
+            yield break;
+        }
+
+        Vector2 offset = attackHitbox.hitboxOffset;
+        offset.x = isFacingRight ? Mathf.Abs(offset.x) : -Mathf.Abs(offset.x);
+        attackHitbox.hitboxOffset = offset;
+
+        if (slashEffectPrefab != null)
+        {
+            Vector3 effectPos = transform.position + new Vector3(
+                isFacingRight ? slashOffset.x : -slashOffset.x,
+                slashOffset.y,
+                0f
+            );
+
+            float zRotation = isFacingRight ? -90f : 90f;
+            Quaternion rotation = Quaternion.Euler(0f, 0f, zRotation);
+
+            Instantiate(slashEffectPrefab, effectPos, rotation);
+        }
+
+        attackHitbox.SetDamageMultiplier(meleeDamageMultiplier);
+
+        attackHitbox.gameObject.SetActive(true);
+        attackHitbox.ActivateHitbox(meleeHitboxDuration);
+
+        Debug.Log($"MeleeStrike! Multiplier: {meleeDamageMultiplier}");
+        yield return new WaitForSeconds(meleeHitboxDuration + 0.1f);
+
+        attackHitbox.ResetDamageMultiplier();
+        attackHitbox.gameObject.SetActive(false);
     }
 
     IEnumerator GroundSlam()
     {
-        Debug.Log($"GroundSlam!");
-        yield return new WaitForSeconds(0.1f);
+        bool grounded = playerController != null && playerController.IsGrounded();
+
+        if (grounded)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            rb.AddForce(Vector2.up * jumpForce * 0.5f, ForceMode2D.Impulse);
+            yield return new WaitForSeconds(0.15f);
+        }
+
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, -groundSlamForce);
+
+        float timeout = 2f;
+        float elapsed = 0f;
+        while (elapsed < timeout)
+        {
+            if (playerController != null && playerController.IsGrounded())
+            {
+                break;
+            }
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Debug.Log("GroundSlam Impact!");
+
+        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, groundSlamRadius, LayerMask.GetMask("Enemy"));
+        float damage = (playerStats != null) ? playerStats.GetStat("AttackPower") * groundSlamDamageMultiplier : 100f;
+
+        foreach (Collider2D col in targets)
+        {
+            PlayerStats targetStats = col.GetComponent<PlayerStats>();
+            if (targetStats != null)
+            {
+                targetStats.TakeDamage(damage);
+                Debug.Log($"GroundSlam hit {col.name} for {damage}!");
+            }
+
+            Rigidbody2D targetRb = col.GetComponent<Rigidbody2D>();
+            if (targetRb != null)
+            {
+                Vector2 knockbackDir = (col.transform.position - transform.position).normalized;
+                targetRb.AddForce(knockbackDir * 200f, ForceMode2D.Impulse);
+            }
+        }
+
+        yield return new WaitForSeconds(0.2f);
     }
 
     // ========================================
@@ -204,8 +421,18 @@ public class SkillExecutor : MonoBehaviour
     // ========================================
     IEnumerator ShieldBuff()
     {
-        Debug.Log($"ShieldBuff!");
-        yield return new WaitForSeconds(0.1f);
+        currentShield = shieldAmount;
+        Debug.Log($"Shield activated! {currentShield} damage absorption");
+
+        float elapsed = 0f;
+        while (elapsed < shieldDuration && currentShield > 0f)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        currentShield = 0f;
+        Debug.Log("Shield expired!");
     }
 
     IEnumerator InstantHeal()
@@ -216,20 +443,87 @@ public class SkillExecutor : MonoBehaviour
         playerStats.Heal(healAmount);
 
         Debug.Log($"Healed {healAmount} HP!");
-
         yield return new WaitForSeconds(0.2f);
     }
 
     IEnumerator InvulnerabilityWindow()
     {
-        Debug.Log($"InvulnerabilityWindow!");
-        yield return new WaitForSeconds(0.1f);
+        isInvincible = true;
+        Debug.Log($"Invincible for {invincibilityDuration}s!");
+
+        float elapsed = 0f;
+        float flashInterval = 0.1f;
+        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+
+        while (elapsed < invincibilityDuration)
+        {
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = spriteRenderer.color.a > 0.5f
+                    ? new Color(originalColor.r, originalColor.g, originalColor.b, 0.3f)
+                    : originalColor;
+            }
+
+            elapsed += flashInterval;
+            yield return new WaitForSeconds(flashInterval);
+        }
+
+        isInvincible = false;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = originalColor;
+        }
+        Debug.Log("Invincibility ended!");
     }
 
     IEnumerator DamageReductionBuff()
     {
-        Debug.Log($"DamageReductionBuff!");
-        yield return new WaitForSeconds(0.1f);
+        damageReductionMultiplier = 1f - damageReduction;
+        Debug.Log($"Damage reduced to {damageReductionMultiplier * 100}% for {damageReductionDuration}s!");
+
+        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = new Color(0.5f, 0.5f, 1f);
+        }
+
+        yield return new WaitForSeconds(damageReductionDuration);
+
+        damageReductionMultiplier = 1f;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = originalColor;
+        }
+        Debug.Log("Damage reduction ended!");
+    }
+
+    public float ProcessIncomingDamage(float damage)
+    {
+        if (isInvincible)
+        {
+            Debug.Log("Damage blocked by invincibility!");
+            return 0f;
+        }
+
+        float reducedDamage = damage * damageReductionMultiplier;
+
+        if (currentShield > 0f)
+        {
+            if (currentShield >= reducedDamage)
+            {
+                currentShield -= reducedDamage;
+                Debug.Log($"Shield absorbed {reducedDamage} damage! Shield remaining: {currentShield}");
+                return 0f;
+            }
+            else
+            {
+                reducedDamage -= currentShield;
+                Debug.Log($"Shield broke! {currentShield} absorbed, {reducedDamage} damage passes through");
+                currentShield = 0f;
+            }
+        }
+
+        return reducedDamage;
     }
 
     // ========================================
@@ -238,15 +532,16 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator Stun()
     {
-        Debug.Log("Attempting to stun nearby enemies!");
+        Debug.Log("Stun!");
 
-        Collider2D[] nearbyEnemies = Physics2D.OverlapCircleAll(transform.position, 3f);
+        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, stunRadius, LayerMask.GetMask("Enemy"));
 
-        foreach (Collider2D col in nearbyEnemies)
+        foreach (Collider2D col in targets)
         {
-            if (col.gameObject != gameObject && col.GetComponent<PlayerStats>() != null)
+            EnemyAI enemyAI = col.GetComponent<EnemyAI>();
+            if (enemyAI != null)
             {
-                Debug.Log($"Stunned: {col.gameObject.name}");
+                enemyAI.ApplyStun(stunDuration);
             }
         }
 
@@ -255,13 +550,39 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator Slow()
     {
-        Debug.Log($"Slow!");
+        Debug.Log("Slow!");
+
+        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, slowRadius, LayerMask.GetMask("Enemy"));
+
+        foreach (Collider2D col in targets)
+        {
+            EnemyAI enemyAI = col.GetComponent<EnemyAI>();
+            if (enemyAI != null)
+            {
+                enemyAI.ApplySlow(slowMultiplier, slowDuration);
+            }
+        }
+
         yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator Airborne()
     {
-        Debug.Log($"Airborne!");
+        Debug.Log("Airborne!");
+
+        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, airborneRadius, LayerMask.GetMask("Enemy"));
+
+        foreach (Collider2D col in targets)
+        {
+            Rigidbody2D targetRb = col.GetComponent<Rigidbody2D>();
+            if (targetRb != null)
+            {
+                targetRb.linearVelocity = new Vector2(targetRb.linearVelocity.x, 0f);
+                targetRb.AddForce(Vector2.up * airborneForce, ForceMode2D.Impulse);
+                Debug.Log($"Launched {col.name} into the air!");
+            }
+        }
+
         yield return new WaitForSeconds(0.1f);
     }
 

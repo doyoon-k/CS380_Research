@@ -102,6 +102,13 @@ public class PlayerStats : MonoBehaviour
     {
         if (isDead) return;
 
+        SkillExecutor skillExecutor = GetComponent<SkillExecutor>();
+        if (skillExecutor != null)
+        {
+            damage = skillExecutor.ProcessIncomingDamage(damage);
+            if (damage <= 0f) return;
+        }
+
         float defense = GetStat("Defense");
         float actualDamage = Mathf.Max(0, damage - defense);
         CurrentHealth -= actualDamage;

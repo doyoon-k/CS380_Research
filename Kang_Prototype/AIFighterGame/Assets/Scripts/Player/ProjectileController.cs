@@ -6,7 +6,17 @@ public class ProjectileController : MonoBehaviour
     public float speed = 10f;
     public float lifeTime = 3f;
     public float damage = 10f;
-    public string element = "Physical"; // Fire, Ice, Lightning
+    public string element = "Physical";
+
+    [Header("Special Properties")]
+    private bool isExplosive = false;
+    private float explosionRadius = 50f;
+    private bool isPiercing = false;
+    private int pierceCount = 0;
+    private int maxPierceCount = 3;
+
+    [Header("Effects")]
+    public GameObject explosionEffectPrefab;
 
     private Rigidbody2D rb;
     private Vector2 moveDir;
@@ -17,11 +27,19 @@ public class ProjectileController : MonoBehaviour
         damage = dmg;
         element = elem;
 
-        // Change color based on element
         GetComponent<SpriteRenderer>().color = color;
-
-        // Auto destroy after lifetime
         Destroy(gameObject, lifeTime);
+    }
+    public void SetExplosive(float radius)
+    {
+        isExplosive = true;
+        explosionRadius = radius;
+    }
+    public void SetPiercing(int maxPierces)
+    {
+        isPiercing = true;
+        maxPierceCount = maxPierces;
+        pierceCount = 0;
     }
 
     void Start()
@@ -41,19 +59,85 @@ public class ProjectileController : MonoBehaviour
     {
         if (collision.CompareTag("Enemy"))
         {
-            // Apply Damage (Assumes Enemy has PlayerStats too)
-            PlayerStats enemyStats = collision.GetComponent<PlayerStats>();
-            if (enemyStats != null)
+            if (isExplosive)
             {
-                enemyStats.TakeDamage(damage);
-                Debug.Log($"[Projectile] Hit Enemy! Dealt {damage} {element} damage.");
+                Explode();
             }
+            else
+            {
+                PlayerStats enemyStats = collision.GetComponent<PlayerStats>();
+                if (enemyStats != null)
+                {
+                    enemyStats.TakeDamage(damage);
+                    Debug.Log($"[Projectile] Hit {collision.name}! Dealt {damage} {element} damage.");
+                }
 
-            Destroy(gameObject); // Destroy bullet on hit
+                if (isPiercing)
+                {
+                    pierceCount++;
+                    if (pierceCount >= maxPierceCount)
+                    {
+                        Debug.Log($"[Piercing] Max pierce reached!");
+                        Destroy(gameObject);
+                    }
+                    else
+                    {
+                        Debug.Log($"[Piercing] Pierce {pierceCount}/{maxPierceCount}");
+                    }
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
+            }
         }
         else if (collision.CompareTag("Ground"))
         {
-            Destroy(gameObject); // Destroy bullet on wall hit
+            if (isExplosive)
+            {
+                Explode();
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
+    }
+
+    void Explode()
+    {
+        Debug.Log($"[Explosive] BOOM! Radius: {explosionRadius}");
+
+        if (explosionEffectPrefab != null)
+        {
+            GameObject effect = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
+
+            ExplosionEffect explosionEffect = effect.GetComponent<ExplosionEffect>();
+            if (explosionEffect != null)
+            {
+                explosionEffect.maxScale = explosionRadius / 10f;
+            }
+        }
+
+        Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, explosionRadius, LayerMask.GetMask("Enemy"));
+
+        foreach (Collider2D col in targets)
+        {
+            PlayerStats targetStats = col.GetComponent<PlayerStats>();
+            if (targetStats != null)
+            {
+                targetStats.TakeDamage(damage);
+                Debug.Log($"[Explosive] Hit {col.name} for {damage}!");
+            }
+
+            Rigidbody2D targetRb = col.GetComponent<Rigidbody2D>();
+            if (targetRb != null)
+            {
+                Vector2 knockbackDir = (col.transform.position - transform.position).normalized;
+                targetRb.AddForce(knockbackDir * 100f, ForceMode2D.Impulse);
+            }
+        }
+
+        Destroy(gameObject);
     }
 }

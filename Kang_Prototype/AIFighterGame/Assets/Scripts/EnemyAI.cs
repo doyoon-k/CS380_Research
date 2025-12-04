@@ -13,6 +13,10 @@ public class EnemyAI : MonoBehaviour
     private float lastHitTime = 0f;
     private bool isReturning = false;
 
+    private bool isStunned = false;
+    private float originalSpeed;
+    private float slowMultiplier = 1f;
+
     void Start()
     {
         homePosition = transform.position;
@@ -30,6 +34,7 @@ public class EnemyAI : MonoBehaviour
     void Update()
     {
         if (stats != null && stats.isDead) return;
+        if (isStunned) return;
 
         float distanceFromHome = Vector3.Distance(transform.position, homePosition);
 
@@ -51,6 +56,7 @@ public class EnemyAI : MonoBehaviour
     void FixedUpdate()
     {
         if (stats != null && stats.isDead) return;
+        if (isStunned) return;
         if (!isReturning) return;
         if (rb == null) return;
 
@@ -65,7 +71,7 @@ public class EnemyAI : MonoBehaviour
         }
 
         Vector2 direction = (homePosition - transform.position).normalized;
-        float moveX = direction.x * returnSpeed;
+        float moveX = direction.x * returnSpeed * slowMultiplier;
         rb.linearVelocity = new Vector2(moveX, rb.linearVelocity.y);
     }
 
@@ -73,6 +79,39 @@ public class EnemyAI : MonoBehaviour
     {
         lastHitTime = Time.time;
         isReturning = false;
+    }
+
+    public void ApplyStun(float duration)
+    {
+        StartCoroutine(StunCoroutine(duration));
+    }
+    private System.Collections.IEnumerator StunCoroutine(float duration)
+    {
+        isStunned = true;
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+        Debug.Log($"{gameObject.name} stunned for {duration}s!");
+
+        yield return new WaitForSeconds(duration);
+
+        isStunned = false;
+        Debug.Log($"{gameObject.name} stun ended!");
+    }
+    public void ApplySlow(float multiplier, float duration)
+    {
+        StartCoroutine(SlowCoroutine(multiplier, duration));
+    }
+    private System.Collections.IEnumerator SlowCoroutine(float multiplier, float duration)
+    {
+        slowMultiplier = multiplier;
+        Debug.Log($"{gameObject.name} slowed to {multiplier * 100}% for {duration}s!");
+
+        yield return new WaitForSeconds(duration);
+
+        slowMultiplier = 1f;
+        Debug.Log($"{gameObject.name} slow ended!");
     }
 
     public void Respawn()
@@ -87,6 +126,8 @@ public class EnemyAI : MonoBehaviour
             rb.linearVelocity = Vector2.zero;
         }
         isReturning = false;
+        isStunned = false;   
+        slowMultiplier = 1f;
         Debug.Log($"[RESPAWN] {gameObject.name} respawned at {homePosition}");
     }
 

@@ -1778,12 +1778,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackHitbox
   damage: 10
+  damageMultiplier: 1
   knockbackForce: 0.3
   enemyLayer:
     serializedVersion: 2
     m_Bits: 128
-  hitboxSize: {x: 1, y: 1.5}
-  hitboxOffset: {x: 0.5, y: 0}
+  hitboxSize: {x: 2, y: 2}
+  hitboxOffset: {x: 0, y: 0}
 --- !u!4 &1335789249
 Transform:
   m_ObjectHideFlags: 0
@@ -2501,7 +2502,7 @@ GameObject:
   - component: {fileID: 1934769448}
   - component: {fileID: 1934769450}
   - component: {fileID: 1934769449}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -2745,11 +2746,43 @@ MonoBehaviour:
   spriteRenderer: {fileID: 0}
   projectilePrefab: {fileID: 7843604172891786416, guid: d1e94d1a53c94f34db406444b6e272f3, type: 3}
   firePoint: {fileID: 707272464}
-  dashSpeed: 20
-  dashDuration: 0.4
+  dashSpeed: 10
+  dashDuration: 0.2
+  jumpForce: 12
+  blinkDistance: 4
   attackDelay: 0.2
-  heavyAttackMultiplier: 1.5
   projectileCooldown: 1
+  maxExtraJumps: 1
+  playerController: {fileID: 0}
+  blinkObstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  blinkEffectPrefab: {fileID: 0}
+  meleeHitboxDuration: 0.2
+  meleeDamageMultiplier: 1.5
+  slashEffectPrefab: {fileID: 8324893958413332661, guid: 8305e70c7e397f14980bd3e8029df5e8, type: 3}
+  slashOffset: {x: 0.7, y: 0.4}
+  currentShield: 0
+  damageReductionMultiplier: 1
+  shieldAmount: 500
+  shieldDuration: 10
+  invincibilityDuration: 2
+  damageReduction: 0.1
+  damageReductionDuration: 5
+  stunRadius: 50
+  stunDuration: 2
+  slowRadius: 50
+  slowMultiplier: 0.3
+  slowDuration: 3
+  airborneRadius: 10
+  airborneForce: 20
+  groundSlamForce: 10
+  groundSlamRadius: 2
+  groundSlamDamageMultiplier: 1.3
+  explosiveRadius: 80
+  explosiveDamageMultiplier: 1.5
+  pierceMaxCount: 3
+  piercingDamageMultiplier: 0.8
 --- !u!1 &1954686900
 GameObject:
   m_ObjectHideFlags: 0
