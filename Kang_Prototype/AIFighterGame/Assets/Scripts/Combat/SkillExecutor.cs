@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Unity.VisualScripting;
+using UnityEngine;
 using UnityEngine.InputSystem.Interactions;
 
 
@@ -57,10 +57,10 @@ public class SkillExecutor : MonoBehaviour
     public float damageReductionMultiplier = 1f;
 
     [Header("Defense Settings")]
-    public float shieldAmount = 500f;         
-    public float shieldDuration = 10f;        
-    public float invincibilityDuration = 2f;  
-    public float damageReduction = 0.5f;      
+    public float shieldAmount = 500f;
+    public float shieldDuration = 10f;
+    public float invincibilityDuration = 2f;
+    public float damageReduction = 0.5f;
     public float damageReductionDuration = 5f;
 
     [Header("Utility Settings")]
@@ -99,7 +99,7 @@ public class SkillExecutor : MonoBehaviour
     void Update()
     {
         float moveInput = Input.GetAxisRaw("Horizontal");
-        if(!isDashing)
+        if (!isDashing)
         {
             if (moveInput > 0) isFacingRight = true;
             else if (moveInput < 0) isFacingRight = false;
@@ -197,6 +197,12 @@ public class SkillExecutor : MonoBehaviour
         float startTime = Time.time;
         float originalGravity = rb.gravityScale;
 
+        // VFX: Dash trail
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateDashEffect(transform);
+        }
+
         rb.gravityScale = 0;
         Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
 
@@ -226,6 +232,12 @@ public class SkillExecutor : MonoBehaviour
 
             float jumpPower = playerStats != null ? playerStats.GetStat("JumpPower") : jumpForce;
             rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+
+            // VFX: Jump burst
+            if (ProceduralVFX.Instance != null)
+            {
+                ProceduralVFX.Instance.CreateJumpBurst(transform.position);
+            }
 
             if (!grounded)
             {
@@ -257,6 +269,12 @@ public class SkillExecutor : MonoBehaviour
             Debug.Log($"WALL! {hit.collider.name}");
         }
 
+        // VFX: Blink effect at start and end positions
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateBlinkEffect(startPos, targetPos, transform);
+        }
+
         transform.position = targetPos;
         Debug.Log($"Blink! {startPos} -> {targetPos}");
         yield return new WaitForSeconds(0.1f);
@@ -279,6 +297,12 @@ public class SkillExecutor : MonoBehaviour
             Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
             float dmg = (playerStats != null) ? playerStats.GetStat("AttackPower") : 10f;
             pc.Initialize(dir, dmg, element, color);
+
+            // VFX: Fire trail on normal projectile
+            if (ProceduralVFX.Instance != null)
+            {
+                ProceduralVFX.Instance.CreateFireTrail(proj.transform);
+            }
         }
     }
 
@@ -301,6 +325,12 @@ public class SkillExecutor : MonoBehaviour
             float dmg = (playerStats != null) ? playerStats.GetStat("AttackPower") * explosiveDamageMultiplier : 15f;
             pc.Initialize(dir, dmg, "Explosive", Color.red);
             pc.SetExplosive(explosiveRadius);
+
+            // VFX: Fire trail on projectile
+            if (ProceduralVFX.Instance != null)
+            {
+                ProceduralVFX.Instance.CreateFireTrail(proj.transform);
+            }
         }
 
         Debug.Log("ExplosiveProjectile fired!");
@@ -320,6 +350,13 @@ public class SkillExecutor : MonoBehaviour
             float dmg = (playerStats != null) ? playerStats.GetStat("AttackPower") * piercingDamageMultiplier : 8f;
             pc.Initialize(dir, dmg, "Piercing", Color.cyan);
             pc.SetPiercing(pierceMaxCount);
+
+            // VFX: Beam effect
+            if (ProceduralVFX.Instance != null && firePoint != null)
+            {
+                Vector3 endPos = firePoint.position + (isFacingRight ? Vector3.right : Vector3.left) * 15f;
+                ProceduralVFX.Instance.CreateBeam(firePoint.position, endPos, 0.2f);
+            }
         }
 
         Debug.Log("PiercingProjectile fired!");
@@ -334,6 +371,12 @@ public class SkillExecutor : MonoBehaviour
         {
             Debug.LogWarning("No AttackHitbox!");
             yield break;
+        }
+
+        // VFX: Slash arc
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateSlashArc(transform, isFacingRight);
         }
 
         Vector2 offset = attackHitbox.hitboxOffset;
@@ -393,6 +436,12 @@ public class SkillExecutor : MonoBehaviour
 
         Debug.Log("GroundSlam Impact!");
 
+        // VFX: Shockwave rings
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateShockwave(transform.position);
+        }
+
         Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, groundSlamRadius, LayerMask.GetMask("Enemy"));
         float damage = (playerStats != null) ? playerStats.GetStat("AttackPower") * groundSlamDamageMultiplier : 100f;
 
@@ -424,6 +473,12 @@ public class SkillExecutor : MonoBehaviour
         currentShield = shieldAmount;
         Debug.Log($"Shield activated! {currentShield} damage absorption");
 
+        // VFX: Shield ring
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateShieldRing(transform, shieldDuration);
+        }
+
         float elapsed = 0f;
         while (elapsed < shieldDuration && currentShield > 0f)
         {
@@ -442,6 +497,12 @@ public class SkillExecutor : MonoBehaviour
         float healAmount = playerStats.GetStat("MaxHealth") * 0.2f;
         playerStats.Heal(healAmount);
 
+        // VFX: Heal sparkles
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateHealEffect(transform.position);
+        }
+
         Debug.Log($"Healed {healAmount} HP!");
         yield return new WaitForSeconds(0.2f);
     }
@@ -450,6 +511,12 @@ public class SkillExecutor : MonoBehaviour
     {
         isInvincible = true;
         Debug.Log($"Invincible for {invincibilityDuration}s!");
+
+        // VFX: Invulnerability flash
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateInvulnerabilityFlash(transform, invincibilityDuration);
+        }
 
         float elapsed = 0f;
         float flashInterval = 0.1f;
@@ -480,6 +547,12 @@ public class SkillExecutor : MonoBehaviour
     {
         damageReductionMultiplier = 1f - damageReduction;
         Debug.Log($"Damage reduced to {damageReductionMultiplier * 100}% for {damageReductionDuration}s!");
+
+        // VFX: Hexagon barrier
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateBarrierHexagon(transform, damageReductionDuration);
+        }
 
         Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
         if (spriteRenderer != null)
@@ -542,6 +615,12 @@ public class SkillExecutor : MonoBehaviour
             if (enemyAI != null)
             {
                 enemyAI.ApplyStun(stunDuration);
+
+                // VFX: Stun stars on target
+                if (ProceduralVFX.Instance != null)
+                {
+                    ProceduralVFX.Instance.CreateStunStars(col.transform, stunDuration);
+                }
             }
         }
 
@@ -560,6 +639,12 @@ public class SkillExecutor : MonoBehaviour
             if (enemyAI != null)
             {
                 enemyAI.ApplySlow(slowMultiplier, slowDuration);
+
+                // VFX: Slow ice particles on target
+                if (ProceduralVFX.Instance != null)
+                {
+                    ProceduralVFX.Instance.CreateSlowEffect(col.transform, slowDuration);
+                }
             }
         }
 
@@ -569,6 +654,12 @@ public class SkillExecutor : MonoBehaviour
     IEnumerator Airborne()
     {
         Debug.Log("Airborne!");
+
+        // VFX: Airborne wind effect
+        if (ProceduralVFX.Instance != null)
+        {
+            ProceduralVFX.Instance.CreateAirborneEffect(transform.position, airborneForce);
+        }
 
         Collider2D[] targets = Physics2D.OverlapCircleAll(transform.position, airborneRadius, LayerMask.GetMask("Enemy"));
 
