@@ -7,7 +7,7 @@ public class SkillNotification : MonoBehaviour
     public Text skillDescriptionText;
     public CanvasGroup canvasGroup;
 
-    public float displayDuration = 2f;
+    public float displayDuration = 5f;
     public float fadeSpeed = 2f;
 
     private float timer = 0f;
@@ -38,6 +38,7 @@ public class SkillNotification : MonoBehaviour
 
     public void ShowSkill(string skillName, string description)
     {
+        displayDuration = 5f; // Force override inspector value
         skillNameText.text = skillName;
         skillDescriptionText.text = description;
         timer = 0f;

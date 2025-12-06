@@ -151,6 +151,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (beam == null) yield break;
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
@@ -199,6 +200,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (arc == null) yield break;
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
@@ -264,6 +266,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (ring == null) yield break;
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
@@ -372,6 +375,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (ring == null) yield break;
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
@@ -415,6 +419,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (ring == null) yield break;
             elapsed += Time.deltaTime;
 
             // Rotate
@@ -497,6 +502,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (flash == null) yield break;
             elapsed += Time.deltaTime;
 
             // Pulse
@@ -535,6 +541,7 @@ public class ProceduralVFX : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < duration)
         {
+            if (hex == null) yield break;
             elapsed += Time.deltaTime;
 
             // Orbit
@@ -590,6 +597,7 @@ public class ProceduralVFX : MonoBehaviour
 
         while (elapsed < duration)
         {
+            if (star == null) yield break;
             elapsed += Time.deltaTime;
 
             float angle = (elapsed * 180f + angleOffset) * Mathf.Deg2Rad;

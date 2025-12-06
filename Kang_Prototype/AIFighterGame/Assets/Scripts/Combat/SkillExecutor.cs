@@ -179,7 +179,8 @@ public class SkillExecutor : MonoBehaviour
             // ===== DEFENCE =====
             case "SHIELDBUFF": yield return ShieldBuff(); break;
             case "INSTANTHEAL": yield return InstantHeal(); break;
-            case "INVULNERABILITYWINDOW": yield return InvulnerabilityWindow(); break;
+            case "INVULNERABILITYWINDOW":
+            case "INVINCIBLE": yield return Invincible(); break;
             case "DAMAGEREDUCTIONBUFF": yield return DamageReductionBuff(); break;
 
             // ===== Utility =====
@@ -472,6 +473,12 @@ public class SkillExecutor : MonoBehaviour
     // ========================================
     IEnumerator ShieldBuff()
     {
+        StartCoroutine(MaintainShieldRoutine());
+        yield return new WaitForSeconds(0.1f);
+    }
+
+    IEnumerator MaintainShieldRoutine()
+    {
         currentShield = shieldAmount;
         Debug.Log($"Shield activated! {currentShield} damage absorption");
 
@@ -509,7 +516,7 @@ public class SkillExecutor : MonoBehaviour
         yield return new WaitForSeconds(0.2f);
     }
 
-    IEnumerator InvulnerabilityWindow()
+    IEnumerator Invincible()
     {
         isInvincible = true;
         Debug.Log($"Invincible for {invincibilityDuration}s!");

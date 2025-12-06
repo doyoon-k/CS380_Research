@@ -41,19 +41,18 @@ MonoBehaviour:
   - stepName: SkillGeneration
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 943b4e34f94c7cd46991bc6d70dce1b6, type: 2}
-    userPromptTemplate: "[ITEM]\r\nName: {{item_name}}\r\nDescription: {{item_description}}\r\n\r\n[CURRENT_DESCRIPTION]\r\n\"{{character_description}}\"\r\n\r\n[TASK]\r\nBased
+    userPromptTemplate: "[ITEM]\nName: {{item_name}}\nDescription: {{item_description}}\n\n[CURRENT_DESCRIPTION]\n\"{{character_description}}\"\n\n[TASK]\nBased
       on this item and the character\u2019s current description, design exactly ONE
-      new active ability.\r\n\r\nUse only the primitive action ids from the allowed
-      list given in the system instructions.\r\n\r\nSelect all primitive actions
-      from the list that clearly match the item\u2019s theme and the current character
-      description. \r\nIf many would fit, choose the 2\u20134 most iconic ones, and
-      you MUST choose at least 2 primitives.\r\n\r\nCreate a short ability name (1\u20133
-      words).\r\n\r\nWrite a playful description (1\u20132 short sentences, about
-      30 words or fewer)\r\nthat explains how the ability looks and feels in play,
-      without mentioning raw stat names, cooldowns, or exact numbers.\r\n\r\nEnsure
-      the ability feels like a natural move for this specific character, reusing
-      at least one key element from the current description combined with the item\u2019s
-      vibe.\r\n"
+      new active ability.\n\nUse only the primitive action ids from the allowed list
+      given in the system instructions.\n\nSelect all primitive actions that clearly
+      fit the item\u2019s theme + current character state\nand can read as one coherent
+      ability.\n\nIf too many actions fit, choose the 2\u20134 most iconic.\n\nChoose
+      more than one primitive action.\n\nOrder the primitiveActions in the most natural
+      execution flow for this ability.\n\nCreate:\n\nA short ability name (1\u20133
+      words).\n\nA playful description (1\u20132 short sentences, about 30 words
+      or fewer)\nexplaining how it looks and feels in play, without mentioning raw
+      stat names, cooldowns, or exact numbers.\n\nEnsure the ability feels like a
+      natural move for this specific character."
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
@@ -74,7 +73,7 @@ MonoBehaviour:
     outputNodePosition: {x: 731, y: -146}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 596, y: 122, z: 0}
+    viewPosition: {x: 458, y: -1587, z: 0}
     viewScale: {x: 1, y: 1, z: 1}
     viewInitialized: 1
     snapshotPositions:

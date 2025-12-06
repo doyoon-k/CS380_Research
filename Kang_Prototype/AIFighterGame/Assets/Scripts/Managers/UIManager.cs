@@ -119,12 +119,12 @@ public class UIManager : MonoBehaviour
                     float remaining = skill.skillData.cooldown - (Time.time - skill.lastUsedTime);
                     if (remaining < 0) remaining = 0;
                     display += $"<color=yellow>[{key}]</color> <color=grey>{skillName}</color> <color=red>(CD: {remaining:F1}s)</color>\n";
-                    display += $"  <color=yellow><size=10>{primitives}</size></color>\n";
+                    display += $"  <color=yellow><size=15>{primitives}</size></color>\n";
                 }
                 else
                 {
                     display += $"<color=yellow>[{key}]</color> <color=cyan>{skillName}</color> <color=lime>Ready!</color>\n";
-                    display += $"  <color=yellow><size=10>{primitives}</size></color>\n";
+                    display += $"  <color=yellow><size=15>{primitives}</size></color>\n";
                 }
             }
         }
@@ -170,7 +170,7 @@ public class UIManager : MonoBehaviour
         display += "<color=yellow><size=18>Attack: FireProjectile, ExplosiveProjectile, PiercingProjectile,\n";
         display += "        MeleeStrike, GroundSlam\n";
         display += "Move:   Dash, MultiJump, Blink\n";
-        display += "Defense: ShieldBuff, InstantHeal, InvulnerabilityWindow,\n";
+        display += "Defense: ShieldBuff, InstantHeal, Invincible,\n";
         display += "         DamageReductionBuff\n";
         display += "Utility: Stun, Slow, Airborne</size></color>\n";
 
