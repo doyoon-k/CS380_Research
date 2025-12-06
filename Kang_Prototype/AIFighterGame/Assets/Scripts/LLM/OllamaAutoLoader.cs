@@ -12,7 +12,9 @@ using UnityEngine;
 /// Manages per-model Ollama servers. Each model is served by a dedicated
 /// Ollama process listening on its own port.
 /// </summary>
+#if UNITY_EDITOR
 [InitializeOnLoad]
+#endif
 public static class OllamaAutoLoader
 {
     private class ServerInfo

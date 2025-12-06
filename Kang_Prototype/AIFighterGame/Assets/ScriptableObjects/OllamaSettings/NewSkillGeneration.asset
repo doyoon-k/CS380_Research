@@ -24,44 +24,56 @@ MonoBehaviour:
     or vibe).\n\nThe current description of the character (how they feel, move, fight,
     or behave right now).\n\nYour ability must be driven primarily by the item +
     the character\u2019s current description.\n\nAvailable primitive actions (use
-    only these ids):\n\nAttack-related:\nFireProjectile\nExplosiveProjectile\nPiercingProjectile\nMeleeStrike\nGroundSlam\n\nMovement-related:\nDash\nMultiJump\nBlink\nDefense-related:\nShieldBuff\nInstantHeal\nInvincible\n\nDamageReductionBuff\nUtility-related:\nStun\nSlow\nAirborne\n\n[TASK]\n\nPRIMARY
-    DESIGN PRINCIPLES:\n\nYour first priority is to match the item's theme and the
-    current character description.\nThe ability should feel like a direct expression
-    of:\n(this specific item) + (this specific character\u2019s current state).\n\nOnly
-    infer playstyle cues from the current description\u2019s language.\n\nWhen multiple
-    primitive combinations would work, prefer the one that feels\nmost uniquely tied
-    to THIS item + THIS character\u2019s description.\n\nABILITY EVOLUTION RULES:\n\nTreat
-    the current character description as the core identity of the character.\n\nReuse
-    at least one key element from the current description and combine it with the
-    new item\u2019s theme.\n\nIf the character already mixes multiple elements or
-    moods, reflect that hybrid nature.\n\nIt is okay if the same signature pairing
-    appears again when the evolving description strongly implies it.\n\nPRIMITIVE
-    SELECTION RULES:\n\nSelect all primitive actions that clearly match the item
-    + current character description\nand can read as ONE coherent ability.\n\nIf
-    too many fit, choose the 2\u20134 most iconic for this specific item + character
-    state.\n\nChoose more than one primitive action.\n\nPRIMITIVE ORDERING RULES:\n\nThe
-    order of primitiveActions represents the intended choreography of the ability.\n\nArrange
-    primitives so the sequence reads naturally as a single move:\n\nIf a movement
-    action is used to engage or reposition (Dash/Blink/MultiJump), list it before
-    the main hit.\n\nIf a defensive action is a \u201Cbrace/commit\u201D moment for
-    the move, list it early in the sequence.\n\nUtility effects (Stun/Slow/Airborne)
-    should be placed where they feel like the impact\u2019s consequence,\nusually
-    after or alongside the main attack beat.\n\nPrefer a readable \u201Csetup \u2192
-    strike \u2192 control/after-effect\u201D flow when appropriate.\n\nGiven the
-    item and the current character description, you must:\n\nDecide what kind of
-    active ability best suits:\n\nthe item\u2019s theme, and\n\nthe character\u2019s
-    current state as described.\n\nSelect primitive actions from the list above and
-    combine them into a simple, cohesive ability.\n\nUse ONLY the primitive action
-    ids listed above.\n\nEnsure the chosen primitives work together in a way that
-    feels clear and readable in gameplay.\n\nOutput 2\u20134 primitives in most cases.\n\nCreate
-    both:\n\nA short, flavorful ability name (1\u20133 words).\n\nA concise, playful
-    description (1\u20132 short sentences, about 30 words or fewer)\nthat explains
-    how it looks and feels in play.\n\n[CONSTRAINTS]\n\nThe ability name should be
-    catchy and fit the cute, playful tone.\n\nThe ability description must not reference
-    raw stat names, cooldowns, DPS, or explicit numbers.\n\nThe chosen primitiveIds,
-    name, and description must all feel thematically consistent with:\n\nthe absorbed
-    item, and\n\nthe current character description.\n\nOutput ONLY the JSON object
-    that matches the caller\u2019s schema, with no extra commentary or text."
+    only these ids):\n\nFireProjectile: Shoots a basic projectile forward.\r\nExplosiveProjectile:
+    Shoots a projectile that explodes on impact, dealing area damage.\r\nPiercingProjectile:
+    Shoots a projectile that passes through multiple enemies (piercing).\r\nMeleeStrike:
+    Performs a close-range slash attack.\r\nGroundSlam: Smashes the ground, damaging
+    and knocking back nearby enemies.\r\nDash: Quickly dashes forward, ignoring gravity.\r\nMultiJump:
+    Performs an extra jump in the air (Double Jump).\r\nBlink: Teleports a short
+    distance in the facing direction (ignores obstacles if clear).\r\nShieldBuff:
+    Grants a temporary shield that absorbs damage.\r\nDamageReductionBuff: Reduces
+    incoming damage by a percentage for a set time.\r\nInstantHeal: Instantly restores
+    a portion of health.\r\nInvincible: Becomes immune to all damage for a short
+    duration.\r\nStun: Stuns enemies in range, preventing them from moving or attacking.\r\nSlow:
+    Slows down enemies' movement speed in range.\r\nAirborne: Launches enemies into
+    the air, disabling them temporarily.\n\n[TASK]\n\nPRIMARY DESIGN PRINCIPLES:\n\nYour
+    first priority is to match the item's theme and the current character description.\nThe
+    ability should feel like a direct expression of:\n(this specific item) + (this
+    specific character\u2019s current state).\n\nOnly infer playstyle cues from the
+    current description\u2019s language.\n\nWhen multiple primitive combinations
+    would work, prefer the one that feels\nmost uniquely tied to THIS item + THIS
+    character\u2019s description.\n\nABILITY EVOLUTION RULES:\n\nTreat the current
+    character description as the core identity of the character.\n\nReuse at least
+    one key element from the current description and combine it with the new item\u2019s
+    theme.\n\nIf the character already mixes multiple elements or moods, reflect
+    that hybrid nature.\n\nIt is okay if the same signature pairing appears again
+    when the evolving description strongly implies it.\n\nPRIMITIVE SELECTION RULES:\n\nSelect
+    all primitive actions that clearly match the item + current character description\nand
+    can read as ONE coherent ability.\n\nIf too many fit, choose the 2\u20134 most
+    iconic for this specific item + character state.\n\nChoose more than one primitive
+    action.\n\nPRIMITIVE ORDERING RULES:\n\nThe order of primitiveActions represents
+    the intended choreography of the ability.\n\nArrange primitives so the sequence
+    reads naturally as a single move:\n\nIf a movement action is used to engage or
+    reposition (Dash/Blink/MultiJump), list it before the main hit.\n\nIf a defensive
+    action is a \u201Cbrace/commit\u201D moment for the move, list it early in the
+    sequence.\n\nUtility effects (Stun/Slow/Airborne) should be placed where they
+    feel like the impact\u2019s consequence,\nusually after or alongside the main
+    attack beat.\n\nPrefer a readable \u201Csetup \u2192 strike \u2192 control/after-effect\u201D
+    flow when appropriate.\n\nGiven the item and the current character description,
+    you must:\n\nDecide what kind of active ability best suits:\n\nthe item\u2019s
+    theme, and\n\nthe character\u2019s current state as described.\n\nSelect primitive
+    actions from the list above and combine them into a simple, cohesive ability.\n\nUse
+    ONLY the primitive action ids listed above.\n\nEnsure the chosen primitives work
+    together in a way that feels clear and readable in gameplay.\n\nOutput 2\u20134
+    primitives in most cases.\n\nCreate both:\n\nA short, flavorful ability name
+    (1\u20133 words).\n\nA concise, playful description (1\u20132 short sentences,
+    about 30 words or fewer)\nthat explains how it looks and feels in play.\n\n[CONSTRAINTS]\n\nThe
+    ability name should be catchy and fit the cute, playful tone.\n\nThe ability
+    description must not reference raw stat names, cooldowns, DPS, or explicit numbers.\n\nThe
+    chosen primitiveIds, name, and description must all feel thematically consistent
+    with:\n\nthe absorbed item, and\n\nthe current character description.\n\nOutput
+    ONLY the JSON object that matches the caller\u2019s schema, with no extra commentary
+    or text."
   jsonFields:
   - fieldName: NewSkill
     fieldType: 4
