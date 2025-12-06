@@ -65,6 +65,11 @@ public class ItemCreatorUI : MonoBehaviour
         {
             playerController.SetInputEnabled(!isOpen);
         }
+
+        if (ItemManager.Instance != null)
+        {
+            ItemManager.Instance.inputEnabled = !isOpen;
+        }
     }
 
     public void OnGenerateClicked()

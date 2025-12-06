@@ -98,6 +98,8 @@ public class SkillExecutor : MonoBehaviour
 
     void Update()
     {
+        if (playerController != null && !playerController.IsInputEnabled) return;
+
         float moveInput = Input.GetAxisRaw("Horizontal");
         if (!isDashing)
         {

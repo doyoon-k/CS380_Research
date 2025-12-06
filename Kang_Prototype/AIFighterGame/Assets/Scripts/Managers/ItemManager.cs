@@ -20,6 +20,8 @@ public class ItemManager : MonoBehaviour
     public int currentEquipIndex = 0;
     public ItemData currentItem;
 
+    public bool inputEnabled = true;
+
     private void Awake()
     {
         Instance = this;
@@ -33,6 +35,8 @@ public class ItemManager : MonoBehaviour
 
     void Update()
     {
+        if (!inputEnabled) return;
+
         // Debug Keys
         if (Input.GetKeyDown(KeyCode.R))
         {

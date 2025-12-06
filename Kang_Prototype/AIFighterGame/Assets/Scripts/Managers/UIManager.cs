@@ -90,7 +90,7 @@ public class UIManager : MonoBehaviour
             display += $"<color=white><b>ITEM:</b></color> <color=yellow>{itemManager.currentItem.itemName}</color>\n";
             if (!string.IsNullOrEmpty(itemManager.currentItem.description))
             {
-                display += $"<color=#AAAAAA><i>{itemManager.currentItem.description}</i></color>\n\n";
+                display += $"<color=yellow><i>{itemManager.currentItem.description}</i></color>\n\n";
             }
             else
             {
@@ -119,12 +119,12 @@ public class UIManager : MonoBehaviour
                     float remaining = skill.skillData.cooldown - (Time.time - skill.lastUsedTime);
                     if (remaining < 0) remaining = 0;
                     display += $"<color=yellow>[{key}]</color> <color=grey>{skillName}</color> <color=red>(CD: {remaining:F1}s)</color>\n";
-                    display += $"  <color=#666666><size=10>{primitives}</size></color>\n";
+                    display += $"  <color=yellow><size=10>{primitives}</size></color>\n";
                 }
                 else
                 {
                     display += $"<color=yellow>[{key}]</color> <color=cyan>{skillName}</color> <color=lime>Ready!</color>\n";
-                    display += $"  <color=#AAAAAA><size=10>{primitives}</size></color>\n";
+                    display += $"  <color=yellow><size=10>{primitives}</size></color>\n";
                 }
             }
         }
@@ -164,7 +164,15 @@ public class UIManager : MonoBehaviour
         display += $"<color=white>Skill: Q/E</color>\n";
         display += "<color=#DDDDDD>Item: 4 | Swap: T</color>\n";
         display += "<color=#DDDDDD>Reset Stats: R | Respawn Enemy: E</color>\n";
-        display += "<color=#DDDDDD>Debug: 1/2/3</color>\n";
+        display += "<color=#DDDDDD>Debug: 1/2/3</color>\n\n";
+
+        display += "<color=white><b>=== PRIMITIVES ===</b></color>\n";
+        display += "<color=yellow><size=18>Attack: FireProjectile, ExplosiveProjectile, PiercingProjectile,\n";
+        display += "        MeleeStrike, GroundSlam\n";
+        display += "Move:   Dash, MultiJump, Blink\n";
+        display += "Defense: ShieldBuff, InstantHeal, InvulnerabilityWindow,\n";
+        display += "         DamageReductionBuff\n";
+        display += "Utility: Stun, Slow, Airborne</size></color>\n";
 
         statsText.text = display;
     }
