@@ -39,18 +39,18 @@ MonoBehaviour:
     strongly implies the same signature move is evolving.\n\nGiven the item and the
     current character description, you must:\n\nDecide what kind of active ability
     best suits:\n\nthe item\u2019s theme, and\n\nthe character\u2019s current state
-    as described.\n\nSelect 2\u20133 primitive actions from the list above and combine
+    as described.\n\nSelect all primitive actions from the list above and combine
     them into a simple, cohesive ability.\n\nUse ONLY the primitive action ids listed
     above.\n\nEnsure the chosen primitives work together in a way that feels clear
     and readable in gameplay.\n\nCreate both:\n\nA short, flavorful ability name
     (1\u20133 words).\n\nA concise, playful description (1\u20132 short sentences,
     about 30 words or fewer)\nthat explains how it looks and feels in play.\n\n[CONSTRAINTS]\n\nThe
     ability name should be catchy and fit the cute, playful tone.\n\nThe ability
-    description must not reference raw stat names, cooldowns, DPS, or explicit numbers.\n\nThe
-    chosen primitiveIds, name, and description must all feel thematically consistent
-    with:\n\nthe absorbed item, and\n\nthe current character description.\n\nOutput
-    ONLY the JSON object that matches the caller\u2019s schema, with no extra commentary
-    or text."
+    description must not reference raw stat names, cooldowns, DPS, or explicit numbers.\n\nChoose
+    more than one primitive skill.\n\nThe chosen primitiveIds, name, and description
+    must all feel thematically consistent with:\n\nthe absorbed item, and\n\nthe
+    current character description.\n\nOutput ONLY the JSON object that matches the
+    caller\u2019s schema, with no extra commentary or text."
   jsonFields:
   - fieldName: NewSkill
     fieldType: 4

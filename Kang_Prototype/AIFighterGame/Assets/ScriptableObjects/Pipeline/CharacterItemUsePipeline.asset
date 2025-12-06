@@ -44,8 +44,8 @@ MonoBehaviour:
     userPromptTemplate: "[ITEM]\nName: {{item_name}}\nDescription: {{item_description}}\n\n[CURRENT_DESCRIPTION]\n\"{{character_description}}\"\n\n[TASK]\nBased
       on this item and the character\u2019s current description, design exactly ONE
       new active ability.\n\nUse only the primitive action ids from the allowed list
-      given in the system instructions.\n\nSelect 2\u20133 primitive actions that
-      fit the item\u2019s theme and feel like one coherent ability.\n\nCreate a short
+      given in the system instructions.\n\nSelect all primitive actions that fit
+      the item\u2019s theme and feel like one coherent ability.\n\nCreate a short
       ability name (1\u20133 words).\n\nWrite a playful description (1\u20132 short
       sentences, about 30 words or fewer)\nthat explains how the ability looks and
       feels in play, without mentioning raw stat names, cooldowns, or exact numbers.\n\nEnsure
@@ -70,8 +70,8 @@ MonoBehaviour:
     outputNodePosition: {x: 731, y: -146}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 1185, y: -571, z: 0}
-    viewScale: {x: 0.8695652, y: 0.8695652, z: 1}
+    viewPosition: {x: 491, y: -16.999977, z: 0}
+    viewScale: {x: 1.15, y: 1.15, z: 1}
     viewInitialized: 1
     snapshotPositions:
     - {x: -134, y: -9}
