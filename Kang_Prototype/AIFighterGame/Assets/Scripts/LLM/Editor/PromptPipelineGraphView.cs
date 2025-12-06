@@ -28,6 +28,7 @@ public class PromptPipelineGraphView : GraphView
     private bool _skipSnapshotCacheOnce;
     private bool _ignoreSnapshotCacheOnce;
     private bool _skipSnapshotPersistenceOnce;
+    private bool _shouldFocusOnLoad;
     private Vector3 _lastViewPosition;
     private Vector3 _lastViewScale = Vector3.one;
     private Vector2 _lastMouseScreenPosition;
@@ -81,6 +82,7 @@ public class PromptPipelineGraphView : GraphView
         _ignoreSnapshotCacheOnce = skipSnapshotCache;
         _skipSnapshotPersistenceOnce = skipSnapshotPersistence;
         _asset = asset;
+        _shouldFocusOnLoad = true;
         Reload();
     }
 
@@ -114,11 +116,56 @@ public class PromptPipelineGraphView : GraphView
         BuildExecutionEdgesFromAsset();
         RefreshStateAnalysis();
 
-        if (!restoredView)
+        if (_shouldFocusOnLoad || !restoredView)
         {
-            FrameAll();
-            PersistCurrentViewTransform();
+            FocusFirstNode();
+            _shouldFocusOnLoad = false;
         }
+    }
+
+    private void FocusFirstNode()
+    {
+        // Default to centering on the first step or input node
+        Vector2 focusPoint = Vector2.zero;
+
+        if (_inputNode != null)
+        {
+            focusPoint = _inputNode.GetPosition().center;
+        }
+        else if (_stepNodes.Count > 0)
+        {
+            // Try to find the first node (lowest x) or index 0
+            var firstNode = _stepNodes.OrderBy(n => n.GetPosition().x).FirstOrDefault();
+            if (firstNode != null)
+            {
+                focusPoint = firstNode.GetPosition().center;
+            }
+        }
+
+        // Center the view on the focusPoint
+        // ViewTransform is (Translate, Scale)
+        // Center of viewport (in local graph coords) = -Translate / Scale + ViewportSize/2/Scale
+        // We want Center = focusPoint
+        // focusPoint = -Translate/Scale + ViewportCenter/Scale
+        // focusPoint * Scale = -Translate + ViewportCenter
+        // Translate = ViewportCenter - focusPoint * Scale
+
+        // Wait, Unity GraphView uses UpdateViewTransform(Vector3 pos, Vector3 scale)
+        // where pos is the translation.
+
+        // We need the viewport size.
+        float width = this.contentContainer.layout.width;
+        float height = this.contentContainer.layout.height;
+
+        // If layout is not ready, use a default approximation or FrameAll fallback
+        if (float.IsNaN(width) || width < 1f) width = 800f;
+        if (float.IsNaN(height) || height < 1f) height = 600f;
+
+        Vector3 scale = Vector3.one; // Default zoom 1.0
+        Vector3 translate = new Vector3(width * 0.5f, height * 0.5f, 0f) - (Vector3)focusPoint;
+
+        UpdateViewTransform(translate, scale);
+        PersistCurrentViewTransform();
     }
 
     private void ClearGraph()

@@ -38,7 +38,6 @@ public class SkillExecutor : MonoBehaviour
     public int maxExtraJumps = 1;
     private int remainingJumps;
     private bool isGrounded;
-    private bool isJumping = false; // Flag to prevent consecutive jumps
 
     [Header("Ground Check")]
     public PlayerController playerController;
@@ -110,16 +109,6 @@ public class SkillExecutor : MonoBehaviour
         {
             spriteRenderer.flipX = !isFacingRight;
         }
-
-        // Reset jump flag when landed
-        bool currentlyGrounded = playerController != null && playerController.IsGrounded();
-        if (currentlyGrounded && !isGrounded)
-        {
-            // Just landed
-            isJumping = false;
-            remainingJumps = maxExtraJumps;
-        }
-        isGrounded = currentlyGrounded;
 
         if (Input.GetKeyDown(KeyCode.K))
         {
@@ -230,34 +219,21 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator MultiJump()
     {
-        // Prevent rapid-fire execution (spam protection)
-        if (isJumping)
-        {
-            yield break;
-        }
-
         bool grounded = playerController != null && playerController.IsGrounded();
 
-        // Safety: If velocity is moving up significantly, treat as airborne to prevent ground detection glitches
-        if (rb.linearVelocity.y > 0.1f) grounded = false;
-
-        // Reset jumps if grounded (and not falsely detected as grounded while rising)
         if (grounded)
         {
             remainingJumps = maxExtraJumps;
         }
 
-        // Execute Jump if valid
-        if (grounded || remainingJumps > 0)
+        if (remainingJumps > 0 || grounded)
         {
-            // Lock jump action
-            isJumping = true;
-
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
 
             float jumpPower = playerStats != null ? playerStats.GetStat("JumpPower") : jumpForce;
             rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
 
+            // VFX: Jump burst
             if (ProceduralVFX.Instance != null)
             {
                 ProceduralVFX.Instance.CreateJumpBurst(transform.position);
@@ -266,23 +242,16 @@ public class SkillExecutor : MonoBehaviour
             if (!grounded)
             {
                 remainingJumps--;
-                Debug.Log($"Air Jump! Remaining: {remainingJumps}");
             }
-            else
-            {
-                Debug.Log($"Ground Jump! Air jumps: {remainingJumps}");
-            }
+
+            Debug.Log($"MultiJump! Remain: {remainingJumps}");
         }
         else
         {
-            Debug.Log("No jumps remaining!");
+            Debug.Log("Used all jump chance!");
         }
 
-        // Wait to prevent immediate double-jump (physics lag or spam)
-        yield return new WaitForSeconds(0.2f);
-
-        // Unlock jump action
-        isJumping = false;
+        yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator Blink()
@@ -510,15 +479,6 @@ public class SkillExecutor : MonoBehaviour
             ProceduralVFX.Instance.CreateShieldRing(transform, shieldDuration);
         }
 
-        // Start buff management in separate coroutine (fire-and-forget)
-        StartCoroutine(ManageShieldBuff());
-
-        // Return immediately so skill sequence can continue
-        yield return new WaitForSeconds(0.1f);
-    }
-
-    IEnumerator ManageShieldBuff()
-    {
         float elapsed = 0f;
         while (elapsed < shieldDuration && currentShield > 0f)
         {
@@ -558,18 +518,9 @@ public class SkillExecutor : MonoBehaviour
             ProceduralVFX.Instance.CreateInvulnerabilityFlash(transform, invincibilityDuration);
         }
 
-        // Start buff management in separate coroutine
-        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
-        StartCoroutine(ManageInvulnerability(originalColor));
-
-        // Return immediately
-        yield return new WaitForSeconds(0.1f);
-    }
-
-    IEnumerator ManageInvulnerability(Color originalColor)
-    {
         float elapsed = 0f;
         float flashInterval = 0.1f;
+        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
 
         while (elapsed < invincibilityDuration)
         {
@@ -609,15 +560,6 @@ public class SkillExecutor : MonoBehaviour
             spriteRenderer.color = new Color(0.5f, 0.5f, 1f);
         }
 
-        // Start buff management in separate coroutine
-        StartCoroutine(ManageDamageReduction(originalColor));
-
-        // Return immediately
-        yield return new WaitForSeconds(0.1f);
-    }
-
-    IEnumerator ManageDamageReduction(Color originalColor)
-    {
         yield return new WaitForSeconds(damageReductionDuration);
 
         damageReductionMultiplier = 1f;
