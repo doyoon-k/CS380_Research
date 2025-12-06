@@ -68,7 +68,14 @@ public class OllamaHttpWorker
             format = ParseFormat(settings.format),
             stream = settings.stream,
             keep_alive = settings.keepAlive,
-            options = BuildOptions(settings.modelParams)
+            options = new
+            {
+                temperature = settings.modelParams.temperature,
+                top_p = settings.modelParams.top_p,
+                top_k = settings.modelParams.top_k,
+                num_predict = settings.modelParams.num_predict,
+                repeat_penalty = settings.modelParams.repeat_penalty
+            }
         };
 
         string url = $"{OllamaAutoLoader.GetServerAddress(settings.model)}/api/chat";
@@ -90,7 +97,7 @@ public class OllamaHttpWorker
             input = (inputs.Length == 1) ? (object)inputs[0] : inputs,
             keep_alive = settings.keepAlive,
             truncate = true,
-            options = BuildOptions(settings.modelParams)
+            options = new { temperature = settings.modelParams.temperature }
         };
 
         string url = $"{OllamaAutoLoader.GetServerAddress(settings.model)}/api/embed";
@@ -165,10 +172,6 @@ public class OllamaHttpWorker
             { "num_predict", settings.modelParams.num_predict },
             { "repeat_penalty", settings.modelParams.repeat_penalty }
         };
-        if (settings.modelParams.seed >= 0)
-        {
-            options["seed"] = settings.modelParams.seed;
-        }
         body["options"] = options;
 
         string url = $"{OllamaAutoLoader.GetServerAddress(settings.model)}/api/generate";
@@ -284,26 +287,6 @@ public class OllamaHttpWorker
         if (string.IsNullOrEmpty(fmt)) return null;
         try { return JToken.Parse(fmt); }
         catch { return fmt; }
-    }
-
-    private static object BuildOptions(OllamaSettings.ModelParams modelParams)
-    {
-        var options = new Dictionary<string, object>
-        {
-            { "temperature", modelParams.temperature },
-            { "top_p", modelParams.top_p },
-            { "top_k", modelParams.top_k },
-            { "num_predict", modelParams.num_predict },
-            { "repeat_penalty", modelParams.repeat_penalty }
-        };
-
-        // Add seed only if specified (>= 0). If -1, Ollama uses random seed
-        if (modelParams.seed >= 0)
-        {
-            options["seed"] = modelParams.seed;
-        }
-
-        return options;
     }
 
     private static float[][] ParseEmbeddings(string json)

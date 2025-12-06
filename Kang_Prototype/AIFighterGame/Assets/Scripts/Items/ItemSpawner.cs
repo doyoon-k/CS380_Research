@@ -136,6 +136,22 @@ public class ItemSpawner : MonoBehaviour
         Debug.Log($"[ItemSpawner] Spawned {itemData.itemName} at {spawnPos}");
     }
 
+    public void SpawnCustomItem(string name, string description)
+    {
+        if (string.IsNullOrEmpty(name)) return;
+
+        ItemData newItem = ScriptableObject.CreateInstance<ItemData>();
+        newItem.itemName = name;
+        newItem.description = description;
+        // Assign a unique ID or other default values if necessary
+
+        // Use the last known valid spawn position or random
+        Vector2 spawnPos = FindValidSpawnPosition();
+        if (spawnPos == Vector2.zero) spawnPos = spawnCenter;
+
+        SpawnItem(newItem, spawnPos);
+    }
+
     [ContextMenu("Load All Items from Folder")]
     public void LoadAllItemsFromFolder()
     {

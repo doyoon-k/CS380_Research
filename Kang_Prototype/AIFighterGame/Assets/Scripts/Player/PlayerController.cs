@@ -31,8 +31,22 @@ public class PlayerController : MonoBehaviour
         Debug.Log("PlayerController initialized!");
     }
 
+    private bool inputEnabled = true;
+
+    public void SetInputEnabled(bool enabled)
+    {
+        inputEnabled = enabled;
+        if (!enabled)
+        {
+            moveInput = 0;
+            if (rb != null) rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        }
+    }
+
     void Update()
     {
+        if (!inputEnabled) return;
+
         moveInput = Input.GetAxisRaw("Horizontal");
 
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
