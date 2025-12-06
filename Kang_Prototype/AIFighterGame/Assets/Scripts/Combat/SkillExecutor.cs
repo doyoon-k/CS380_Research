@@ -179,7 +179,6 @@ public class SkillExecutor : MonoBehaviour
             // ===== DEFENCE =====
             case "SHIELDBUFF": yield return ShieldBuff(); break;
             case "INSTANTHEAL": yield return InstantHeal(); break;
-            case "INVULNERABILITYWINDOW":
             case "INVINCIBLE": yield return Invincible(); break;
             case "DAMAGEREDUCTIONBUFF": yield return DamageReductionBuff(); break;
 
@@ -222,37 +221,29 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator MultiJump()
     {
-        bool grounded = playerController != null && playerController.IsGrounded();
+        // Jump 1
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+        float jumpPower = playerStats != null ? playerStats.GetStat("JumpPower") : jumpForce;
+        rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
 
-        if (grounded)
+        if (ProceduralVFX.Instance != null)
         {
-            remainingJumps = maxExtraJumps;
+            ProceduralVFX.Instance.CreateJumpBurst(transform.position);
         }
+        Debug.Log("MultiJump: Jump 1!");
 
-        if (remainingJumps > 0 || grounded)
+        // Wait for a short duration to allow upward movement
+        yield return new WaitForSeconds(0.2f);
+
+        // Jump 2 (Air Jump)
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f); // Reset Y velocity for consistent second jump
+        rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+
+        if (ProceduralVFX.Instance != null)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-
-            float jumpPower = playerStats != null ? playerStats.GetStat("JumpPower") : jumpForce;
-            rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-
-            // VFX: Jump burst
-            if (ProceduralVFX.Instance != null)
-            {
-                ProceduralVFX.Instance.CreateJumpBurst(transform.position);
-            }
-
-            if (!grounded)
-            {
-                remainingJumps--;
-            }
-
-            Debug.Log($"MultiJump! Remain: {remainingJumps}");
+            ProceduralVFX.Instance.CreateJumpBurst(transform.position);
         }
-        else
-        {
-            Debug.Log("Used all jump chance!");
-        }
+        Debug.Log("MultiJump: Jump 2!");
 
         yield return new WaitForSeconds(0.1f);
     }
@@ -472,12 +463,6 @@ public class SkillExecutor : MonoBehaviour
     // Defense-related primitive Skills
     // ========================================
     IEnumerator ShieldBuff()
-    {
-        StartCoroutine(MaintainShieldRoutine());
-        yield return new WaitForSeconds(0.1f);
-    }
-
-    IEnumerator MaintainShieldRoutine()
     {
         currentShield = shieldAmount;
         Debug.Log($"Shield activated! {currentShield} damage absorption");

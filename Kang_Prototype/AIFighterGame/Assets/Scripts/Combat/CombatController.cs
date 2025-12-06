@@ -5,7 +5,6 @@ public class CombatController : MonoBehaviour
     [Header("Components")]
     public PlayerStats playerStats;
     public AttackHitbox attackHitbox;
-    private PlayerController playerController;
 
     [Header("Attack Settings")]
     public float attackDuration = 0.2f;
@@ -16,9 +15,6 @@ public class CombatController : MonoBehaviour
 
     void Start()
     {
-        playerController = GetComponent<PlayerController>();
-        if (playerController == null) playerController = FindObjectOfType<PlayerController>();
-
         if (attackHitbox != null && playerStats != null)
         {
             attackHitbox.Initialize(playerStats);
@@ -32,8 +28,6 @@ public class CombatController : MonoBehaviour
 
     void Update()
     {
-        if (playerController != null && !playerController.IsInputEnabled) return;
-
         if (Input.GetKeyDown(KeyCode.J) && canAttack)
         {
             PerformAttack();

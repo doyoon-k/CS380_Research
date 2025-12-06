@@ -143,53 +143,13 @@ public class ItemSpawner : MonoBehaviour
         ItemData newItem = ScriptableObject.CreateInstance<ItemData>();
         newItem.itemName = name;
         newItem.description = description;
+        // Assign a unique ID or other default values if necessary
 
+        // Use the last known valid spawn position or random
         Vector2 spawnPos = FindValidSpawnPosition();
         if (spawnPos == Vector2.zero) spawnPos = spawnCenter;
 
         SpawnItem(newItem, spawnPos);
-    }
-
-    [ContextMenu("Spawn Demo Items (10 Examples)")]
-    public void SpawnDemoItems()
-    {
-        var demos = new List<(string name, string desc)>
-        {
-            ("Rocket Boots",
-             "Heavy boots equipped with experimental thrusters. They allow the wearer to leap high into the air and crash back down with enough force to shatter the ground."),
-
-            ("Quantum Stopwatch",
-             "A strange time-keeping device. When activated, it freezes the flow of time around enemies, making them sluggish, while allowing the user to slip through space to a new position instantly."),
-
-            ("Berserker's Helm",
-             "A helmet stained with old blood. It drives the wearer into a frenzy, ignoring all pain and shrugging off death itself, while driving them to relentlessly batter their foes up close."),
-
-            ("Sniper's Goggles",
-             "High-tech eyewear that highlights enemy weak points. It analyzes the target to stop them in their tracks with fear, creating the perfect opening for a single, penetrating shot through the heart."),
-
-            ("Phoenix Feather",
-             "A warm, glowing feather. It grants the agility to rush forward leaving a trail of embers, unleash a wave of cleansing fire, and restore the user's vitality from the ashes."),
-
-            ("Gravity Reversal Mine",
-             "A device that manipulates gravity to launch nearby enemies helplessly into the air. While they float, the user relocates to a vantage point and fires upon the helpless targets."),
-
-            ("Shadow Assassin's Dagger",
-             "A blade for those who strike from the shadows. It urges the wielder to rush the enemy in a blink, deliver a fatal cut, and vanish instantly before retaliation."),
-
-            ("Staff of Eternal Frost",
-             "A staff cold to the touch. It freezes enemies in place, numbing their limbs with biting cold before shattering them with a lance of ice that pierces through everything."),
-
-            ("Spiked Greatshield",
-             "A massive shield that deploys a temporary force field to absorb incoming damage, while empowering the wielder to crush any foe foolish enough to come within arm's reach."),
-
-            ("Vampiric Chalice",
-             "This cursed goblet drains the vitality of its victims, making them sluggish. It tears into their flesh and drinks their life essence to restore the wielder.")
-        };
-
-        foreach (var (name, desc) in demos)
-        {
-            SpawnCustomItem(name, desc);
-        }
     }
 
     [ContextMenu("Load All Items from Folder")]

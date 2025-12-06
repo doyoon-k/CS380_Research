@@ -14,13 +14,12 @@ public class ItemManager : MonoBehaviour
     [Header("Components")]
     public PlayerStats playerStats;
     public SkillManager skillManager;
+    public PlayerController playerController;
 
     [Header("Inventory")]
     public List<ItemData> inventory = new List<ItemData>();
     public int currentEquipIndex = 0;
     public ItemData currentItem;
-
-    public bool inputEnabled = true;
 
     private void Awake()
     {
@@ -31,11 +30,13 @@ public class ItemManager : MonoBehaviour
     {
         Debug.Log("ItemManager initialized!");
         Debug.Log("Controls: [T] Swap Item, [4] Use Item");
+
+        if (playerController == null) playerController = FindAnyObjectByType<PlayerController>();
     }
 
     void Update()
     {
-        if (!inputEnabled) return;
+        if (playerController != null && !playerController.IsInputEnabled) return;
 
         // Debug Keys
         if (Input.GetKeyDown(KeyCode.R))

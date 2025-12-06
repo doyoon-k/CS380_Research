@@ -63,6 +63,11 @@ public class ItemCreatorUITool : EditorWindow
         generateBtnObj.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -110);
         generateBtnObj.GetComponent<Image>().color = new Color(0.2f, 0.6f, 0.2f); // Greenish
 
+        // Preset Button
+        GameObject presetBtnObj = CreateButton(panelObj.transform, "PresetBtn", "Cycle Preset");
+        presetBtnObj.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, -160);
+        presetBtnObj.GetComponent<Image>().color = new Color(0.2f, 0.4f, 0.8f); // Blueish
+
         // 5. Create Toggle Button (Outside Panel)
         GameObject toggleBtnObj = CreateButton(uiControllerObj.transform, "OpenButton", "New Item");
         RectTransform toggleRect = toggleBtnObj.GetComponent<RectTransform>();

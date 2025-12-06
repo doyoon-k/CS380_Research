@@ -90,7 +90,7 @@ public class UIManager : MonoBehaviour
             display += $"<color=white><b>ITEM:</b></color> <color=yellow>{itemManager.currentItem.itemName}</color>\n";
             if (!string.IsNullOrEmpty(itemManager.currentItem.description))
             {
-                display += $"<color=yellow><i>{itemManager.currentItem.description}</i></color>\n\n";
+                display += $"<color=#AAAAAA><i>{itemManager.currentItem.description}</i></color>\n\n";
             }
             else
             {
@@ -119,12 +119,12 @@ public class UIManager : MonoBehaviour
                     float remaining = skill.skillData.cooldown - (Time.time - skill.lastUsedTime);
                     if (remaining < 0) remaining = 0;
                     display += $"<color=yellow>[{key}]</color> <color=grey>{skillName}</color> <color=red>(CD: {remaining:F1}s)</color>\n";
-                    display += $"  <color=yellow><size=15>{primitives}</size></color>\n";
+                    display += $"  <color=#FFFF00><size=18>{primitives}</size></color>\n";
                 }
                 else
                 {
                     display += $"<color=yellow>[{key}]</color> <color=cyan>{skillName}</color> <color=lime>Ready!</color>\n";
-                    display += $"  <color=yellow><size=15>{primitives}</size></color>\n";
+                    display += $"  <color=#FFFF00><size=18>{primitives}</size></color>\n";
                 }
             }
         }
@@ -166,13 +166,13 @@ public class UIManager : MonoBehaviour
         display += "<color=#DDDDDD>Reset Stats: R | Respawn Enemy: E</color>\n";
         display += "<color=#DDDDDD>Debug: 1/2/3</color>\n\n";
 
-        display += "<color=white><b>=== PRIMITIVES ===</b></color>\n";
-        display += "<color=yellow><size=18>Attack: FireProjectile, ExplosiveProjectile, PiercingProjectile,\n";
-        display += "        MeleeStrike, GroundSlam\n";
-        display += "Move:   Dash, MultiJump, Blink\n";
-        display += "Defense: ShieldBuff, InstantHeal, Invincible,\n";
-        display += "         DamageReductionBuff\n";
-        display += "Utility: Stun, Slow, Airborne</size></color>\n";
+        display += "<color=white><b>=== PRIMITIVE SKILLS REFERENCE ===</b></color>\n";
+        display += "<color=#AAAAAA><b>[Attack]</b></color> <color=yellow>FireProjectile, ExplosiveProjectile, PiercingProjectile</color>\n";
+        display += "         <color=yellow>MeleeStrike, GroundSlam</color>\n";
+        display += "<color=#AAAAAA><b>[Move]</b></color>   <color=yellow>Dash, MultiJump, Blink</color>\n";
+        display += "<color=#AAAAAA><b>[Defense]</b></color> <color=yellow>ShieldBuff, InstantHeal, Invincible</color>\n";
+        display += "         <color=yellow>DamageReductionBuff</color>\n";
+        display += "<color=#AAAAAA><b>[Utility]</b></color> <color=yellow>Stun, Slow, Airborne</color>\n";
 
         statsText.text = display;
     }
