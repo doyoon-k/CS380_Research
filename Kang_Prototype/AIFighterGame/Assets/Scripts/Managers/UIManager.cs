@@ -32,7 +32,7 @@ public class UIManager : MonoBehaviour
     {
         UpdateStatsDisplay();
         UpdateInventoryList();
-        UpdateControlsDisplay(); // Controls 별도 업데이트
+        UpdateControlsDisplay();
     }
 
     void UpdateInventoryList()
@@ -137,13 +137,13 @@ public class UIManager : MonoBehaviour
 
         display += "\n";
 
-        // Primitive Skills Reference - 새로 추가!
+        // Primitive Skills Reference - 글씨 크기 11로 증가
         display += "<color=white><b>=== PRIMITIVE SKILLS ===</b></color>\n";
-        display += "<color=#AAAAAA><size=10>Available building blocks</size></color>\n";
-        display += "<color=yellow>⚔ Attack:</color> <color=#CCCCCC><size=9>FireProjectile, ExplosiveProjectile, PiercingProjectile, MeleeStrike, GroundSlam</size></color>\n";
-        display += "<color=cyan>🏃 Move:</color> <color=#CCCCCC><size=9>Dash, MultiJump, Blink</size></color>\n";
-        display += "<color=lime>🛡 Defense:</color> <color=#CCCCCC><size=9>ShieldBuff, InstantHeal, InvulnerabilityWindow, DamageReductionBuff</size></color>\n";
-        display += "<color=magenta>⚡ Utility:</color> <color=#CCCCCC><size=9>Stun, Slow, Airborne</size></color>\n";
+        display += "<color=#AAAAAA><size=11>Available building blocks</size></color>\n";
+        display += "<color=yellow>⚔ Attack:</color> <color=#CCCCCC><size=11>FireProjectile, ExplosiveProjectile, PiercingProjectile, MeleeStrike, GroundSlam</size></color>\n";
+        display += "<color=cyan>🏃 Move:</color> <color=#CCCCCC><size=11>Dash, MultiJump, Blink</size></color>\n";
+        display += "<color=lime>🛡 Defense:</color> <color=#CCCCCC><size=11>ShieldBuff, InstantHeal, InvulnerabilityWindow, DamageReductionBuff</size></color>\n";
+        display += "<color=magenta>⚡ Utility:</color> <color=#CCCCCC><size=11>Stun, Slow, Airborne</size></color>\n";
 
         statsText.text = display;
     }
@@ -152,8 +152,8 @@ public class UIManager : MonoBehaviour
     {
         if (controlsText == null) return;
 
-        string display = "<color=white><b>=== CONTROLS ===</b></color>\n";
-        display += "<color=#DDDDDD>Move: A/D | Jump: Space</color>\n";
+        string controls = "<color=white><b>=== CONTROLS ===</b></color>\n";
+        controls += "<color=#DDDDDD>Move: A/D | Jump: Space</color>\n";
 
         // Attack Cooldown Display
         string attackStatus = "<color=green>[READY]</color>";
@@ -177,13 +177,13 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        display += $"<color=white>Attack: J</color> {attackStatus} | <color=white>Shoot: K</color> {shootStatus}\n";
-        display += $"<color=white>Skill: Q/E</color>\n";
-        display += "<color=#DDDDDD>Item: 4 | Swap: T</color>\n";
-        display += "<color=#DDDDDD>Reset: R | Enemy: E</color>\n";
-        display += "<color=#DDDDDD>Debug: 1/2/3</color>\n";
+        controls += $"<color=white>Attack: J</color> {attackStatus} | <color=white>Shoot: K</color> {shootStatus}\n";
+        controls += $"<color=white>Skill: Q/E</color>\n";
+        controls += "<color=#DDDDDD>Item: 4 | Swap: T</color>\n";
+        controls += "<color=#DDDDDD>Reset: R | Enemy: E</color>\n";
+        controls += "<color=#DDDDDD>Debug: 1/2/3</color>\n";
 
-        controlsText.text = display;
+        controlsText.text = controls;
     }
 
     /// <summary>
