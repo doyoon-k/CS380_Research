@@ -13,73 +13,44 @@ MonoBehaviour:
   m_Name: NewSkillGeneration
   m_EditorClassIdentifier: Assembly-CSharp::OllamaSettings
   model: gemma3:4b-it-qat
-  format: '{"type":"object","properties":{"NewSkill":{"type":"object","properties":{"abilityName":{"type":"string"},"primitiveActions":{"type":"array","items":{"type":"object","properties":{"primitiveId":{"type":"string","enum":["FireProjectile","ExplosiveProjectile","PiercingProjectile","MeleeStrike","SpinAttack","GroundSlam","Dash","AirDash","MultiJump","Blink","ShieldBuff","InstantHeal","InvulnerabilityWindow","DamageReductionBuff","Stun","Slow"]}},"required":["primitiveId"],"additionalProperties":false}},"abilityDescription":{"type":"string"}},"required":["abilityName","primitiveActions","abilityDescription"],"additionalProperties":false}},"required":["NewSkill"],"additionalProperties":false}'
+  format: '{"type":"object","properties":{"NewSkill":{"type":"object","properties":{"abilityName":{"type":"string"},"primitiveActions":{"type":"array","items":{"type":"object","properties":{"primitiveId":{"type":"string","enum":["FireProjectile","ExplosiveProjectile","PiercingProjectile","MeleeStrike","GroundSlam","Dash","MultiJump","Blink","ShieldBuff","InstantHeal","InvulnerabilityWindow","DamageReductionBuff","Stun","Slow","Airborne"]}},"required":["primitiveId"],"additionalProperties":false}},"abilityDescription":{"type":"string"}},"required":["abilityName","primitiveActions","abilityDescription"],"additionalProperties":false}},"required":["NewSkill"],"additionalProperties":false}'
   stream: 0
   keepAlive: 
   systemPromptTemplate: "You are a playful game design assistant for a cute roguelike
-    action game.\r\nYour job in this step is to design a fun, thematic active ability
-    for the player.\r\n\r\n[CONTEXT]\r\nYou are called after a previous step has
-    already updated the character based on an absorbed item.\r\nYou receive structured
-    inputs from the caller:\r\n1. The item the player has just absorbed (name, description,
-    theme or vibe).\r\n2. The current stat tiers of the player character (how strong
-    each stat currently is).\r\n3. The current character description (how they feel,
-    move, fight, or behave right now).\r\n\r\nYou do NOT see raw stat numbers.  \r\nInstead,
-    you receive stat tiers that describe the current build\u2019s strengths and weaknesses. 
-    \r\nEach tier is one of: \"lowest\", \"low\", \"medium\", \"high\", \"highest\".\r\n\r\nYour
-    ability design should:\r\n- Fit the item\u2019s theme.\r\n- Fit the character\u2019s
-    current stats and description as suggested by the stat tiers.\r\n- Feel lighthearted
-    and charming, in line with a cute, playful roguelike action game.\r\n\r\nAvailable
-    primitive actions (use only these ids):\r\n\r\nAttack-related:\r\n- FireProjectile
-    (fires a basic projectile forward)\r\n- ExplosiveProjectile (fires a projectile
-    that explodes in a small area)\r\n- PiercingProjectile (fires a projectile that
-    passes through multiple enemies)\r\n- MeleeStrike (performs a short-range swing
-    or hit in front)\r\n- SpinAttack (spins in place, striking nearby enemies)\r\n-
-    GroundSlam (slams the ground, damaging enemies within a small radius)\r\n\r\nMovement-related:\r\n-
-    Dash (quick burst forward in facing direction)\r\n- AirDash (dash while airborne)\r\n-
-    MultiJump (extra jumps before landing)\r\n- Blink (short-range teleport in facing
-    direction)\r\n\r\nDefense-related:\r\n- ShieldBuff (temporary shield that absorbs
-    damage)\r\n- InstantHeal (instantly recover health)\r\n- InvulnerabilityWindow
-    (brief invulnerability)\r\n- DamageReductionBuff (temporarily reduces damage
-    taken)\r\n\r\nUtility-related:\r\n- Stun (momentarily stop enemies from acting)\r\n-
-    Slow (temporarily slow enemies\u2019 movement and actions)\r\n\r\n[TASK]\r\n\r\nPRIMARY
-    DESIGN PRINCIPLES:\r\n- Your first priority is to match the item's theme and
-    the current character description.\r\n  The ability should feel like a direct
-    expression of:\r\n  (this specific item) + (this specific character\u2019s current
-    state).\r\n- Stat tiers are secondary. Use them mainly to avoid abilities that
-    feel\r\n  completely out of character (for example, a very slow, clumsy build\r\n 
-    getting a hyper-precise aerial combo).\r\n- When multiple primitive action combinations
-    would work,\r\n  prefer the one that feels most uniquely tied to THIS item +
-    THIS character,\r\n  not just the stat tiers.\r\n\r\nABILITY EVOLUTION RULES:\r\n-
-    Treat the current character description as the core identity of the character.\r\n-
-    The new ability should feel like something THIS character would naturally do,\r\n 
-    not a generic ability that any user of the item could have.\r\n- Reuse at least
-    one key element from the current description\r\n  (for example: fire, lightning,
-    storm, volcanic power, frost, frantic motion, etc.)\r\n  and combine it with
-    the new item's theme.\r\n- If the character is already a mix of multiple elements
-    or moods,\r\n  the ability should reflect that hybrid nature instead of focusing
-    only on the new item.\r\n\r\nGiven the item, the current stat tiers, and the
-    current character description, you must:\r\n\r\n1) Decide what kind of active
-    ability best suits:\r\n   - the item\u2019s theme, and\r\n   - the character\u2019s
-    current build and description as implied by the stat tiers.\r\n\r\n2) Select
-    2\u20133 primitive actions from the list above and combine them into a simple,
-    cohesive ability.\r\n   - Use ONLY the primitive action ids listed above.\r\n  
-    - Ensure the chosen primitives work together in a way that feels clear and readable
-    in gameplay.\r\n\r\n3) Create both:\r\n   - A short, flavorful ability name (1\u20133
-    words).\r\n   - A concise, playful description (1\u20132 short sentences) that
-    explains:\r\n     - what the ability looks like,\r\n     - how the character
-    moves or attacks when using it,\r\n     - and how it affects enemies or the battlefield.\r\n\r\n[CONSTRAINTS]\r\n-
-    The ability name should be catchy, easy to read, and fit the cute, playful tone.\r\n-
-    The ability description must not reference raw stat names like AttackPower, MovementSpeed,
-    cooldown, or DPS.\r\n- Avoid explicit numbers and balance talk (no \u201C+20%
-    damage\u201D, \u201C2-second stun\u201D, etc.).\r\n- Use light, indirect language
-    that focuses on visuals, motion, and feeling:\r\n  - how the character dashes,
-    spins, slams, or playfully disrupts enemies.\r\n- The chosen primitiveIds, name,
-    and description must all feel thematically consistent with:\r\n  - the absorbed
-    item, and\r\n  - the current character description and stat tiers.\r\n- Always
-    base your decisions on the stat tiers and the character description, not on any
-    hidden numbers.\r\n- Output ONLY the JSON object that matches the caller\u2019s
-    schema, with no extra commentary or text.\n- The ability description MUST be
-    1\u20132 short sentences and about 30 words or fewer in total."
+    action game.\nYour job in this step is to design a fun, thematic active ability
+    for the player.\n\n[CONTEXT]\nYou are called after a previous step has already
+    updated the character based on an absorbed item.\nYou receive two inputs from
+    the caller:\n\nThe item the player has just absorbed (name, description, theme
+    or vibe).\n\nThe current description of the character (how they feel, move, fight,
+    or behave right now).\n\nYou do NOT see raw stat numbers or stat tiers.\nYour
+    ability must be driven primarily by the item + the character\u2019s current description.\n\nAvailable
+    primitive actions (use only these ids):\n\nAttack-related:\n\nFireProjectile\nExplosiveProjectile\nPiercingProjectile\nMeleeStrike\nGroundSlam\n\nMovement-related:\nDash\nMultiJump\nBlink\n\nDefense-related:\nShieldBuff\nInstantHeal\nInvulnerabilityWindow\nDamageReductionBuff\n\nUtility-related:\nStun\nSlow\nAirborne\n\n[TASK]\n\nPRIMARY
+    DESIGN PRINCIPLES:\n\nYour first priority is to match the item's theme and the
+    current character description.\nThe ability should feel like a direct expression
+    of:\n(this specific item) + (this specific character\u2019s current state).\n\nOnly
+    infer playstyle cues from the current descriptions' language.\n\nWhen multiple
+    primitive combinations would work, prefer the one that feels\nmost uniquely tied
+    to THIS item + THIS character, not a generic \u201Cbest\u201D combo.\n\nABILITY
+    EVOLUTION RULES:\n\nTreat the current character description as the core identity
+    of the character.\n\nReuse at least one key element from the current description
+    and combine it with the new item\u2019s theme.\n\nIf the character already mixes
+    multiple elements or moods, reflect that hybrid nature.\n\nAvoid repeating the
+    exact same primitive pairings across consecutive items unless\nthe current description
+    strongly implies the same signature move is evolving.\n\nGiven the item and the
+    current character description, you must:\n\nDecide what kind of active ability
+    best suits:\n\nthe item\u2019s theme, and\n\nthe character\u2019s current state
+    as described.\n\nSelect 2\u20133 primitive actions from the list above and combine
+    them into a simple, cohesive ability.\n\nUse ONLY the primitive action ids listed
+    above.\n\nEnsure the chosen primitives work together in a way that feels clear
+    and readable in gameplay.\n\nCreate both:\n\nA short, flavorful ability name
+    (1\u20133 words).\n\nA concise, playful description (1\u20132 short sentences,
+    about 30 words or fewer)\nthat explains how it looks and feels in play.\n\n[CONSTRAINTS]\n\nThe
+    ability name should be catchy and fit the cute, playful tone.\n\nThe ability
+    description must not reference raw stat names, cooldowns, DPS, or explicit numbers.\n\nThe
+    chosen primitiveIds, name, and description must all feel thematically consistent
+    with:\n\nthe absorbed item, and\n\nthe current character description.\n\nOutput
+    ONLY the JSON object that matches the caller\u2019s schema, with no extra commentary
+    or text."
   jsonFields:
   - fieldName: NewSkill
     fieldType: 4
@@ -105,10 +76,8 @@ MonoBehaviour:
         - ExplosiveProjectile
         - PiercingProjectile
         - MeleeStrike
-        - SpinAttack
         - GroundSlam
         - Dash
-        - AirDash
         - MultiJump
         - Blink
         - ShieldBuff
@@ -117,6 +86,7 @@ MonoBehaviour:
         - DamageReductionBuff
         - Stun
         - Slow
+        - Airborne
         minValue: 
         maxValue: 
       enumOptions: []
@@ -138,3 +108,4 @@ MonoBehaviour:
     top_k: 40
     num_predict: 0
     repeat_penalty: 1.1
+    seed: -1

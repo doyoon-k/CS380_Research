@@ -15,34 +15,14 @@ MonoBehaviour:
   displayName: CharacterItemUsePipeline
   description: 
   steps:
-  - stepName: StatAssesment
-    stepKind: 2
-    ollamaSettings: {fileID: 0}
-    userPromptTemplate: 
-    jsonMaxRetries: 3
-    jsonRetryDelaySeconds: 0.1
-    customLinkTypeName: StatTierEvaluationLink, Assembly-CSharp, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
-    customAsset: {fileID: 11400000, guid: dff9558e766da9444967e3d2707c6c15, type: 2}
-    customLinkParameters: []
-    editorPosition: {x: -1236, y: -128}
-    guid: 7ddbd3b3-b56f-444d-b52e-df6374932a88
-    nextStepGuid: 8950e9c5-5547-4e15-b5a8-f76ac47ae410
   - stepName: StatAndDescriptionChange
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: f223fef346f752e4d8c7cb70dfa28e2d, type: 2}
-    userPromptTemplate: "[ITEM]\r\nName: {{item_name}}\r\nDescription: {{item_description}}\r\n\r\n[STAT_TIERS]\r\n#
-      Each tier is one of: \"lowest\", \"low\", \"medium\", \"high\", \"highest\".\r\nAttackPowerTier:
-      {{AttackPowerTier}}\r\nAttackSpeedTier: {{AttackSpeedTier}}\r\nProjectileRangeTier:
-      {{ProjectileRangeTier}}\r\nMovementSpeedTier: {{MovementSpeedTier}}\r\nMaxHealthTier:
-      {{MaxHealthTier}}\r\nDefenseTier: {{DefenseTier}}\r\nJumpPowerTier: {{JumpPowerTier}}\r\nCooldownHasteTier:
-      {{CooldownHasteTier}}\r\n\r\n[CURRENT_DESCRIPTION]\r\n\"{{character_description}}\"\r\n\r\n[TASK]\r\nUsing
-      the system instructions, update the character after absorbing this item:\r\n-
-      Use the stat tiers (not raw numbers) plus the current description to understand
-      the current build\u2019s strengths and weaknesses.\r\n- Select 0\u20134 stats
-      to modify in a way that fits both the item\u2019s theme and the current build.\r\n-
-      Produce a SHORT updated character description (1\u20132 sentences, ~40 words
-      or fewer) in simple English that reflects how the character has changed."
+    userPromptTemplate: "[ITEM]\nName: {{item_name}}\nDescription: {{item_description}}\n\n[CURRENT_DESCRIPTION]\n\"{{character_description}}\"\n\n[TASK]\nUsing
+      the system instructions, update the character after absorbing this item:\n\nSelect
+      2\u20133 stats to modify in a way that fits the item\u2019s theme and the current
+      description.\n\nProduce a SHORT updated character description (1\u20132 sentences,
+      ~40 words or fewer) in simple English that reflects how the character has changed."
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
@@ -61,22 +41,15 @@ MonoBehaviour:
   - stepName: SkillGeneration
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 943b4e34f94c7cd46991bc6d70dce1b6, type: 2}
-    userPromptTemplate: "[ITEM]\r\nName: {{item_name}}\r\nDescription: {{item_description}}\r\n\r\n[STAT_TIERS]\r\n#
-      Each tier is one of: \"lowest\", \"low\", \"medium\", \"high\", \"highest\".\r\nAttackPowerTier:
-      {{AttackPowerTier}}\r\nAttackSpeedTier: {{AttackSpeedTier}}\r\nProjectileRangeTier:
-      {{ProjectileRangeTier}}\r\nMovementSpeedTier: {{MovementSpeedTier}}\r\nMaxHealthTier:
-      {{MaxHealthTier}}\r\nDefenseTier: {{DefenseTier}}\r\nJumpPowerTier: {{JumpPowerTier}}\r\nCooldownHasteTier:
-      {{CooldownHasteTier}}\r\n\r\n[CURRENT_DESCRIPTION]\r\n\"{{character_description}}\"\r\n\r\n[TASK]\r\nBased
-      on this item, the current stat tiers, and the character\u2019s description,
-      design exactly ONE new active ability.\r\n\r\n- Use only the primitive action
-      ids from the allowed list given in the system instructions.\r\n- Select 2\u20133
-      primitive actions that fit the item\u2019s theme and feel like one coherent
-      ability.\r\n- Create a short ability name (1\u20133 words).\r\n- Write a playful
-      description (1\u20132 short sentences) that explains how the ability looks
-      and feels in play, without mentioning raw stat names, cooldowns, or exact numbers.\r\n-
-      Make your choices based on the stat tiers (not hidden numeric values) and the
-      character description, and ensure the ability feels like a natural move for
-      this specific character.\r\n"
+    userPromptTemplate: "[ITEM]\nName: {{item_name}}\nDescription: {{item_description}}\n\n[CURRENT_DESCRIPTION]\n\"{{character_description}}\"\n\n[TASK]\nBased
+      on this item and the character\u2019s current description, design exactly ONE
+      new active ability.\n\nUse only the primitive action ids from the allowed list
+      given in the system instructions.\n\nSelect 2\u20133 primitive actions that
+      fit the item\u2019s theme and feel like one coherent ability.\n\nCreate a short
+      ability name (1\u20133 words).\n\nWrite a playful description (1\u20132 short
+      sentences, about 30 words or fewer)\nthat explains how the ability looks and
+      feels in play, without mentioning raw stat names, cooldowns, or exact numbers.\n\nEnsure
+      the ability feels like a natural move for this specific character."
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
@@ -89,19 +62,18 @@ MonoBehaviour:
       value: 
     - key: level
       value: 
-    editorPosition: {x: 114, y: -125}
+    editorPosition: {x: 79, y: -128}
     guid: d62a622c-3398-47df-a9c7-2e5812fb4ad9
     nextStepGuid: 
   layoutSettings:
-    inputNodePosition: {x: -1424, y: -117}
-    outputNodePosition: {x: 905, y: -168}
+    inputNodePosition: {x: -765, y: -96}
+    outputNodePosition: {x: 731, y: -146}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 342, y: -1132, z: 0}
-    viewScale: {x: 1, y: 1, z: 1}
+    viewPosition: {x: 1185, y: -571, z: 0}
+    viewScale: {x: 0.8695652, y: 0.8695652, z: 1}
     viewInitialized: 1
     snapshotPositions:
-    - {x: -820, y: -57}
-    - {x: -142, y: -28}
-    - {x: 552, y: -42}
+    - {x: -134, y: -9}
+    - {x: 500, y: -105}
     snapshotPositionsInitialized: 1

@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b38eac8f7fb3f94d8f7d62ebef4586b, type: 3}
-  m_Name: IceCrystal
+  m_Name: Umbrella
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Ice Crystal
-  description: "A shard of frozen stillness that chills the air around your fingertips. 
-    \r\nIt reins in your wild motions, turning them into sharp, deliberate strikes
-    and cool, measured steps that leave a thin frost where you pass."
-  icon: {fileID: -7560284153744367771, guid: f0336eae2f7825a42ac319534eccbd60, type: 3}
+  itemName: Umbrella
+  description: A slightly worn umbrella that opens with a satisfying snap. The fabric
+    feels sturdy, and standing under it makes the outside world feel a little farther
+    away.
+  icon: {fileID: 0}
   isCached: 0
   cachedStatModelJson: 
   cachedSkillModelJson: 

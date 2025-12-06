@@ -170,6 +170,9 @@ public class ItemManager : MonoBehaviour
 
         if (playerStats == null) return;
 
+        // Snapshot stats before applying changes
+        playerStats.SnapshotStats();
+
         // Map StatChanges to ModifyStat calls
         if (statModel.stat_changes.Speed != 0) playerStats.ModifyStat("MovementSpeed", statModel.stat_changes.Speed);
         if (statModel.stat_changes.Attack != 0) playerStats.ModifyStat("AttackPower", statModel.stat_changes.Attack);
@@ -179,6 +182,11 @@ public class ItemManager : MonoBehaviour
         if (statModel.stat_changes.Range != 0) playerStats.ModifyStat("ProjectileRange", statModel.stat_changes.Range);
         if (statModel.stat_changes.CooldownHaste != 0) playerStats.ModifyStat("CooldownHaste", statModel.stat_changes.CooldownHaste);
         if (statModel.stat_changes.MaxHP != 0) playerStats.ModifyStat("MaxHealth", statModel.stat_changes.MaxHP);
+
+        // Calculate deltas after applying changes
+        playerStats.CalculateStatDeltas();
+
+        // Deltas now persist until stats are reset with 'R' key
     }
 
     void ApplySkillModel(SkillModel skillModel)

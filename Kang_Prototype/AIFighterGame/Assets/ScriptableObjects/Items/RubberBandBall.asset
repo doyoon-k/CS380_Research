@@ -10,13 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b38eac8f7fb3f94d8f7d62ebef4586b, type: 3}
-  m_Name: ThunderOrb
+  m_Name: RubberBandBall
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Thunder Orb
-  description: "A crackling sphere of bottled thunder that hums impatiently in your
-    hands.  \r\nIt makes your steps snap into short, reckless bursts and your swings
-    fire off in sudden electric flurries, as if your whole body were a jittery lightning
-    rod."
+  itemName: Rubber Band Ball
+  description: A dense knot of colorful bands, slightly sticky to the touch. It bounces
+    in unpredictable angles and never seems to stop moving once it hits the ground.
   icon: {fileID: 0}
   isCached: 0
   cachedStatModelJson: 

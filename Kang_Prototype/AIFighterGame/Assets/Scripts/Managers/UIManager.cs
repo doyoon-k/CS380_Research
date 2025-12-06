@@ -71,10 +71,13 @@ public class UIManager : MonoBehaviour
         string display = "<color=white><b>=== PLAYER ===</b></color>\n";
         display += $"<color=#CCCCCC><i>{playerStats.characterDescription}</i></color>\n";
         display += $"<color=white>HP:</color> <color=green>{playerStats.CurrentHealth:F0}/{playerStats.GetStat("MaxHealth"):F0}</color>\n";
-        display += $"<color=white>Atk:</color> <color=yellow>{playerStats.GetStat("AttackPower"):F0}</color> | <color=white>Def:</color> <color=cyan>{playerStats.GetStat("Defense"):F0}</color>\n";
-        display += $"<color=white>Spd:</color> <color=cyan>{playerStats.GetStat("MovementSpeed"):F0}</color> | <color=white>Jump:</color> <color=cyan>{playerStats.GetStat("JumpPower"):F0}</color>\n";
-        display += $"<color=white>AtkSpd:</color> <color=cyan>{playerStats.GetStat("AttackSpeed"):F1}</color> | <color=white>Rng:</color> <color=cyan>{playerStats.GetStat("ProjectileRange"):F0}</color>\n";
-        display += $"<color=white>Haste:</color> <color=cyan>{playerStats.GetStat("CooldownHaste"):F1}%</color>\n\n";
+        display += $"<color=white>Atk:</color> {FormatStatWithDelta("AttackPower", playerStats.GetStat("AttackPower"))}";
+        display += $" | <color=white>Def:</color> {FormatStatWithDelta("Defense", playerStats.GetStat("Defense"))}\n";
+        display += $"<color=white>Spd:</color> {FormatStatWithDelta("MovementSpeed", playerStats.GetStat("MovementSpeed"))}";
+        display += $" | <color=white>Jump:</color> {FormatStatWithDelta("JumpPower", playerStats.GetStat("JumpPower"))}\n";
+        display += $"<color=white>AtkSpd:</color> {FormatStatWithDelta("AttackSpeed", playerStats.GetStat("AttackSpeed"), "F1")}";
+        display += $" | <color=white>Rng:</color> {FormatStatWithDelta("ProjectileRange", playerStats.GetStat("ProjectileRange"))}\n";
+        display += $"<color=white>Haste:</color> {FormatStatWithDelta("CooldownHaste", playerStats.GetStat("CooldownHaste"), "F1")}%\n\n";
 
         if (enemyStats != null)
         {
@@ -84,7 +87,15 @@ public class UIManager : MonoBehaviour
 
         if (itemManager.currentItem != null)
         {
-            display += $"<color=white><b>ITEM:</b></color> <color=yellow>{itemManager.currentItem.itemName}</color>\n\n";
+            display += $"<color=white><b>ITEM:</b></color> <color=yellow>{itemManager.currentItem.itemName}</color>\n";
+            if (!string.IsNullOrEmpty(itemManager.currentItem.description))
+            {
+                display += $"<color=#AAAAAA><i>{itemManager.currentItem.description}</i></color>\n\n";
+            }
+            else
+            {
+                display += "\n";
+            }
         }
         else
         {
@@ -152,5 +163,28 @@ public class UIManager : MonoBehaviour
         display += "<color=#DDDDDD>Debug: 1/2/3</color>\n";
 
         statsText.text = display;
+    }
+
+    /// <summary>
+    /// Format a stat value with color coding and delta indicator
+    /// </summary>
+    private string FormatStatWithDelta(string statName, float currentValue, string format = "F0")
+    {
+        float delta = playerStats.GetStatDelta(statName);
+        string colorTag = "white";
+        string deltaText = "";
+
+        if (delta > 0.01f) // Positive change
+        {
+            colorTag = "lime";
+            deltaText = $" <color=lime>(+{delta.ToString(format)})</color>";
+        }
+        else if (delta < -0.01f) // Negative change
+        {
+            colorTag = "red";
+            deltaText = $" <color=red>({delta.ToString(format)})</color>";
+        }
+
+        return $"<color={colorTag}>{currentValue.ToString(format)}</color>{deltaText}";
     }
 }

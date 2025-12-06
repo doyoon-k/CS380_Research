@@ -10,6 +10,10 @@ public class PlayerStats : MonoBehaviour
     private Dictionary<string, float> _currentStats = new Dictionary<string, float>();
     public float CurrentHealth { get; set; }
 
+    [Header("Stat Change Tracking")]
+    private Dictionary<string, float> _previousStats = new Dictionary<string, float>();
+    public Dictionary<string, float> StatDeltas { get; private set; } = new Dictionary<string, float>();
+
     [TextArea] public string characterDescription = "A brave warrior.";
 
     [Header("Death Settings")]
@@ -95,6 +99,7 @@ public class PlayerStats : MonoBehaviour
     {
         Debug.Log("Resetting stats to base values");
         InitializeStats();
+        ClearStatDeltas(); // Clear stat change indicators
         LogCurrentStats();
     }
 
@@ -212,5 +217,46 @@ public class PlayerStats : MonoBehaviour
         }
         log += $"HP: {CurrentHealth}/{GetStat("MaxHealth")}";
         Debug.Log(log);
+    }
+
+    /// <summary>
+    /// Snapshot current stats before applying changes. Call this before modifying stats.
+    /// </summary>
+    public void SnapshotStats()
+    {
+        _previousStats.Clear();
+        foreach (var kvp in _currentStats)
+        {
+            _previousStats[kvp.Key] = kvp.Value;
+        }
+    }
+
+    /// <summary>
+    /// Calculate deltas after stats have been modified. Call this after applying changes.
+    /// </summary>
+    public void CalculateStatDeltas()
+    {
+        StatDeltas.Clear();
+        foreach (var kvp in _currentStats)
+        {
+            float previous = _previousStats.ContainsKey(kvp.Key) ? _previousStats[kvp.Key] : kvp.Value;
+            StatDeltas[kvp.Key] = kvp.Value - previous;
+        }
+    }
+
+    /// <summary>
+    /// Get the delta (change) for a specific stat.
+    /// </summary>
+    public float GetStatDelta(string statName)
+    {
+        return StatDeltas.TryGetValue(statName, out float delta) ? delta : 0f;
+    }
+
+    /// <summary>
+    /// Clear all stat deltas. Typically called after a delay to hide change indicators.
+    /// </summary>
+    public void ClearStatDeltas()
+    {
+        StatDeltas.Clear();
     }
 }

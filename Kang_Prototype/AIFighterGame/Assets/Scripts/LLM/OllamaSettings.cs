@@ -31,6 +31,8 @@ public class OllamaSettings : ScriptableObject
         public float top_k = 40f;
         public int num_predict = 0;
         public float repeat_penalty = 1.1f;
+        [Tooltip("Random seed for reproducibility. -1 = random (default), >= 0 = fixed seed")]
+        public int seed = -1;
     }
 
     public ModelParams modelParams = new ModelParams();
