@@ -83,6 +83,11 @@ public class SkillExecutor : MonoBehaviour
     public int pierceMaxCount = 3;
     public float piercingDamageMultiplier = 0.8f;
 
+    private Coroutine shieldCoroutine;
+    private Coroutine invincibleCoroutine;
+    private Coroutine damageReductionCoroutine;
+    private Color baseSpriteColor = Color.white;
+
 
 
     void Start()
@@ -91,8 +96,14 @@ public class SkillExecutor : MonoBehaviour
         if (playerStats == null) playerStats = GetComponent<PlayerStats>();
         if (attackHitbox == null) attackHitbox = GetComponentInChildren<AttackHitbox>();
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
-        if (attackHitbox != null) attackHitbox.gameObject.SetActive(false);
         if (playerController == null) playerController = GetComponent<PlayerController>();
+
+        if (spriteRenderer != null)
+        {
+            baseSpriteColor = spriteRenderer.color;
+        }
+
+        if (attackHitbox != null) attackHitbox.gameObject.SetActive(false);
         remainingJumps = maxExtraJumps;
     }
 
@@ -464,6 +475,8 @@ public class SkillExecutor : MonoBehaviour
     // ========================================
     IEnumerator ShieldBuff()
     {
+        if (shieldCoroutine != null) StopCoroutine(shieldCoroutine);
+
         currentShield = shieldAmount;
         Debug.Log($"Shield activated! {currentShield} damage absorption");
 
@@ -473,6 +486,12 @@ public class SkillExecutor : MonoBehaviour
             ProceduralVFX.Instance.CreateShieldRing(transform, shieldDuration);
         }
 
+        shieldCoroutine = StartCoroutine(MonitorShieldDuration());
+        yield return null;
+    }
+
+    IEnumerator MonitorShieldDuration()
+    {
         float elapsed = 0f;
         while (elapsed < shieldDuration && currentShield > 0f)
         {
@@ -482,6 +501,7 @@ public class SkillExecutor : MonoBehaviour
 
         currentShield = 0f;
         Debug.Log("Shield expired!");
+        shieldCoroutine = null;
     }
 
     IEnumerator InstantHeal()
@@ -503,6 +523,8 @@ public class SkillExecutor : MonoBehaviour
 
     IEnumerator Invincible()
     {
+        if (invincibleCoroutine != null) StopCoroutine(invincibleCoroutine);
+
         isInvincible = true;
         Debug.Log($"Invincible for {invincibilityDuration}s!");
 
@@ -512,17 +534,22 @@ public class SkillExecutor : MonoBehaviour
             ProceduralVFX.Instance.CreateInvulnerabilityFlash(transform, invincibilityDuration);
         }
 
+        invincibleCoroutine = StartCoroutine(MonitorInvincibility());
+        yield return null;
+    }
+
+    IEnumerator MonitorInvincibility()
+    {
         float elapsed = 0f;
         float flashInterval = 0.1f;
-        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
 
         while (elapsed < invincibilityDuration)
         {
             if (spriteRenderer != null)
             {
                 spriteRenderer.color = spriteRenderer.color.a > 0.5f
-                    ? new Color(originalColor.r, originalColor.g, originalColor.b, 0.3f)
-                    : originalColor;
+                    ? new Color(baseSpriteColor.r, baseSpriteColor.g, baseSpriteColor.b, 0.3f)
+                    : baseSpriteColor;
             }
 
             elapsed += flashInterval;
@@ -532,13 +559,16 @@ public class SkillExecutor : MonoBehaviour
         isInvincible = false;
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = originalColor;
+            spriteRenderer.color = baseSpriteColor;
         }
         Debug.Log("Invincibility ended!");
+        invincibleCoroutine = null;
     }
 
     IEnumerator DamageReductionBuff()
     {
+        if (damageReductionCoroutine != null) StopCoroutine(damageReductionCoroutine);
+
         damageReductionMultiplier = 1f - damageReduction;
         Debug.Log($"Damage reduced to {damageReductionMultiplier * 100}% for {damageReductionDuration}s!");
 
@@ -548,7 +578,12 @@ public class SkillExecutor : MonoBehaviour
             ProceduralVFX.Instance.CreateBarrierHexagon(transform, damageReductionDuration);
         }
 
-        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+        damageReductionCoroutine = StartCoroutine(MonitorDamageReduction());
+        yield return null;
+    }
+
+    IEnumerator MonitorDamageReduction()
+    {
         if (spriteRenderer != null)
         {
             spriteRenderer.color = new Color(0.5f, 0.5f, 1f);
@@ -559,9 +594,10 @@ public class SkillExecutor : MonoBehaviour
         damageReductionMultiplier = 1f;
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = originalColor;
+            spriteRenderer.color = baseSpriteColor;
         }
         Debug.Log("Damage reduction ended!");
+        damageReductionCoroutine = null;
     }
 
     public float ProcessIncomingDamage(float damage)
