@@ -23,6 +23,7 @@ MonoBehaviour:
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
+    customAsset: {fileID: 0}
     customLinkParameters:
     - key: name
       value: 
@@ -31,6 +32,8 @@ MonoBehaviour:
     - key: level
       value: 
     editorPosition: {x: -1281, y: 343}
+    guid: c4e3e025-a098-430b-9200-0288546dbe3b
+    nextStepGuid: 
   - stepName: Step 2
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 1f25e6887e6af4144a0454ea5ef79e19, type: 2}
@@ -39,6 +42,7 @@ MonoBehaviour:
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
+    customAsset: {fileID: 0}
     customLinkParameters:
     - key: name
       value: 
@@ -47,6 +51,8 @@ MonoBehaviour:
     - key: level
       value: 
     editorPosition: {x: -719, y: 343}
+    guid: c4c9348e-61e7-4592-944e-f30ddde4ea00
+    nextStepGuid: 
   - stepName: Step 3
     stepKind: 2
     ollamaSettings: {fileID: 0}
@@ -55,6 +61,7 @@ MonoBehaviour:
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
       PublicKeyToken=null
+    customAsset: {fileID: 0}
     customLinkParameters:
     - key: name
       value: 
@@ -63,13 +70,15 @@ MonoBehaviour:
     - key: level
       value: 
     editorPosition: {x: -126, y: 341}
+    guid: f22136ed-78d5-4ce1-aace-2d366c33d24c
+    nextStepGuid: 
   layoutSettings:
     inputNodePosition: {x: -1538, y: 382}
     outputNodePosition: {x: 736, y: 364}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 803, y: -51, z: 0}
-    viewScale: {x: 0.49717674, y: 0.49717674, z: 1}
+    viewPosition: {x: 2756, y: -133, z: 0}
+    viewScale: {x: 1, y: 1, z: 1}
     viewInitialized: 1
     snapshotPositions:
     - {x: -924, y: 454}

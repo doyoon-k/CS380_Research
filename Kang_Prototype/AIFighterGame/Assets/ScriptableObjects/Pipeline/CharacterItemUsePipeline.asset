@@ -18,11 +18,31 @@ MonoBehaviour:
   - stepName: StatAndDescriptionChange
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: f223fef346f752e4d8c7cb70dfa28e2d, type: 2}
-    userPromptTemplate: "[ITEM]\nName: {{item_name}}\nDescription: {{item_description}}\n\n[CURRENT_DESCRIPTION]\n\"{{character_description}}\"\n\n[TASK]\nUsing
-      the system instructions, update the character after absorbing this item:\n\nSelect
-      2\u20133 stats to modify in a way that fits the item\u2019s theme and the current
-      description.\n\nProduce a SHORT updated character description (1\u20132 sentences,
-      ~40 words or fewer) in simple English that reflects how the character has changed."
+    userPromptTemplate: '[CONTEXT]
+
+      Item: {{item_name}}
+
+      Item Desc: {{item_description}}
+
+      Current
+      Character: "{{character_description}}"
+
+
+      [INSTRUCTION]
+
+      Update
+      the character description and stats based on this new item absorption.
+
+      Stat
+      changes must fit the theme:
+
+      - additive: -5.0 to 5.0
+
+      - multiplicative:
+      0.5 to 1.1
+
+
+      Return JSON.'
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
@@ -41,18 +61,25 @@ MonoBehaviour:
   - stepName: SkillGeneration
     stepKind: 0
     ollamaSettings: {fileID: 11400000, guid: 943b4e34f94c7cd46991bc6d70dce1b6, type: 2}
-    userPromptTemplate: "[ITEM]\nName: {{item_name}}\nDescription: {{item_description}}\n\n[CURRENT_DESCRIPTION]\n\"{{character_description}}\"\n\n[TASK]\nBased
-      on this item and the character\u2019s current description, design exactly ONE
-      new active ability.\n\nUse only the primitive action ids from the allowed list
-      given in the system instructions.\n\nSelect all primitive actions that clearly
-      fit the item\u2019s theme + current character state\nand can read as one coherent
-      ability.\n\nIf too many actions fit, choose the 2\u20134 most iconic.\n\nChoose
-      more than one primitive action.\n\nOrder the primitiveActions in the most natural
-      execution flow for this ability.\n\nCreate:\n\nA short ability name (1\u20133
-      words).\n\nA playful description (1\u20132 short sentences, about 30 words
-      or fewer)\nexplaining how it looks and feels in play, without mentioning raw
-      stat names, cooldowns, or exact numbers.\n\nEnsure the ability feels like a
-      natural move for this specific character."
+    userPromptTemplate: '[CONTEXT]
+
+      Item: {{item_name}}
+
+      Item Desc: {{item_description}}
+
+      Current
+      Character: "{{character_description}}"
+
+
+      [INSTRUCTION]
+
+      Design
+      a new ability that suits this character''s evolution.
+
+      Combine 2-4 primitives
+      into a cohesive move.
+
+      Return JSON.'
     jsonMaxRetries: 3
     jsonRetryDelaySeconds: 0.1
     customLinkTypeName: SampleCustomLink, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
@@ -73,8 +100,8 @@ MonoBehaviour:
     outputNodePosition: {x: 731, y: -146}
     inputPositionInitialized: 1
     outputPositionInitialized: 1
-    viewPosition: {x: 516, y: -13, z: 0}
-    viewScale: {x: 1.15, y: 1.15, z: 1}
+    viewPosition: {x: 922, y: 278, z: 0}
+    viewScale: {x: 0.65751624, y: 0.65751624, z: 1}
     viewInitialized: 1
     snapshotPositions:
     - {x: -134, y: -9}
