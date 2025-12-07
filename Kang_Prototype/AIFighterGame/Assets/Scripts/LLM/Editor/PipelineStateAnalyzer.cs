@@ -79,7 +79,19 @@ public static class PipelineStateAnalyzer
             }
             else if (hasProducer && hasConsumer)
             {
-                key.kind = AnalyzedStateKeyKind.Intermediate;
+                // Fix: State keys incorrectly hidden if produced by *any* step, even if needed earlier.
+                // If the key is consumed BEFORE (or at the same step as) it is first produced, it must be an input.
+                int firstProd = key.producedByStepIndices.Min();
+                int firstCons = key.consumedByStepIndices.Min();
+
+                if (firstCons <= firstProd)
+                {
+                    key.kind = AnalyzedStateKeyKind.Input;
+                }
+                else
+                {
+                    key.kind = AnalyzedStateKeyKind.Intermediate;
+                }
             }
             else
             {
